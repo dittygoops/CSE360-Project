@@ -36,9 +36,19 @@ class DatabaseHelper {
 	private void createTables() throws SQLException {
 		String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
+				+ "userName VARCHAR(255), "
 				+ "email VARCHAR(255) UNIQUE, "
 				+ "password VARCHAR(255), "
-				+ "role VARCHAR(20))";
+				// first name
+				+ "firstName VARCHAR(255), "
+				// last name
+				+ "lastName VARCHAR(255), "
+				// middle name
+				+ "middleName VARCHAR(255), "
+				// preferred first
+				+ "preferredFirst VARCHAR(255), "
+				// user role sia
+				+ "role VARCHAR(3))";
 		statement.execute(userTable);
 	}
 
