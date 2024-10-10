@@ -21,29 +21,14 @@ public class StartCSE360 {
 				//set up administrator access
 				setupAdministrator();
 			}
-			else {
-				System.out.println( "If you are an administrator, then select A\nIf you are an user then select U\nEnter your choice:  " );
-				String role = scanner.nextLine();
-
-				switch (role) {
-				case "U":
-					userFlow();
-					break;
-				case "A":
-					adminFlow();
-					break;
-				default:
-					System.out.println("Invalid choice. Please select 'a', 'u'");
-					databaseHelper.closeConnection();
-				}
-
-			}
+			//called here as need to reroute to main login after initial setup or if there are other users
+			mainLogin();
+			
 		} catch (SQLException e) {
 			System.err.println("Database error: " + e.getMessage());
 			e.printStackTrace();
 		}
 		finally {
-			//call main user page here + not sure to add option on this page to close the connection as well
 			System.out.println("Good Bye!!");
 			databaseHelper.closeConnection();
 		}
@@ -51,7 +36,7 @@ public class StartCSE360 {
 
 	//Sets up administrator on first registration to the system
 	private static void setupAdministrator() throws SQLException {
-		System.out.println("Setting up the Administrator access.");
+		System.out.println("Setting up the Administrator access");
 		System.out.print("Enter Admin Email: ");
 		String email = scanner.nextLine();
 		System.out.print("Enter Admin Password: ");
@@ -60,7 +45,7 @@ public class StartCSE360 {
 		String confirmPassword = scanner.nextLine();
 		//Must have matching password and confirm password so loop till it is right
 		while(!password.equals(confirmPassword)) {
-			System.out.println("Invalid. Please re-enter Admin Password to confirm: ");
+			System.out.print("Invalid. Please re-enter Admin Password to confirm: ");
 			confirmPassword = scanner.nextLine();
 		}
 		databaseHelper.register(email, password, "admin");
@@ -119,8 +104,10 @@ public class StartCSE360 {
 		}
 	}
 	
+	//pass in User object here which contains all their role info assigned by Admin at invitation (if reset account - come back in as student)
 	private static void settingUpAccount() throws SQLException {
 		
+		//fields we need information for
 		String first = "";
 		String preferred = "";
 		String last = "";
@@ -128,6 +115,8 @@ public class StartCSE360 {
 		String email = "";
 		
 		System.out.println("Finish Setting up Your Account");
+		
+		//Asking for user input to get the information required
 		System.out.print("Enter Your First Name: ");
 		first = scanner.nextLine();
 		System.out.print("Enter Your Middle Name: ");
@@ -136,19 +125,20 @@ public class StartCSE360 {
 		last = scanner.nextLine();
 		System.out.print("Enter Your Preferred First Name: ");
 		preferred = scanner.nextLine();
-		
-		//Maybe put some more new lines here
 		System.out.print("Enter Your Email: ");
 		email = scanner.nextLine();
 		
 		//have a db function here that updates their account 
 		System.out.println("Congrats! You have finished setting up your account.");
-		//check roles - if only one - route to that home | if multiple - route to role selection page
+		//check roles from User object param: if only one - route to that home | if multiple - route to role selection page
+		
 		
 	}
 	
-	//want a User object from a user class returned here to check roles
+	//want a User object from a user class passed as a parameter here to check roles
 	private static void sessionRoleSelection() throws SQLException {
+		
+		//From the User object that was a parameter - find the roles or maybe from DB 
 		String roles = "ast";
 		String choice = "";
 		
@@ -157,31 +147,33 @@ public class StartCSE360 {
 		if(roles.indexOf("a") != -1) System.out.println("1. Administrator");
 		if(roles.indexOf("s") != -1) System.out.println("2. Student");
 		if(roles.indexOf("t") != -1) System.out.println("3. Instructor");
-		System.out.print("Please select your role: ");
+		
+		System.out.print("Please select your role for the session: ");
 		choice = scanner.nextLine();
 		while(!choice.equals("1") || !choice.equals("2") || !choice.equals("3")) {
 			System.out.print("Invalid option. Please select your role from the list above again: ");
 			choice = scanner.nextLine();
 		}
 		
+		//navigation to the proper method based on which role was selected
 		System.out.print("You have successfully selected the role: ");
 		switch(choice) {
 			case "1": 
 				System.out.println("Administrator.");
+				adminHome();
 				break;
 			case "2": 
 				System.out.println("Student.");
+				regHome();
 				break;
 			case "3": 
 				System.out.println("Instructor.");
+				regHome();
 				break;
 			default:
 				System.out.println("There was an error on our end. We are navigation you back to the login page. Please try again at a later time.");
 				break;
 		}
-		/*
-		 * Based on choice take to either Student/Instructor Home or Admin Home -
-		 */
 	}
 	
 	private static void regHome() throws SQLException {
@@ -201,9 +193,8 @@ public class StartCSE360 {
 	
 	private static void adminHome() throws SQLException {
 		String choice = "";
-		boolean valid = false;
 		
-		System.out.println("Welcome to the Home Page for Admins!");
+		System.out.print("Welcome to the Home Page for Admins!");
 		
 		
 		choice = scanner.nextLine();
@@ -243,37 +234,37 @@ public class StartCSE360 {
 				switch(roleSelect) {
 					case "1": {
 						rolesToGive = "a";
-						valid = true;
+						 
 						break;
 					}
 					case "2": {
 						rolesToGive = "s";
-						valid = true;
+						 
 						break;
 					}
 					case "3": {
 						rolesToGive = "t";
-						valid = true;
+						 
 						break;
 					}
 					case "4": {
 						rolesToGive = "as";
-						valid = true;
+						 
 						break;
 					}
 					case "5": {
 						rolesToGive = "at";
-						valid = true;
+						 
 						break;
 					}
 					case "6": {
 						rolesToGive = "st";
-						valid = true;
+						 
 						break;
 					}
 					case "7": {
 						rolesToGive = "ast";
-						valid = true;
+						 
 						break;
 					}
 					default:
@@ -283,7 +274,7 @@ public class StartCSE360 {
 				}
 				
 				//OTP Generation + Sending
-				if(valid) {
+				if(rolesToGive.length() > 0) {
 					//generate OTP + flag on DB side
 					System.out.println("You have successfully invited a student to join the system!");
 					System.out.println("One Time Password has been sent to this user to enable their registration.");
@@ -308,7 +299,7 @@ public class StartCSE360 {
 				System.out.println("You have successfully reset a user in the system.");
 				//OTP generation
 				System.out.println("One Time Password has been sent to this user to enable their registration.");
-				valid = true;
+				 
 				break;
 			}
 			
@@ -329,7 +320,7 @@ public class StartCSE360 {
 					else {
 						//db user delete - check if exists first
 						System.out.println("You have successfully deleted a user.");
-						valid = true;
+						 
 					}
 				} else if(confirmDelete == "2") System.out.println("You have not deleted a user.");
 				else System.out.println("Invalid Option. You have not deletd a user.");
@@ -339,14 +330,154 @@ public class StartCSE360 {
 			//List of all Users
 			case "4": {
 				databaseHelper.displayUsersByAdmin();
-				valid = true;
+				 
 				break;
 			}
 			
 			//User Role Adjustment
 			case "5": {
 				
-				valid = true;
+				//Find User in System - put into a User object after found
+				System.out.print("Enter username for the user whose roles you would like to adjust: ");
+				String usernameAdjust = scanner.nextLine();
+				System.out.print("Enter email for the user whose roles you would like to adjust: ");
+				String emailAdjust = scanner.nextLine();
+				if(!databaseHelper.doesUserExist(emailAdjust)) {
+					System.out.println("There is no user with the provided specifications.");
+					break;
+				}
+				
+				//have this from User object that we have found via db query I assume
+				String userRoles = "";
+				
+				System.out.print("Please choose if you would like to add or remove a role from this user? 1. Add 2. Remove");
+				String option = scanner.nextLine();
+				if(option == "1") {
+					
+					if(userRoles.length() == 3) {
+						System.out.println("This user already has all the roles.");
+						break;
+					}
+					//Pick Roles to add - must check if a user does not have one to add it
+					System.out.println("You are now adding a role to this user. Here are the options: ");
+					if(userRoles.indexOf("a") == -1) System.out.println("1. Administrator");
+					if(userRoles.indexOf("s") == -1) System.out.println("2. Student");
+					if(userRoles.indexOf("t") == -1) System.out.println("3. Instructor");
+					System.out.print("Please select a role: ");
+					String rolePick = scanner.nextLine();
+					
+					
+					switch(rolePick) {
+					
+					//Adding a role to the user
+					case "1": {
+						
+						//Initial Check is in case they input a number between 1 and 3 but the user already has the role (accidental input that would be valid in other cases)
+						if(userRoles.indexOf("a") != -1) {
+							System.out.println("You have selected a role that this user already has. The user's roles will remain the same");
+							break;
+						}
+						
+						//Add role to the local String - used for DB update later
+						userRoles += "a";
+						System.out.println("You have successfully added the Administrator role to this user");
+						 
+						break;
+					}
+					case "2": {
+						
+						//same as case 1 but for student role
+						if(userRoles.indexOf("s") != -1) {
+							System.out.println("You have selected a role that this user already has. The user's roles will remain the same");
+							break;
+						}
+						userRoles += "s";
+						System.out.println("You have successfully added the Student role to this user");
+						 
+						break;
+					}
+					case "3": {
+						
+						//same as case 1 but for instructor role
+						if(userRoles.indexOf("t") != -1) {
+							System.out.println("You have selected a role that this user already has. The user's roles will remain the same");
+							break;
+						}
+						userRoles += "t";
+						System.out.println("You have successfully added the Instructor role to this user");
+						 
+						break;
+					}
+					default:
+						System.out.println("Invalid option. The user will remain unchanged.");
+						break;
+					}
+				
+				//Removing a role from the user
+				} else if (option == "2") {
+					
+					if(userRoles.length() == 0) {
+						System.out.println("This user has no roles.");
+						break;
+					}
+					
+					//Pick Roles to remove - must check if a user has one to remove it
+					System.out.println("You are now removing a role to this user. Here are the options: ");
+					if(userRoles.indexOf("a") != -1) System.out.println("1. Administrator");
+					if(userRoles.indexOf("s") != -1) System.out.println("2. Student");
+					if(userRoles.indexOf("t") != -1) System.out.println("3. Instructor");
+					System.out.print("Please select a role: ");
+					String rolePick = scanner.nextLine();
+					
+					
+					switch(rolePick) {
+					
+					case "1": {
+						
+						//Initial Check is in case they input a number between 1 and 3 but the user already has the role (accidental input that would be valid in other cases)
+						if(userRoles.indexOf("a") == -1) {
+							System.out.println("You have selected a role that this user does not have. The user's roles will remain the same");
+							break;
+						}
+						
+						//Remove role from string - again this string will be used for a DB update later
+						userRoles = userRoles.replace("a", "");
+						System.out.println("You have successfully removed the Administrator role from this user");
+						 
+						break;
+					}
+					
+					//Same as case 1 but for Student role
+					case "2": {
+						if(userRoles.indexOf("s") == -1) {
+							System.out.println("You have selected a role that this user does not have. The user's roles will remain the same");
+							break;
+						}
+						userRoles = userRoles.replace("s", "");
+						System.out.println("You have successfully removed the Student role from this user");
+						 
+						break;
+					}
+					
+					//Same as case 1 but for Instructor role
+					case "3": {
+						if(userRoles.indexOf("t") != -1) {
+							System.out.println("You have selected a role that this user does not have. The user's roles will remain the same");
+							break;
+						}
+						userRoles = userRoles.replace("t", "");
+						System.out.println("You have successfully removed the Instructor role from this user");
+						 
+						break;
+					}
+					default:
+						System.out.println("Invalid option. The user will remain unchanged.");
+						break;
+					}
+					
+				//Final Check is for invalid input on Adding or Removing roles	
+				} else System.out.println("Invalid Option. The user will remain unchanged.");
+				
 				break;
 			}
 			
@@ -357,7 +488,7 @@ public class StartCSE360 {
 				String logout = scanner.nextLine();
 				if(logout == "q") {
 					System.out.println("You have successfully been logged out of the system.");
-					valid = true;
+					 
 				} else System.out.println("Invalid option.");
 				break;
 			}
@@ -365,7 +496,7 @@ public class StartCSE360 {
 				System.out.print("Invalid choice. Please try again.");
 				break;
 			}
-		} while(!valid); 
+		} while(choice != "6"); 
 			
 		
 		
@@ -382,7 +513,7 @@ public class StartCSE360 {
 		int oTP = -1;
 		
 		//input for returning user and deals with invalid input
-		System.out.print("Are you a returning user? 1. Yes 2. No");
+		System.out.print("Are you a returning user? (Note - If you had your account reset, choose the second option) 1. Yes 2. No");
 		choice = scanner.nextLine();
 		while(!choice.equals("1") || !choice.equals("2") ) {
 			System.out.println("Invalid option selected. Please try again");
@@ -392,17 +523,19 @@ public class StartCSE360 {
 		
 		//if a first time user - needs an OTP to setup username and password
 		if(choice.equals("2")) {
-			System.out.println("Congratulations! You have been invited to the system by an administrator.");
+			System.out.println("You have been invited to the system or had your account reset by an administrator.");
 			System.out.print("Enter your One Time Password: ");
 			oTP = scanner.nextInt();
-			System.out.println("Please continue on to set up your initial username and password");
+			System.out.println("If you had your account reset, Please re-enter your current username and new password.");
+			System.out.println("If you are a first time user, Continue on to set up your initial username and password");
 		}
 		
 		System.out.print("Enter Username: ");
 		userName = scanner.nextLine();
 		System.out.print("Enter Password: ");
 		password = scanner.nextLine();
-		//If it is a first time user
+		
+		//If it is a first time user or someone whose account has been reset - need confirmation on the password
 		if(choice.equals("2")) {
 			System.out.print("Confirm Password: ");
 			confirmPassword = scanner.nextLine();
@@ -410,18 +543,23 @@ public class StartCSE360 {
 				System.out.print("Invalid. Please re-enter your password to confirm: ");
 				confirmPassword = scanner.nextLine();
 			}
+			
+			//Need section here to check the OTP, and then register the user
+			
 			System.out.println("You have just completed the initial set up for your account.");
 			System.out.println("The next time you login with this username and password, you will be taken to finish setting up your account.");
-		} else System.out.println("You have successfully logged in.");
-		/* adjust the register and login sql statements
-		 * if choice = 1 = remove role from sql statement (user and password should be enough to get a unique user)
-		 * if choice = 2 - register them as a user
-		 * Also need something in database to validate the OTP 
-		 * 
-		 * If new user - route back to main login again
-		 * On second log in
-		 * 		have db return something that tells us to move to the finish setting up account
-		 */
+			//we need to come back to this same page once the reset/new user is finished for the first time
+		} else {
+			
+			//check to see if valid user; function needs to be role blind
+			System.out.println("You have successfully logged in.");
+			/*
+			 * if first time logging back in after initial log in - move to settingupaccount func
+			 * if returning and only one role - move to that home page
+			 * if multiple - move to select role page
+			 */
+		}
+
 
 	}
 }
