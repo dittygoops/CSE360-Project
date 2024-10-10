@@ -6,6 +6,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="/Users/abhaveabhilash/ASU-CSE360/h2/bin/h2-2.3.232.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files (x86)/H2/bin/h2-2.3.232.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

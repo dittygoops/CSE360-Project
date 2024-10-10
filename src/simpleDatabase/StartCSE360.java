@@ -54,20 +54,20 @@ public class StartCSE360 {
 	}
 
 	private static void userFlow() throws SQLException {
-		String email = null;
+		String userName = null;
 		String password = null;
 		System.out.println("user flow");
 		System.out.print("What would you like to do 1.Register 2.Login  ");
 		String choice = scanner.nextLine();
 		switch(choice) {
 		case "1": 
-			System.out.print("Enter User Email: ");
-			email = scanner.nextLine();
+			System.out.print("Enter Username: ");
+			userName = scanner.nextLine();
 			System.out.print("Enter User Password: ");
 			password = scanner.nextLine(); 
 			// Check if user already exists in the database
-		    if (!databaseHelper.doesUserExist(email)) {
-		        databaseHelper.register(email, password, "user");
+		    if (!databaseHelper.doesUserExist(userName)) {
+		        databaseHelper.register(userName, password, "user");
 		        System.out.println("User setup completed.");
 		    } else {
 		        System.out.println("User already exists.");
@@ -75,10 +75,10 @@ public class StartCSE360 {
 			break;
 		case "2":
 			System.out.print("Enter User Email: ");
-			email = scanner.nextLine();
+			userName = scanner.nextLine();
 			System.out.print("Enter User Password: ");
 			password = scanner.nextLine();
-			if (databaseHelper.login(email, password, "user")) {
+			if (databaseHelper.login(userName, password, "user")) {
 				System.out.println("User login successful.");
 //				databaseHelper.displayUsers();
 
@@ -91,11 +91,11 @@ public class StartCSE360 {
 
 	private static void adminFlow() throws SQLException {
 		System.out.println("admin flow");
-		System.out.print("Enter Admin Email: ");
-		String email = scanner.nextLine();
+		System.out.print("Enter Admin Username: ");
+		String userName = scanner.nextLine();
 		System.out.print("Enter Admin Password: ");
 		String password = scanner.nextLine();
-		if (databaseHelper.login(email, password, "admin")) {
+		if (databaseHelper.login(userName, password, "admin")) {
 			System.out.println("Admin login successful.");
 			databaseHelper.displayUsersByAdmin();
 
