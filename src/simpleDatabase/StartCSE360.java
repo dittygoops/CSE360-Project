@@ -537,7 +537,6 @@ public class StartCSE360 {
 
 	            if (validLogin) {
 	                System.out.println("You have successfully logged in.");
-	                System.out.println(user);
 	                break;  // Exit the loop upon successful login
 	            } else {
 	                System.out.println("Invalid Credentials! Please try again.");
