@@ -89,11 +89,6 @@ public class User {
         return prefName;
     }
 
-    // get role
-    public String getRole() {
-        return roles;
-    }
-
     public LocalDateTime getOneTimePasswordExpiration() {
         return otpExpiration;
     }

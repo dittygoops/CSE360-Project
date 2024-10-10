@@ -125,7 +125,7 @@ class DatabaseHelper {
 			pstmt.setString(5, user.getMiddleName());
 			pstmt.setString(6, user.getLastName());
 			pstmt.setString(7, user.getPreferredFirst());
-			pstmt.setString(8, user.getRole());
+			pstmt.setString(8, user.getRoles());
 			pstmt.executeUpdate();
 		}
 	}
