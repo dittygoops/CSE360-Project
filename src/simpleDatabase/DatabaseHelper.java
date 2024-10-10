@@ -114,6 +114,22 @@ class DatabaseHelper {
 	    }
 	}
 
+	// store user information in the database
+	public void storeUser(User user) throws SQLException {
+		String insertUser = "INSERT INTO cse360users (userName, email, password, firstName, middleName, lastName, preferredFirst, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+			pstmt.setString(1, user.getUsername());
+			pstmt.setString(2, user.getEmail());
+			pstmt.setString(3, user.getPassword());
+			pstmt.setString(4, user.getFirstName());
+			pstmt.setString(5, user.getMiddleName());
+			pstmt.setString(6, user.getLastName());
+			pstmt.setString(7, user.getPreferredFirst());
+			pstmt.setString(8, user.getRole());
+			pstmt.executeUpdate();
+		}
+	}
+
 	
 	public boolean doesUserExist(String userName) {
 	    String query = "SELECT COUNT(*) FROM cse360users WHERE userName = ?";

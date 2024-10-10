@@ -18,7 +18,6 @@ package simpleDatabase;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 /* .......... User Superclass ............*/
 public class User {
@@ -77,8 +76,22 @@ public class User {
         return roles;
     }
 
+    public String getPassword() {
+        return password;
+    }
+    
     public boolean isOneTimePasswordFlag() {
         return otpFlag;
+    }
+
+    // get prefered first
+    public String getPreferredFirst() {
+        return prefName;
+    }
+
+    // get role
+    public String getRole() {
+        return roles;
     }
 
     public LocalDateTime getOneTimePasswordExpiration() {
