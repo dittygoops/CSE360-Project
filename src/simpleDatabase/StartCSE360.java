@@ -539,6 +539,7 @@ public class StartCSE360 {
 	            }
 	        }
 	    }
+	    
 	    // Choice 2: First-time user or account reset using OTP
 	    else if (choice.equals("2")) {
 	        System.out.println("You have been invited to the system or had your account reset by an administrator.");
