@@ -113,6 +113,36 @@ class DatabaseHelper {
 	        }
 	    }
 	}
+	
+	public User findUser(String userName, String email) throws SQLException {
+	    String query = "SELECT * FROM cse360users WHERE userName = ? AND email = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setString(1, userName);
+	        pstmt.setString(2, email);
+	        try (ResultSet rs = pstmt.executeQuery()) {
+	            if (rs.next()) {
+	                // Extracting values from the result set
+	                String username = rs.getString("userName");
+	                String userEmail = rs.getString("email");
+	                String firstName = rs.getString("firstName");
+	                String middleName = rs.getString("middleName");
+	                String lastName = rs.getString("lastName");
+	                String preferredFirst = rs.getString("preferredFirst");
+	                String roles = rs.getString("role");
+	                
+	                boolean otpFlag = rs.getBoolean("otpFlag"); // Get actual otpFlag value from DB
+	                LocalDateTime otpExpiration = LocalDateTime.now(); // You can replace this with actual expiration time if you have it in DB
+
+	                // Constructing and returning the User object
+	                return new User(username, "", userEmail, firstName, middleName, lastName,
+	                        preferredFirst, roles, otpFlag, otpExpiration);
+	            } else {
+	                return null; // User not found
+	            }
+	        }
+	    }
+	}
+
 
 	
 	public boolean doesUserExist(String userName) {

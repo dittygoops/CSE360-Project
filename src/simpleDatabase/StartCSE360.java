@@ -537,6 +537,9 @@ public class StartCSE360 {
 
 	            if (validLogin) {
 	                System.out.println("You have successfully logged in.");
+	                if (user.getRoles().indexOf("a") >= 0) {
+	                	System.out.println("admin!");
+	                }
 	                break;  // Exit the loop upon successful login
 	            } else {
 	                System.out.println("Invalid Credentials! Please try again.");
