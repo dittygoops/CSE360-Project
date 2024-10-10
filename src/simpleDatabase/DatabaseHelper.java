@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 
 class DatabaseHelper {
@@ -274,7 +275,8 @@ class DatabaseHelper {
 			try (ResultSet rs = pstmt.executeQuery()) {
 				if (rs.next()) {
 					String expiryTime = rs.getString("expiryTime");
-					LocalDateTime expiry = LocalDateTime.parse(expiryTime);
+					DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+			        LocalDateTime expiry = LocalDateTime.parse(expiryTime, formatter);
 					if (LocalDateTime.now().isBefore(expiry)) {
 						return true;
 					}

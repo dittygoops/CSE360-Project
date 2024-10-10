@@ -20,6 +20,7 @@ public class StartCSE360 {
 				System.out.println( "In-Memory Database  is empty" );
 				//set up administrator access
 				setupAdministrator();
+				databaseHelper.register("hi2", "bruh2", "as");
 			}
 			//called here as need to reroute to main login after initial setup or if there are other users
 			mainLogin();
@@ -118,7 +119,7 @@ public class StartCSE360 {
 		
 		System.out.print("Please select your role for the session: ");
 		choice = scanner.nextLine();
-		while(!choice.equals("1") || !choice.equals("2") || !choice.equals("3")) {
+		while(!choice.equals("1") && !choice.equals("2") && !choice.equals("3")) {
 			System.out.print("Invalid option. Please select your role from the list above again: ");
 			choice = scanner.nextLine();
 		}
@@ -242,6 +243,7 @@ public class StartCSE360 {
 				}
 				
 				//OTP Generation + Sending
+				databaseHelper.createOTP();
 				if(rolesToGive.length() > 0) {
 					//generate OTP + flag on DB side
 					System.out.println("You have successfully invited a student to join the system!");
@@ -504,13 +506,12 @@ public class StartCSE360 {
 	            	User user = databaseHelper.login(userName, password);
 	            	System.out.println("You have successfully logged in.");
 	            	
-	            	//Here add for the OTPflag route to finish setting up Account - true = needs more setting up
-	            	/* assume that true means we need to go to finish setting up account
-	            	 * if(user.getOTPFlag()){
-	            	 * 		settingUpAccount(user);
-	            	 * 		break;
-	            	 * }
-	            	 */
+	            	
+	            	 if(user.isOneTimePasswordFlag()){
+	            	 		settingUpAccount(user);
+	            	 		break;
+	            	 }
+	            	 
 	            	//routes to different pages depending on permissions of a user
 	            	if (user.getRoles().length() == 1) {
 	            		if(user.getRoles().contains("a")) adminHome();
