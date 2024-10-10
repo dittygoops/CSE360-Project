@@ -8,7 +8,12 @@ import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-
+/***
+ * This class contains all functions that relate/interact with our H2 databases
+ * @author Abhave Abhilash and Aditya Gupta
+ * @version 1.0
+ * @since 10/9/2024
+ */
 class DatabaseHelper {
 
 	// JDBC driver name and database URL 
@@ -22,6 +27,11 @@ class DatabaseHelper {
 	private Connection connection = null;
 	private Statement statement = null; 
 	//	PreparedStatement pstmt
+	
+	/**
+	 * Blank constructor
+	 */
+	public DatabaseHelper() {}
 
 	public void connectToDatabase() throws SQLException {
 		try {
@@ -35,6 +45,10 @@ class DatabaseHelper {
 		}
 	}
 
+	/**
+	 * create and initiate our user and otp tables
+	 * @throws SQLException
+	 */
 	private void createTables() throws SQLException {
 		String dropUsers = "DROP TABLE IF EXISTS cse360users";
 		statement.execute(dropUsers);
@@ -65,7 +79,11 @@ class DatabaseHelper {
 		statement.execute(otpTable);
 	}
 
-	// Check if the database is empty
+	/**
+	 * Check if the database is empty
+	 * @return boolean that represents empty or not
+	 * @throws SQLException
+	 */
 	public boolean isDatabaseEmpty() throws SQLException {
 		String query = "SELECT COUNT(*) AS count FROM cse360users";
 		ResultSet resultSet = statement.executeQuery(query);
@@ -75,6 +93,13 @@ class DatabaseHelper {
 		return true;
 	}
 
+	/**
+	 * Register a user with username, password, and role
+	 * @param userName
+	 * @param password
+	 * @param role
+	 * @throws SQLException
+	 */
 	public void register(String userName, String password, String role) throws SQLException {
 		String insertUser = "INSERT INTO cse360users (userName, password, role) VALUES (?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
@@ -85,6 +110,13 @@ class DatabaseHelper {
 		}
 	}
 
+	/**
+	 * login user with username and password
+	 * @param userName
+	 * @param password
+	 * @return User object that is populated with columns from database
+	 * @throws SQLException
+	 */
 	public User login(String userName, String password) throws SQLException {
 	    String query = "SELECT * FROM cse360users WHERE userName = ? AND password = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -114,6 +146,11 @@ class DatabaseHelper {
 	    }
 	}
 	
+	/**
+	 * update database row with data from user object
+	 * @param user
+	 * @throws SQLException
+	 */
 	public void updateUser(User user) throws SQLException {
 	    String query = "UPDATE cse360users SET email = ?, password = ?, firstName = ?, middleName = ?, lastName = ?, preferredFirst = ?, role = ? WHERE userName = ?";
 	    
@@ -137,7 +174,13 @@ class DatabaseHelper {
 	    }
 	}
 
-	
+	/**
+	 * find user by username and email 
+	 * @param userName
+	 * @param email
+	 * @return User object with data from database
+	 * @throws SQLException
+	 */
 	public User findUser(String userName, String email) throws SQLException {
 	    String query = "SELECT * FROM cse360users WHERE userName = ? AND email = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -168,7 +211,11 @@ class DatabaseHelper {
 	}
 
 
-	// store user information in the database
+	/**
+	 * store user information in the database
+	 * @param user
+	 * @throws SQLException
+	 */
 	public void storeUser(User user) throws SQLException {
 		String insertUser = "INSERT INTO cse360users (userName, email, password, firstName, middleName, lastName, preferredFirst, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
@@ -184,7 +231,11 @@ class DatabaseHelper {
 		}
 	}
 
-	
+	/**
+	 * check if user in database
+	 * @param userName
+	 * @return boolean that represents if user exists
+	 */
 	public boolean doesUserExist(String userName) {
 	    String query = "SELECT COUNT(*) FROM cse360users WHERE userName = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -202,6 +253,11 @@ class DatabaseHelper {
 	    return false; // If an error occurs, assume user doesn't exist
 	}
 
+	
+	/**
+	 * display list of all users
+	 * @throws SQLException
+	 */
 	public void displayUsersByAdmin() throws SQLException{
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -222,6 +278,10 @@ class DatabaseHelper {
 		} 
 	}
 	
+	/**
+	 * display user by name
+	 * @throws SQLException
+	 */
 	public void displayUsersByUser() throws SQLException{
 		String sql = "SELECT * FROM cse360users"; 
 		Statement stmt = connection.createStatement();
@@ -242,7 +302,9 @@ class DatabaseHelper {
 		} 
 	}
 
-	// creates the one time password and calls the insertOTP to store the value in the database
+	/**
+	 * Create OTP
+	 */
 	public void createOTP() {
 		String otp = "";
 		for (int i = 0; i < 6; i++) {
@@ -257,6 +319,12 @@ class DatabaseHelper {
 		System.out.println("OTP: " + otp);
 	}
 
+	/**
+	 * insert otp to table
+	 * @param otp
+	 * @param expiryTime
+	 * @throws SQLException
+	 */
 	public void insertOTP(String otp, String expiryTime) throws SQLException {
 		String insertOTP = "INSERT INTO otpTable (otp, expiryTime) VALUES (?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertOTP)) {
@@ -266,8 +334,13 @@ class DatabaseHelper {
 		}
 	}
 
-	// retrieves otp from the database and if the otp is expired, it returns false else it is found in database
-	// and the otp is not expired, it returns true
+	/**
+	 * retrieves otp from the database and if the otp is expired, it returns false else it is found in database
+	 * and the otp is not expired, it returns true
+	 * @param otp
+	 * @return boolean representing the verification of OTP
+	 * @throws SQLException
+	 */
 	public Boolean verifyOTP(String otp) throws SQLException {
 		String query = "SELECT * FROM otpTable WHERE otp = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -286,6 +359,11 @@ class DatabaseHelper {
 		return false;
 	}
 
+	/**
+	 * delete otp from table
+	 * @param otp
+	 * @throws SQLException
+	 */
 	public void deleteOTP(String otp) throws SQLException {
 		String deleteOTP = "DELETE FROM otpTable WHERE otp = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(deleteOTP)) {
@@ -294,7 +372,12 @@ class DatabaseHelper {
 		}
 	}
 
-	// check if the otp is expired by checking the otp table for the expiry time
+	/**
+	 *  check if the otp is expired by checking the otp table for the expiry time
+	 * @param otp
+	 * @return boolean representing the expiration state of otp
+	 * @throws SQLException
+	 */
 	public Boolean isOTPExpired(String otp) throws SQLException {
 		String query = "SELECT * FROM otpTable WHERE otp = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -310,6 +393,9 @@ class DatabaseHelper {
 		return true;
 	}
 
+	/**
+	 * close connections with databases
+	 */
 	public void closeConnection() {
 		try{ 
 			if(statement!=null) statement.close(); 

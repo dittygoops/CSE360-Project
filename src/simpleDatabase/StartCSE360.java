@@ -3,11 +3,27 @@ package simpleDatabase;
 import java.sql.SQLException;
 import java.util.Scanner;
 
+/**
+ * This file contains the controller for the Project, all of the ways the user will interact with our service.
+ * 
+ *
+ * @author Shiva Rudra
+ * @version 1.0
+ * @since 10/9/2024
+ */
 public class StartCSE360 {
 
 	private static final DatabaseHelper databaseHelper = new DatabaseHelper();
 	private static final Scanner scanner = new Scanner(System.in);
 
+	/*
+	 * Blank Constructor
+	 */
+	public StartCSE360() {}
+	
+	/*
+	 * Main method that runs the databases and does the main login
+	 */
 	public static void main( String[] args )
 	{
 
@@ -35,7 +51,9 @@ public class StartCSE360 {
 		}
 	}
 
-	//Sets up administrator on first registration to the system
+	/*
+	 * Sets up administrator on first registration to the system
+	 */
 	private static void setupAdministrator() throws SQLException {
 		System.out.println("Setting up the Administrator access");
 		System.out.print("Enter Admin Username: ");
@@ -54,7 +72,9 @@ public class StartCSE360 {
 
 	}
 	
-	//pass in User object here which contains all their role info assigned by Admin at invitation (if reset account - come back in as student)
+	/*
+	 * pass in User object here which contains all their role info assigned by Admin at invitation (if reset account - come back in as student)
+	 */
 	private static void settingUpAccount(User currentUser) throws SQLException {
 		
 		//fields we need information for
@@ -104,7 +124,9 @@ public class StartCSE360 {
 		
 	}
 	
-	//want a User object from a user class passed as a parameter here to check roles
+	/*
+	 * want a User object from a user class passed as a parameter here to check roles
+	 */
 	private static void sessionRoleSelection(User currentUser) throws SQLException {
 		
 		//From the User object that was a parameter - find the roles or maybe from DB 
@@ -145,6 +167,9 @@ public class StartCSE360 {
 		}
 	}
 	
+	/*
+	 * Homepage for students/instructors
+	 */
 	private static void regHome() throws SQLException {
 		System.out.println("Welcome to the home page of either a Student or Instructor.");
 		System.out.println("At this time, you can only perform one action - Logout. However, you are welcome to sit here for however long you like.");
@@ -162,6 +187,9 @@ public class StartCSE360 {
 		
 	}
 	
+	/*
+	 * Home for admin
+	 */
 	private static void adminHome() throws SQLException {
 		String choice = "";
 		
@@ -469,13 +497,11 @@ public class StartCSE360 {
 		} while(!choice.equals("6")); 
 		
 		mainLogin();
-			
-		
-		
-		
 	}
 	
-	
+	/*
+	 * Contains all of the login functionality for all roles
+	 */
 	private static void mainLogin() throws SQLException {
 
 	    String choice = "";
@@ -548,7 +574,11 @@ public class StartCSE360 {
 	    }
 	}
 
-	
+	/**
+	 * Gets username and password from user input
+	 * 
+	 * @return String array with username and password
+	 */
 	public static String[] get_user_credentials() {
 		String[] credentials = new String[2];
 		
