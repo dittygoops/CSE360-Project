@@ -114,6 +114,30 @@ class DatabaseHelper {
 	    }
 	}
 	
+	public void updateUser(User user) throws SQLException {
+	    String query = "UPDATE cse360users SET email = ?, password = ?, firstName = ?, middleName = ?, lastName = ?, preferredFirst = ?, role = ? WHERE userName = ?";
+	    
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setString(1, user.getEmail());
+	        pstmt.setString(2, user.getPassword());
+	        pstmt.setString(3, user.getFirstName());
+	        pstmt.setString(4, user.getMiddleName());
+	        pstmt.setString(5, user.getLastName());
+	        pstmt.setString(6, user.getPreferredFirst());
+	        pstmt.setString(7, user.getRoles());
+	        pstmt.setString(8, user.getUsername()); // Assuming you have a getter for username
+
+	        // Execute the update
+	        int rowsAffected = pstmt.executeUpdate();
+	        if (rowsAffected == 0) {
+	            System.out.println("No user found with the username: " + user.getUsername());
+	        } else {
+	            System.out.println("User updated successfully.");
+	        }
+	    }
+	}
+
+	
 	public User findUser(String userName, String email) throws SQLException {
 	    String query = "SELECT * FROM cse360users WHERE userName = ? AND email = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
