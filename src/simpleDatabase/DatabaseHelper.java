@@ -35,7 +35,9 @@ class DatabaseHelper {
 	}
 
 	private void createTables() throws SQLException {
-		String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
+		String dropTable = "DROP TABLE IF EXISTS cse360users";
+		statement.execute(dropTable);
+		String userTable = "CREATE TABLE cse360users ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "userName VARCHAR(255), "
 				+ "email VARCHAR(255) UNIQUE, "
@@ -70,33 +72,32 @@ class DatabaseHelper {
 		return true;
 	}
 
-	public void register(String email, String password, String role) throws SQLException {
-		String insertUser = "INSERT INTO cse360users (email, password, role) VALUES (?, ?, ?)";
+	public void register(String userName, String password, String role) throws SQLException {
+		String insertUser = "INSERT INTO cse360users (userName, password, role) VALUES (?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
-			pstmt.setString(1, email);
+			pstmt.setString(1, userName);
 			pstmt.setString(2, password);
 			pstmt.setString(3, role);
 			pstmt.executeUpdate();
 		}
 	}
 
-	public boolean login(String email, String password, String role) throws SQLException {
-		String query = "SELECT * FROM cse360users WHERE email = ? AND password = ? AND role = ?";
+	public boolean login(String userName, String password) throws SQLException {
+		String query = "SELECT * FROM cse360users WHERE userName = ? AND password = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-			pstmt.setString(1, email);
+			pstmt.setString(1, userName);
 			pstmt.setString(2, password);
-			pstmt.setString(3, role);
 			try (ResultSet rs = pstmt.executeQuery()) {
 				return rs.next();
 			}
 		}
 	}
 	
-	public boolean doesUserExist(String email) {
-	    String query = "SELECT COUNT(*) FROM cse360users WHERE email = ?";
+	public boolean doesUserExist(String userName) {
+	    String query = "SELECT COUNT(*) FROM cse360users WHERE userName = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 	        
-	        pstmt.setString(1, email);
+	        pstmt.setString(1, userName);
 	        ResultSet rs = pstmt.executeQuery();
 	        
 	        if (rs.next()) {
