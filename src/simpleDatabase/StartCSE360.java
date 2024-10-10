@@ -78,7 +78,9 @@ public class StartCSE360 {
 			userName = scanner.nextLine();
 			System.out.print("Enter User Password: ");
 			password = scanner.nextLine();
-			if (databaseHelper.login(userName, password, "user")) {
+			
+			User user = databaseHelper.login(userName, password);
+			if (user != null) {
 				System.out.println("User login successful.");
 //				databaseHelper.displayUsers();
 
@@ -95,7 +97,8 @@ public class StartCSE360 {
 		String userName = scanner.nextLine();
 		System.out.print("Enter Admin Password: ");
 		String password = scanner.nextLine();
-		if (databaseHelper.login(userName, password, "admin")) {
+		User user = databaseHelper.login(userName, password);
+		if (user != null) {
 			System.out.println("Admin login successful.");
 			databaseHelper.displayUsersByAdmin();
 
@@ -529,10 +532,12 @@ public class StartCSE360 {
 
 	            // Check if user exists and credentials are valid
 	            boolean doesUserExist = databaseHelper.doesUserExist(userName);
-	            boolean validLogin = doesUserExist && databaseHelper.login(userName, password);
+	            User user = databaseHelper.login(userName, password);
+	            boolean validLogin = doesUserExist && user != null;
 
 	            if (validLogin) {
 	                System.out.println("You have successfully logged in.");
+	                System.out.println(user);
 	                break;  // Exit the loop upon successful login
 	            } else {
 	                System.out.println("Invalid Credentials! Please try again.");
