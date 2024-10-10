@@ -64,7 +64,6 @@ class DatabaseHelper {
 		statement.execute(otpTable);
 	}
 
-
 	// Check if the database is empty
 	public boolean isDatabaseEmpty() throws SQLException {
 		String query = "SELECT COUNT(*) AS count FROM cse360users";

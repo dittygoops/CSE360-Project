@@ -79,6 +79,47 @@ public class User {
     public String getPassword() {
         return password;
     }
+
+     // Setter methods
+     public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public void setPreferredName(String prefName) {
+        this.prefName = prefName;
+    }
+
+    public void setRoles(String roles) {
+        this.roles = roles;
+    }
+
+    public void setOneTimePasswordFlag(boolean otpFlag) {
+        this.otpFlag = otpFlag;
+    }
+
+    public void setOneTimePasswordExpiration(LocalDateTime otpExpiration) {
+        this.otpExpiration = otpExpiration;
+    }
     
     public boolean isOneTimePasswordFlag() {
         return otpFlag;
