@@ -35,6 +35,8 @@ class DatabaseHelper {
 	}
 
 	private void createTables() throws SQLException {
+		String dropUsers = "DROP TABLE IF EXISTS cse360users";
+		statement.execute(dropUsers);
 		String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "userName VARCHAR(255), "
@@ -49,13 +51,15 @@ class DatabaseHelper {
 				// preferred first
 				+ "preferredFirst VARCHAR(255), "
 				// user role sia
-				+ "role VARCHAR(3))";
+				+ "role VARCHAR(3), "
+				+ "otpFlag BOOLEAN DEFAULT FALSE) ";
 		statement.execute(userTable);
 		
+		String dropOtp = "DROP TABLE IF EXISTS otpTable";
+		statement.execute(dropOtp);		
 		String otpTable = "CREATE TABLE IF NOT EXISTS otpTable ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "otp VARCHAR(255), "
-				+ "otpFlag BOOLEAN DEFAULT FALSE, "
 				+ "expiryTime TIMESTAMP)";
 		statement.execute(otpTable);
 	}
