@@ -52,63 +52,9 @@ public class StartCSE360 {
 		System.out.println("Administrator setup completed.");
 
 	}
-
-	private static void userFlow() throws SQLException {
-		String userName = null;
-		String password = null;
-		System.out.println("user flow");
-		System.out.print("What would you like to do 1.Register 2.Login  ");
-		String choice = scanner.nextLine();
-		switch(choice) {
-		case "1": 
-			System.out.print("Enter Username: ");
-			userName = scanner.nextLine();
-			System.out.print("Enter User Password: ");
-			password = scanner.nextLine(); 
-			// Check if user already exists in the database
-		    if (!databaseHelper.doesUserExist(userName)) {
-		        databaseHelper.register(userName, password, "user");
-		        System.out.println("User setup completed.");
-		    } else {
-		        System.out.println("User already exists.");
-		    }
-			break;
-		case "2":
-			System.out.print("Enter User Email: ");
-			userName = scanner.nextLine();
-			System.out.print("Enter User Password: ");
-			password = scanner.nextLine();
-			
-			User user = databaseHelper.login(userName, password);
-			if (user != null) {
-				System.out.println("User login successful.");
-//				databaseHelper.displayUsers();
-
-			} else {
-				System.out.println("Invalid user credentials. Try again!!");
-			}
-			break;
-		}
-	}
-
-	private static void adminFlow() throws SQLException {
-		System.out.println("admin flow");
-		System.out.print("Enter Admin Username: ");
-		String userName = scanner.nextLine();
-		System.out.print("Enter Admin Password: ");
-		String password = scanner.nextLine();
-		User user = databaseHelper.login(userName, password);
-		if (user != null) {
-			System.out.println("Admin login successful.");
-			databaseHelper.displayUsersByAdmin();
-
-		} else {
-			System.out.println("Invalid admin credentials. Try again!!");
-		}
-	}
 	
 	//pass in User object here which contains all their role info assigned by Admin at invitation (if reset account - come back in as student)
-	private static void settingUpAccount() throws SQLException {
+	private static void settingUpAccount(User currentUser) throws SQLException {
 		
 		//fields we need information for
 		String first = "";
@@ -131,18 +77,37 @@ public class StartCSE360 {
 		System.out.print("Enter Your Email: ");
 		email = scanner.nextLine();
 		
-		//have a db function here that updates their account 
+		
+		/*
+		 * currentUser.setFirstName(first);
+		 * currentUser.setMiddleName(middle);
+		 * currentUser.setLastName(last);
+		 * currentUser.setPreferredName(preferred);
+		 * currentUser.setEmail(email);
+		 * currentUser.setOTPFlag(false);
+		 * 
+		 * databaseHelper.updateUser(currentUser);
+		 * 
+		 * Below this line goes after the congrats message!
+		 * if (currentUser.getRoles().length() == 1) {
+	            		if(currentUser.getRoles().contains("a")) adminHome();
+	            		else regHome();
+	            	} else sessionRoleSelection(user);
+		 */
+		
 		System.out.println("Congrats! You have finished setting up your account.");
 		//check roles from User object param: if only one - route to that home | if multiple - route to role selection page
+		
+		
 		
 		
 	}
 	
 	//want a User object from a user class passed as a parameter here to check roles
-	private static void sessionRoleSelection() throws SQLException {
+	private static void sessionRoleSelection(User currentUser) throws SQLException {
 		
 		//From the User object that was a parameter - find the roles or maybe from DB 
-		String roles = "ast";
+		String roles = currentUser.getRoles();
 		String choice = "";
 		
 		System.out.println("You have multiple roles, but may only use the system through the view of one of them.");
@@ -186,21 +151,20 @@ public class StartCSE360 {
 		String logout = scanner.nextLine();
 		if(logout.equals("q")) {
 			System.out.println("You have successfully logged out. See you next time!");
+			mainLogin();
 			//route to the main Login Page
 		} 
 		while(!logout.equals("q")) {
 			System.out.print("Invalid input. To Logout, Enter q: ");
 			logout  = scanner.nextLine();
 		}
+		
 	}
 	
 	private static void adminHome() throws SQLException {
 		String choice = "";
 		
 		System.out.print("Welcome to the Home Page for Admins!");
-		
-		
-		choice = scanner.nextLine();
 		do {
 			
 			System.out.println("Here are the actions you can perform: ");
@@ -212,6 +176,7 @@ public class StartCSE360 {
 			System.out.println("5. Add or Remove a role from a user"); //decide add vs remove later
 			System.out.println("6. Logout");
 			
+			choice = scanner.nextLine();			
 			switch(choice) {
 			
 			//User invitation to the system
@@ -489,7 +454,7 @@ public class StartCSE360 {
 				
 				System.out.println("To Logout, Enter q: ");
 				String logout = scanner.nextLine();
-				if(logout == "q") {
+				if(logout.equals("q")) {
 					System.out.println("You have successfully been logged out of the system.");
 					 
 				} else System.out.println("Invalid option.");
@@ -499,12 +464,15 @@ public class StartCSE360 {
 				System.out.print("Invalid choice. Please try again.");
 				break;
 			}
-		} while(choice != "6"); 
+		} while(!choice.equals("6")); 
+		
+		mainLogin();
 			
 		
 		
 		
 	}
+	
 	
 	private static void mainLogin() throws SQLException {
 
@@ -532,15 +500,25 @@ public class StartCSE360 {
 
 	            // Check if user exists and credentials are valid
 	            boolean doesUserExist = databaseHelper.doesUserExist(userName);
-	            User user = databaseHelper.login(userName, password);
-	            boolean validLogin = doesUserExist && user != null;
+	            if(doesUserExist) {
+	            	User user = databaseHelper.login(userName, password);
+	            	System.out.println("You have successfully logged in.");
+	            	
+	            	//Here add for the OTPflag route to finish setting up Account - true = needs more setting up
+	            	/* assume that true means we need to go to finish setting up account
+	            	 * if(user.getOTPFlag()){
+	            	 * 		settingUpAccount(user);
+	            	 * 		break;
+	            	 * }
+	            	 */
+	            	//routes to different pages depending on permissions of a user
+	            	if (user.getRoles().length() == 1) {
+	            		if(user.getRoles().contains("a")) adminHome();
+	            		else regHome();
+	            	} else sessionRoleSelection(user);
+	            	break;
+	            } else System.out.println("Invalid credentials! Try again");
 
-	            if (validLogin) {
-	                System.out.println("You have successfully logged in.");
-	                break;  // Exit the loop upon successful login
-	            } else {
-	                System.out.println("Invalid Credentials! Please try again.");
-	            }
 	        }
 	    }
 	    
@@ -557,6 +535,7 @@ public class StartCSE360 {
 			        System.out.println("If you are a first-time user, continue on to set up your initial username and password.");
 			        
 			        String[] credentials = get_user_credentials();
+			        databaseHelper.register(credentials[0], credentials[1], "s");
 			        
 			        break;
 			        
