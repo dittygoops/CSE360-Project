@@ -35,9 +35,7 @@ class DatabaseHelper {
 	}
 
 	private void createTables() throws SQLException {
-		String dropTable = "DROP TABLE IF EXISTS cse360users";
-		statement.execute(dropTable);
-		String userTable = "CREATE TABLE cse360users ("
+		String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "userName VARCHAR(255), "
 				+ "email VARCHAR(255) UNIQUE, "
@@ -53,10 +51,11 @@ class DatabaseHelper {
 				// user role sia
 				+ "role VARCHAR(3))";
 		statement.execute(userTable);
-
+		
 		String otpTable = "CREATE TABLE IF NOT EXISTS otpTable ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "otp VARCHAR(255), "
+				+ "otpFlag BOOLEAN DEFAULT FALSE, "
 				+ "expiryTime TIMESTAMP)";
 		statement.execute(otpTable);
 	}
@@ -82,16 +81,35 @@ class DatabaseHelper {
 		}
 	}
 
-	public boolean login(String userName, String password) throws SQLException {
-		String query = "SELECT * FROM cse360users WHERE userName = ? AND password = ?";
-		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-			pstmt.setString(1, userName);
-			pstmt.setString(2, password);
-			try (ResultSet rs = pstmt.executeQuery()) {
-				return rs.next();
-			}
-		}
+	public User login(String userName, String password) throws SQLException {
+	    String query = "SELECT * FROM cse360users WHERE userName = ? AND password = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setString(1, userName);
+	        pstmt.setString(2, password);
+	        try (ResultSet rs = pstmt.executeQuery()) {
+	            if (rs.next()) {
+	                // Extracting values from the result set
+	                String username = rs.getString("userName");
+	                String email = rs.getString("email");
+	                String firstName = rs.getString("firstName");
+	                String middleName = rs.getString("middleName");
+	                String lastName = rs.getString("lastName");
+	                String preferredFirst = rs.getString("preferredFirst");
+	                String roles = rs.getString("role");
+	                
+	                boolean otpFlag = false; // default value
+	                LocalDateTime otpExpiration = LocalDateTime.now(); // default value
+
+	                // Constructing and returning the User object
+	                return new User(username, password, email, firstName, middleName, lastName,
+	                        preferredFirst, roles, otpFlag, otpExpiration);
+	            } else {
+	                return null; // User not found
+	            }
+	        }
+	    }
 	}
+
 	
 	public boolean doesUserExist(String userName) {
 	    String query = "SELECT COUNT(*) FROM cse360users WHERE userName = ?";

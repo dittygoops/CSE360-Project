@@ -1,3 +1,5 @@
+package simpleDatabase;
+
 /**
  * This file contains the class hierarchy for the user management and role system of the CSE 360 Help Application.
  * 
@@ -27,15 +29,13 @@ public class User {
 	private String middleName;
 	private String lastName;
 	private String prefName;
-	private List<String> roles;
+	private String roles;
 	private boolean otpFlag;
-	private LocalDateTime otpExpiration;
-	private Map<String, String> topicExpertise; 
+	private LocalDateTime otpExpiration; 
 	
 	public User(String username, String password, String email, String firstName, 
-			String middleName, String lastName, String prefName, List<String> roles,
-			 boolean otpFlag, LocalDateTime otpExpiration, 
-			 Map<String, String> topicExpertise) {
+			String middleName, String lastName, String prefName, String roles,
+			 boolean otpFlag, LocalDateTime otpExpiration) {
         this.username = username;
         this.password = password;
         this.email = email;
@@ -46,7 +46,6 @@ public class User {
         this.roles = roles;
         this.otpFlag = otpFlag;
         this.otpExpiration = otpExpiration;
-        this.topicExpertise = topicExpertise;
 	}
 
 	// Getter methods
@@ -74,7 +73,7 @@ public class User {
         return prefName;
     }
 
-    public List<String> getRoles() {
+    public String getRoles() {
         return roles;
     }
 
@@ -86,9 +85,6 @@ public class User {
         return otpExpiration;
     }
 
-    public Map<String, String> getTopicExpertise() {
-        return topicExpertise;
-    }
     // Method to get the full name
     public String getFullName() {
         return firstName + " " + (middleName != null && !middleName.isEmpty() ? middleName + " " : "") + lastName;
@@ -118,10 +114,9 @@ public class User {
 class Admin extends User {
 	public Admin(String username, String password, String email,
             String firstName, String middleName, String lastName, String prefName,
-            List<String> roles, boolean otpFlag, LocalDateTime otpExpiration,
-            Map<String, String> topicExpertise) {
+            String roles, boolean otpFlag, LocalDateTime otpExpiration) {
 	super(username, password, email, firstName, middleName, lastName, prefName,
-         roles, otpFlag, otpExpiration, topicExpertise);
+         roles, otpFlag, otpExpiration);
 	}
    
 	public String inviteUser(String email, List<String> roles) {
@@ -188,10 +183,9 @@ class Admin extends User {
 class Student extends User {
 	public Student(String username, String password, String email,
             String firstName, String middleName, String lastName, String prefName,
-            List<String> roles, boolean otpFlag, LocalDateTime otpExpiration,
-            Map<String, String> topicExpertise) {
+            String roles, boolean otpFlag, LocalDateTime otpExpiration) {
 	super(username, password, email, firstName, middleName, lastName, prefName,
-         roles, otpFlag, otpExpiration, topicExpertise);
+         roles, otpFlag, otpExpiration);
 	}
 
 	public void accessHomePage() {
@@ -205,10 +199,9 @@ class Student extends User {
 class Instructor extends User {
 	public Instructor(String username, String password, String email,
             String firstName, String middleName, String lastName, String prefName,
-            List<String> roles, boolean otpFlag, LocalDateTime otpExpiration,
-            Map<String, String> topicExpertise) {
+            String roles, boolean otpFlag, LocalDateTime otpExpiration) {
 	super(username, password, email, firstName, middleName, lastName, prefName,
-         roles, otpFlag, otpExpiration, topicExpertise);
+         roles, otpFlag, otpExpiration);
 	}
 	
 	public void accessHomePage() {
