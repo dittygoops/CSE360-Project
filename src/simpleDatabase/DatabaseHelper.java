@@ -64,7 +64,6 @@ class DatabaseHelper {
 		statement.execute(otpTable);
 	}
 
-
 	// Check if the database is empty
 	public boolean isDatabaseEmpty() throws SQLException {
 		String query = "SELECT COUNT(*) AS count FROM cse360users";
@@ -112,6 +111,76 @@ class DatabaseHelper {
 	            }
 	        }
 	    }
+	}
+	
+	public void updateUser(User user) throws SQLException {
+	    String query = "UPDATE cse360users SET email = ?, password = ?, firstName = ?, middleName = ?, lastName = ?, preferredFirst = ?, role = ? WHERE userName = ?";
+	    
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setString(1, user.getEmail());
+	        pstmt.setString(2, user.getPassword());
+	        pstmt.setString(3, user.getFirstName());
+	        pstmt.setString(4, user.getMiddleName());
+	        pstmt.setString(5, user.getLastName());
+	        pstmt.setString(6, user.getPreferredFirst());
+	        pstmt.setString(7, user.getRoles());
+	        pstmt.setString(8, user.getUsername()); // Assuming you have a getter for username
+
+	        // Execute the update
+	        int rowsAffected = pstmt.executeUpdate();
+	        if (rowsAffected == 0) {
+	            System.out.println("No user found with the username: " + user.getUsername());
+	        } else {
+	            System.out.println("User updated successfully.");
+	        }
+	    }
+	}
+
+	
+	public User findUser(String userName, String email) throws SQLException {
+	    String query = "SELECT * FROM cse360users WHERE userName = ? AND email = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setString(1, userName);
+	        pstmt.setString(2, email);
+	        try (ResultSet rs = pstmt.executeQuery()) {
+	            if (rs.next()) {
+	                // Extracting values from the result set
+	                String username = rs.getString("userName");
+	                String userEmail = rs.getString("email");
+	                String firstName = rs.getString("firstName");
+	                String middleName = rs.getString("middleName");
+	                String lastName = rs.getString("lastName");
+	                String preferredFirst = rs.getString("preferredFirst");
+	                String roles = rs.getString("role");
+	                
+	                boolean otpFlag = rs.getBoolean("otpFlag"); // Get actual otpFlag value from DB
+	                LocalDateTime otpExpiration = LocalDateTime.now(); // You can replace this with actual expiration time if you have it in DB
+
+	                // Constructing and returning the User object
+	                return new User(username, "", userEmail, firstName, middleName, lastName,
+	                        preferredFirst, roles, otpFlag, otpExpiration);
+	            } else {
+	                return null; // User not found
+	            }
+	        }
+	    }
+	}
+
+
+	// store user information in the database
+	public void storeUser(User user) throws SQLException {
+		String insertUser = "INSERT INTO cse360users (userName, email, password, firstName, middleName, lastName, preferredFirst, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+			pstmt.setString(1, user.getUsername());
+			pstmt.setString(2, user.getEmail());
+			pstmt.setString(3, user.getPassword());
+			pstmt.setString(4, user.getFirstName());
+			pstmt.setString(5, user.getMiddleName());
+			pstmt.setString(6, user.getLastName());
+			pstmt.setString(7, user.getPreferredFirst());
+			pstmt.setString(8, user.getRoles());
+			pstmt.executeUpdate();
+		}
 	}
 
 	
