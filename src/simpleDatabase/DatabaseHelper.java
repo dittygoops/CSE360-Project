@@ -1,10 +1,11 @@
 package simpleDatabase;
-import java.sql.*;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 
 
 class DatabaseHelper {
@@ -52,6 +53,12 @@ class DatabaseHelper {
 				// user role sia
 				+ "role VARCHAR(3))";
 		statement.execute(userTable);
+
+		String otpTable = "CREATE TABLE IF NOT EXISTS otpTable ("
+				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
+				+ "otp VARCHAR(255), "
+				+ "expiryTime TIMESTAMP)";
+		statement.execute(otpTable);
 	}
 
 
@@ -143,6 +150,72 @@ class DatabaseHelper {
 		} 
 	}
 
+	// creates the one time password and calls the insertOTP to store the value in the database
+	public void createOTP() {
+		String otp = "";
+		for (int i = 0; i < 6; i++) {
+			otp += (int) (Math.random() * 10);
+		}
+		String expiryTime = LocalDateTime.now().plusMinutes(5).toString();
+		try {
+			insertOTP(otp, expiryTime);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		System.out.println("OTP: " + otp);
+	}
+
+	public void insertOTP(String otp, String expiryTime) throws SQLException {
+		String insertOTP = "INSERT INTO otpTable (otp, expiryTime) VALUES (?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(insertOTP)) {
+			pstmt.setString(1, otp);
+			pstmt.setString(2, expiryTime);
+			pstmt.executeUpdate();
+		}
+	}
+
+	// retrieves otp from the database and if the otp is expired, it returns false else it is found in database
+	// and the otp is not expired, it returns true
+	public Boolean verifyOTP(String otp) throws SQLException {
+		String query = "SELECT * FROM otpTable WHERE otp = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, otp);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				if (rs.next()) {
+					String expiryTime = rs.getString("expiryTime");
+					LocalDateTime expiry = LocalDateTime.parse(expiryTime);
+					if (LocalDateTime.now().isBefore(expiry)) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	public void deleteOTP(String otp) throws SQLException {
+		String deleteOTP = "DELETE FROM otpTable WHERE otp = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(deleteOTP)) {
+			pstmt.setString(1, otp);
+			pstmt.executeUpdate();
+		}
+	}
+
+	// check if the otp is expired by checking the otp table for the expiry time
+	public Boolean isOTPExpired(String otp) throws SQLException {
+		String query = "SELECT * FROM otpTable WHERE otp = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, otp);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				if (rs.next()) {
+					String expiryTime = rs.getString("expiryTime");
+					LocalDateTime expiry = LocalDateTime.parse(expiryTime);
+					return LocalDateTime.now().isAfter(expiry);
+				}
+			}
+		}
+		return true;
+	}
 
 	public void closeConnection() {
 		try{ 
