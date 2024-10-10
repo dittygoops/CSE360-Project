@@ -37,8 +37,8 @@ public class StartCSE360 {
 	//Sets up administrator on first registration to the system
 	private static void setupAdministrator() throws SQLException {
 		System.out.println("Setting up the Administrator access");
-		System.out.print("Enter Admin Email: ");
-		String email = scanner.nextLine();
+		System.out.print("Enter Admin Username: ");
+		String userName = scanner.nextLine();
 		System.out.print("Enter Admin Password: ");
 		String password = scanner.nextLine();
 		System.out.print("Confirm Admin Password: ");
@@ -48,26 +48,26 @@ public class StartCSE360 {
 			System.out.print("Invalid. Please re-enter Admin Password to confirm: ");
 			confirmPassword = scanner.nextLine();
 		}
-		databaseHelper.register(email, password, "admin");
+		databaseHelper.register(userName, password, "a");
 		System.out.println("Administrator setup completed.");
 
 	}
 
 	private static void userFlow() throws SQLException {
-		String email = null;
+		String userName = null;
 		String password = null;
 		System.out.println("user flow");
 		System.out.print("What would you like to do 1.Register 2.Login  ");
 		String choice = scanner.nextLine();
 		switch(choice) {
 		case "1": 
-			System.out.print("Enter User Email: ");
-			email = scanner.nextLine();
+			System.out.print("Enter Username: ");
+			userName = scanner.nextLine();
 			System.out.print("Enter User Password: ");
 			password = scanner.nextLine(); 
 			// Check if user already exists in the database
-		    if (!databaseHelper.doesUserExist(email)) {
-		        databaseHelper.register(email, password, "user");
+		    if (!databaseHelper.doesUserExist(userName)) {
+		        databaseHelper.register(userName, password, "user");
 		        System.out.println("User setup completed.");
 		    } else {
 		        System.out.println("User already exists.");
@@ -75,10 +75,10 @@ public class StartCSE360 {
 			break;
 		case "2":
 			System.out.print("Enter User Email: ");
-			email = scanner.nextLine();
+			userName = scanner.nextLine();
 			System.out.print("Enter User Password: ");
 			password = scanner.nextLine();
-			if (databaseHelper.login(email, password, "user")) {
+			if (databaseHelper.login(userName, password, "user")) {
 				System.out.println("User login successful.");
 //				databaseHelper.displayUsers();
 
@@ -91,11 +91,11 @@ public class StartCSE360 {
 
 	private static void adminFlow() throws SQLException {
 		System.out.println("admin flow");
-		System.out.print("Enter Admin Email: ");
-		String email = scanner.nextLine();
+		System.out.print("Enter Admin Username: ");
+		String userName = scanner.nextLine();
 		System.out.print("Enter Admin Password: ");
 		String password = scanner.nextLine();
-		if (databaseHelper.login(email, password, "admin")) {
+		if (databaseHelper.login(userName, password, "admin")) {
 			System.out.println("Admin login successful.");
 			databaseHelper.displayUsersByAdmin();
 
@@ -504,62 +504,64 @@ public class StartCSE360 {
 	}
 	
 	private static void mainLogin() throws SQLException {
-		
-		String choice ="";
-		String userName = "";
-		//char[] password = new char[100];
-		String password = "";
-		String confirmPassword = "-1";
-		int oTP = -1;
-		
-		//input for returning user and deals with invalid input
-		System.out.print("Are you a returning user? (Note - If you had your account reset, choose the second option) 1. Yes 2. No");
-		choice = scanner.nextLine();
-		while(!choice.equals("1") || !choice.equals("2") ) {
-			System.out.println("Invalid option selected. Please try again");
-			System.out.print("Are you a returning user? 1. Yes 2. No");
-			choice = scanner.nextLine();
-		}
-		
-		//if a first time user - needs an OTP to setup username and password
-		if(choice.equals("2")) {
-			System.out.println("You have been invited to the system or had your account reset by an administrator.");
-			System.out.print("Enter your One Time Password: ");
-			oTP = scanner.nextInt();
-			System.out.println("If you had your account reset, Please re-enter your current username and new password.");
-			System.out.println("If you are a first time user, Continue on to set up your initial username and password");
-		}
+
+	    String choice = "";
+	    String userName = "";
+	    String password = "";
+	    int oTP = -1;
+
+	    // Input for returning user and deals with invalid input
+	    System.out.print("Are you a returning user? (Note - If you had your account reset, choose the second option) 1. Yes 2. No: ");
+	    choice = scanner.nextLine();
+
+	    while (!choice.equals("1") && !choice.equals("2")) {
+	        System.out.println("Invalid option selected. Please try again");
+	        System.out.print("Are you a returning user? 1. Yes 2. No: ");
+	        choice = scanner.nextLine();
+	    }
+
+	    // Choice 1: Returning user
+	    if (choice.equals("1")) {
+	        while (true) {
+	            String[] credentials = get_user_credentials();  // Get username and password
+	            userName = credentials[0];
+	            password = credentials[1];
+
+	            // Check if user exists and credentials are valid
+	            boolean doesUserExist = databaseHelper.doesUserExist(userName);
+	            boolean validLogin = doesUserExist && databaseHelper.login(userName, password);
+
+	            if (validLogin) {
+	                System.out.println("You have successfully logged in.");
+	                break;  // Exit the loop upon successful login
+	            } else {
+	                System.out.println("Invalid Credentials! Please try again.");
+	            }
+	        }
+	    }
+	    // Choice 2: First-time user or account reset using OTP
+	    else if (choice.equals("2")) {
+	        System.out.println("You have been invited to the system or had your account reset by an administrator.");
+	        System.out.print("Enter your One Time Password: ");
+	        oTP = scanner.nextInt();
+	        scanner.nextLine();  // Consume newline character after nextInt()
+
+	        System.out.println("If you had your account reset, Please re-enter your current username and new password.");
+	        System.out.println("If you are a first-time user, continue on to set up your initial username and password.");
+
+	        // You will likely want to implement functionality for OTP verification and account setup here.
+	    }
+	}
+
+	
+	public static String[] get_user_credentials() {
+		String[] credentials = new String[2];
 		
 		System.out.print("Enter Username: ");
-		userName = scanner.nextLine();
+		credentials[0] = scanner.nextLine();
 		System.out.print("Enter Password: ");
-		password = scanner.nextLine();
+		credentials[1] = scanner.nextLine();
 		
-		//If it is a first time user or someone whose account has been reset - need confirmation on the password
-		if(choice.equals("2")) {
-			System.out.print("Confirm Password: ");
-			confirmPassword = scanner.nextLine();
-			while(!password.equals(confirmPassword)) {
-				System.out.print("Invalid. Please re-enter your password to confirm: ");
-				confirmPassword = scanner.nextLine();
-			}
-			
-			//Need section here to check the OTP, and then register the user
-			
-			System.out.println("You have just completed the initial set up for your account.");
-			System.out.println("The next time you login with this username and password, you will be taken to finish setting up your account.");
-			//we need to come back to this same page once the reset/new user is finished for the first time
-		} else {
-			
-			//check to see if valid user; function needs to be role blind
-			System.out.println("You have successfully logged in.");
-			/*
-			 * if first time logging back in after initial log in - move to settingupaccount func
-			 * if returning and only one role - move to that home page
-			 * if multiple - move to select role page
-			 */
-		}
-
-
+		return credentials;
 	}
 }
