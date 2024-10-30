@@ -131,7 +131,7 @@ public class User {
         this.roles = roles;
     }
 
-    public void setOneTimePasswordFlag(boolean otpFlag) {
+    public void setOTPFlag(boolean otpFlag) {
         this.otpFlag = otpFlag;
     }
 
@@ -204,6 +204,7 @@ public class User {
  * This includes managing users, sending invitations, and handling account operations.
  */
 class Admin extends User {
+    public DatabaseHelper databaseHelper;
     /**
      * Constructor for creating a new Admin instance.
      *
@@ -218,11 +219,12 @@ class Admin extends User {
      * @param otpFlag         Indicates if a one-time password is required
      * @param otpExpiration    The expiration time for the one-time password
      */
-    public Admin(String username, String password, String email,
-                 String firstName, String middleName, String lastName, String prefName,
+    public Admin(String username, String password, String email, String firstName, String middleName, String lastName, String prefName,
                  String roles, boolean otpFlag, LocalDateTime otpExpiration) {
         super(username, password, email, firstName, middleName, lastName, prefName,
               roles, otpFlag, otpExpiration);
+        // initiliaze DatabaseHelper object
+        databaseHelper = new DatabaseHelper();
     }
 
     /**
@@ -233,8 +235,8 @@ class Admin extends User {
      * @return The generated invitation code
      */
     public String inviteUser(String email, String roles) {
-        // Generate a one-time invitation code
-        String invitationCode = generateInvitationCode();
+        // use DatabaseHelper object to generate invitation code
+        String invitationCode = databaseHelper.createOTP();
         // Logic to send invitation email with the code
         // Store the invitation code and associated roles
         return invitationCode;
@@ -264,6 +266,7 @@ class Admin extends User {
         // Display "Are you sure?" message and check for "Yes" response
         if (confirmDeletion()) {
             // Logic to delete the user account
+
             return true;
         }
         return false;
