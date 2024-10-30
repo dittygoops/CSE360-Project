@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Scanner;
 
 /***
  * This class contains all functions that relate/interact with our H2 databases
@@ -26,6 +27,8 @@ class DatabaseHelper {
 
 	private Connection connection = null;
 	private Statement statement = null; 
+
+	private Scanner scanner = new Scanner(System.in);
 	//	PreparedStatement pstmt
 	
 	/**
@@ -431,12 +434,197 @@ class DatabaseHelper {
 
 	// restore command -->
 	// 1. remove all existing help articles
+	public void deleteAllArticles(String role) throws SQLException {
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
+		String deleteAllArticles = "DELETE FROM articles";
+		try (Statement stmt = connection.createStatement()) {
+			stmt.executeUpdate(deleteAllArticles);
+		}
+	}
 	// 2. merge backup with current help articles (when id matches, don't add backup)
 
 	// i dont understand the mechanism to support multiple groups
 
-	// both admins and instructors may create, update, view, and delete help articles
+	/**
+	 * Create a new article in the database
+	 * @param level
+	 * @param groupId
+	 * @param title
+	 * @param shortDescription
+	 * @param keywords
+	 * @param body
+	 * @param referenceLinks
+	 * @throws SQLException
+	 */
+	public void createArticle(String role) throws SQLException {
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
 
-	// both admins and instructors may list all help articles
-	// and subset of help articles in a group/multiple groups
+		System.out.println("Enter article level (beginner, intermediate, advanced, expert): ");
+		String level = scanner.nextLine();
+		
+		System.out.println("Enter group ID (e.g. CSE360, CSE360-01, CSE360-02): ");
+		String groupId = scanner.nextLine();
+		
+		System.out.println("Enter article title: ");
+		String title = scanner.nextLine();
+		
+		System.out.println("Enter short description: ");
+		String shortDescription = scanner.nextLine();
+		
+		System.out.println("Enter keywords (comma separated): ");
+		String[] keywords = scanner.nextLine().split(",");
+		
+		System.out.println("Enter article body: ");
+		String body = scanner.nextLine();
+		
+		System.out.println("Enter reference links (comma separated): ");
+		String[] referenceLinks = scanner.nextLine().split(",");
+
+		String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+			pstmt.setString(1, level);
+			pstmt.setString(2, groupId);
+			pstmt.setString(3, title);
+			pstmt.setString(4, shortDescription);
+			pstmt.setArray(5, connection.createArrayOf("VARCHAR", keywords));
+			pstmt.setString(6, body);
+			pstmt.setArray(7, connection.createArrayOf("VARCHAR", referenceLinks));
+			pstmt.executeUpdate();
+		}
+	}
+
+	/**
+	 * Update an existing article in the database
+	 * @param role
+	 * @throws SQLException
+	 */
+	public void updateArticle(String role) throws SQLException {
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
+
+		System.out.println("Enter article ID: ");
+		int id = Integer.parseInt(scanner.nextLine());
+		
+		System.out.println("Enter article level (beginner, intermediate, advanced, expert): ");
+		String level = scanner.nextLine();
+		
+		System.out.println("Enter group ID (e.g. CSE360, CSE360-01, CSE360-02): ");
+		String groupId = scanner.nextLine();
+		
+		System.out.println("Enter article title: ");
+		String title = scanner.nextLine();
+		
+		System.out.println("Enter short description: ");
+		String shortDescription = scanner.nextLine();
+		
+		System.out.println("Enter keywords (comma separated): ");
+		String[] keywords = scanner.nextLine().split(",");
+		
+		System.out.println("Enter article body: ");
+		String body = scanner.nextLine();
+		
+		System.out.println("Enter reference links (comma separated): ");
+		String[] referenceLinks = scanner.nextLine().split(",");
+
+		String updateArticle = "UPDATE articles SET level = ?, group_id = ?, title = ?, short_description = ?, keywords = ?, body = ?, reference_links = ? WHERE id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(updateArticle)) {
+			pstmt.setString(1, level);
+			pstmt.setString(2, groupId);
+			pstmt.setString(3, title);
+			pstmt.setString(4, shortDescription);
+			pstmt.setArray(5, connection.createArrayOf("VARCHAR", keywords));
+			pstmt.setString(6, body);
+			pstmt.setArray(7, connection.createArrayOf("VARCHAR", referenceLinks));
+			pstmt.setInt(8, id);
+			pstmt.executeUpdate();
+		}
+	}
+
+	public void viewArticles(String role) throws SQLException {
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
+
+		String query = "SELECT * FROM articles";
+		try (Statement stmt = connection.createStatement();
+				ResultSet rs = stmt.executeQuery(query)) {
+			while (rs.next()) {
+				int id = rs.getInt("id");
+				String level = rs.getString("level");
+				String groupId = rs.getString("group_id");
+				String title = rs.getString("title");
+				String shortDescription = rs.getString("short_description");
+				String[] keywords = (String[]) rs.getArray("keywords").getArray();
+				String body = rs.getString("body");
+				String[] referenceLinks = (String[]) rs.getArray("reference_links").getArray();
+
+				System.out.println("ID: " + id);
+				System.out.println("Level: " + level);
+				System.out.println("Group ID: " + groupId);
+				System.out.println("Title: " + title);
+				System.out.println("Short Description: " + shortDescription);
+				System.out.println("Keywords: " + String.join(", ", keywords));
+				System.out.println("Body: " + body);
+				System.out.println("Reference Links: " + String.join(", ", referenceLinks));
+			}
+		}
+	}
+	
+	public void viewArticles(String role, String group) throws SQLException {
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
+
+		String query = "SELECT * FROM articles WHERE group_id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, group);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				while (rs.next()) {
+					int id = rs.getInt("id");
+					String level = rs.getString("level");
+					String groupId = rs.getString("group_id");
+					String title = rs.getString("title");
+					String shortDescription = rs.getString("short_description");
+					String[] keywords = (String[]) rs.getArray("keywords").getArray();
+					String body = rs.getString("body");
+					String[] referenceLinks = (String[]) rs.getArray("reference_links").getArray();
+
+					System.out.println("ID: " + id);
+					System.out.println("Level: " + level);
+					System.out.println("Group ID: " + groupId);
+					System.out.println("Title: " + title);
+					System.out.println("Short Description: " + shortDescription);
+					System.out.println("Keywords: " + String.join(", ", keywords));
+					System.out.println("Body: " + body);
+					System.out.println("Reference Links: " + String.join(", ", referenceLinks));
+				}
+			}
+		}
+	}
+
+	public void deleteArticle(String role) throws SQLException {
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
+
+		System.out.println("Enter article ID: ");
+		int id = Integer.parseInt(scanner.nextLine());
+
+		String deleteArticle = "DELETE FROM articles WHERE id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(deleteArticle)) {
+			pstmt.setInt(1, id);
+			pstmt.executeUpdate();
+		}
+	}
 }
