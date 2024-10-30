@@ -80,6 +80,19 @@ class DatabaseHelper {
 				+ "expiryTime TIMESTAMP), " 
 				+ "role VARCHAR(3)";
 		statement.execute(otpTable);
+
+		String articlesTable = "CREATE TABLE IF NOT EXISTS articles ("
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "level VARCHAR(20), "     // level (beginner, intermediate, advanced, expert)
+                + "group_id VARCHAR(50), "  				// group_id (e.g. CSE360, CSE360-01, CSE360-02)
+                + "title VARCHAR(255) NOT NULL, " 			// title
+                + "short_description CLOB, "				// short_description/abstract
+                + "keywords ARRAY, "						// keywords
+                + "body CLOB, "								// body
+                + "reference_links ARRAY"					// reference_links
+                + ")";
+			statement.execute(articlesTable);
+		
 	}
 
 	/**
@@ -412,4 +425,18 @@ class DatabaseHelper {
 		} 
 	}
 
+	// Admin and instruction team roles are enhanced
+	// with commands to back up and restore help system data
+	// to admin/instructor named external file
+
+	// restore command -->
+	// 1. remove all existing help articles
+	// 2. merge backup with current help articles (when id matches, don't add backup)
+
+	// i dont understand the mechanism to support multiple groups
+
+	// both admins and instructors may create, update, view, and delete help articles
+
+	// both admins and instructors may list all help articles
+	// and subset of help articles in a group/multiple groups
 }
