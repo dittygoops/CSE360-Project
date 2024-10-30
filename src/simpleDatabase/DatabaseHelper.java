@@ -235,6 +235,27 @@ class DatabaseHelper {
 	}
 
 	/**
+	 * get User Roles by username
+	 * @param userName
+	 */
+	public String getUserRoles(String userName) {
+		String query = "SELECT role FROM cse360users WHERE userName = ?";
+		String roles = "";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, userName);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				roles = rs.getString("role");	
+			} else {
+				System.out.println("User not found");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return roles;
+	}
+
+	/**
 	 * check if user in database
 	 * @param userName
 	 * @return boolean that represents if user exists
@@ -305,17 +326,33 @@ class DatabaseHelper {
 		} 
 	}
 
+	// delete user by username
 	/**
-	 * Create OTP
+	 * delete user by username
+	 * @param userName
+	 * @return boolean that represents if user was deleted
+	 * @throws SQLException
 	 */
-	public String createOTP() {
+	public boolean deleteUserAccount(String userName) throws SQLException {
+		String deleteQuery = "DELETE FROM cse360users WHERE userName = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(deleteQuery)) {
+			pstmt.setString(1, userName);
+			int rowsAffected = pstmt.executeUpdate();
+			return rowsAffected > 0;
+		}
+	}
+
+	/**
+	 * Create OTP and store it in the database
+	 */
+	public String createOTP(String roles) {
 		String otp = "";
 		for (int i = 0; i < 6; i++) {
 			otp += (int) (Math.random() * 10);
 		}
 		String expiryTime = LocalDateTime.now().plusMinutes(5).toString();
 		try {
-			insertOTP(otp, expiryTime);
+			insertOTP(otp, expiryTime, roles);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -328,11 +365,12 @@ class DatabaseHelper {
 	 * @param expiryTime
 	 * @throws SQLException
 	 */
-	public void insertOTP(String otp, String expiryTime) throws SQLException {
-		String insertOTP = "INSERT INTO otpTable (otp, expiryTime) VALUES (?, ?)";
+	public void insertOTP(String otp, String expiryTime, String roles) throws SQLException {
+		String insertOTP = "INSERT INTO otpTable (otp, expiryTime, roles) VALUES (?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertOTP)) {
 			pstmt.setString(1, otp);
 			pstmt.setString(2, expiryTime);
+			pstmt.setString(3, roles);
 			pstmt.executeUpdate();
 		}
 	}
