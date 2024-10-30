@@ -72,10 +72,13 @@ class DatabaseHelper {
 		
 		String dropOtp = "DROP TABLE IF EXISTS otpTable";
 		statement.execute(dropOtp);		
+
+		// create otp table, with id, otp, expiry time and user role(s)
 		String otpTable = "CREATE TABLE IF NOT EXISTS otpTable ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "otp VARCHAR(255), "
-				+ "expiryTime TIMESTAMP)";
+				+ "expiryTime TIMESTAMP), " 
+				+ "role VARCHAR(3)";
 		statement.execute(otpTable);
 	}
 
@@ -162,9 +165,9 @@ class DatabaseHelper {
 	        pstmt.setString(5, user.getLastName());
 	        pstmt.setString(6, user.getPreferredFirst());
 	        pstmt.setString(7, user.getRoles());
-	        pstmt.setString(8, user.getUsername()); // Assuming you have a getter for username
+	        pstmt.setString(8, user.getUsername());
 
-	        // Execute the update
+	        // update execution
 	        int rowsAffected = pstmt.executeUpdate();
 	        if (rowsAffected == 0) {
 	            System.out.println("No user found with the username: " + user.getUsername());
@@ -305,7 +308,7 @@ class DatabaseHelper {
 	/**
 	 * Create OTP
 	 */
-	public void createOTP() {
+	public String createOTP() {
 		String otp = "";
 		for (int i = 0; i < 6; i++) {
 			otp += (int) (Math.random() * 10);
@@ -316,11 +319,11 @@ class DatabaseHelper {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		System.out.println("OTP: " + otp);
+		return otp;
 	}
 
 	/**
-	 * insert otp to table
+	 * insert otp to table with roles
 	 * @param otp
 	 * @param expiryTime
 	 * @throws SQLException
