@@ -2,11 +2,25 @@ package simpleDatabase;
 
 import java.sql.SQLException;
 
+/**
+ * The CSE360Test class contains methods to test the functionality of the User, DatabaseHelper, and Article classes.
+ * It includes methods to run tests and print the results.
+ * 
+ * @author Aditya Gupta, Abhave Abhilash
+ * @version 1.0
+ * @since 2024-10-30
+ */
 public class CSE360Test {
 
     static int numPassed = 0;
     static int numFailed = 0;
 
+    /**
+     * The main method that runs all the tests.
+     * 
+     * @param args Command line arguments
+     * @throws SQLException If a database access error occurs
+     */
     public static void main(String[] args) throws SQLException {
         System.out.println("Running tests...");
         testUser();
@@ -15,6 +29,9 @@ public class CSE360Test {
         System.out.printf("%d tests ran, %d tests successful\n", numPassed + numFailed, numPassed);
     }
 
+    /**
+     * Tests the functionality of the User class.
+     */
     private static void testUser() {
         System.out.println("Testing User class...");
 
@@ -92,6 +109,11 @@ public class CSE360Test {
         }
     }
 
+    /**
+     * Tests the functionality of the DatabaseHelper class.
+     * 
+     * @throws SQLException If a database access error occurs
+     */
     private static void testDatabase() throws SQLException {
         System.out.println("Testing DatabaseHelper class...");
 
@@ -123,6 +145,11 @@ public class CSE360Test {
         databaseHelper.closeConnection();
     }
 
+    /**
+     * Tests the functionality of the Article class.
+     * 
+     * @throws SQLException If a database access error occurs
+     */
     private static void testArticle() throws SQLException {
         System.out.println("Testing Article class...");
 
@@ -136,12 +163,12 @@ public class CSE360Test {
 
         // Test 2: View all articles test
         databaseHelper.viewAllArticles("s");
-        System.out.println("Test 3 passed");
+        System.out.println("Test 2 passed");
         numPassed++;
 
         // Test 3: View article by ID test
         databaseHelper.viewArticle("i", 1);
-        System.out.println("Test 4 passed");
+        System.out.println("Test 3 passed");
         numPassed++;
 
         databaseHelper.closeConnection();

@@ -725,6 +725,9 @@ public class StartCSE360 {
 		}
 	}
 
+	/*
+	 * Get credentials from user
+	 */
 	private static String[] get_user_credentials() {
 		String[] credentials = new String[2];
 		
