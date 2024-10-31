@@ -586,6 +586,66 @@ class DatabaseHelper {
 				e.printStackTrace();
 		}
 	}
+
+
+	// Admin and instruction team roles are enhanced
+	// with commands to back up and restore help system data
+	// to admin/instructor named external file
+	public void backupByGroupID(String role, String file) throws Exception{
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
+		//Check to see if there is anything to back up at all
+		if(isDatabaseEmpty()) {
+			System.out.println("There are no articles in the system to back up.");
+			return;
+		}
+		
+		//Get all entries in the table
+		String sql = "SELECT * FROM articles WHERE group_id LIKE ?"; 
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(sql);
+		
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+		
+			//Each article will have 6 lines in the text file, every 6 lines corresponds to an entry
+			while(rs.next()) {
+				//For each entry - get all fields and store them in their encrypted states
+				int id = rs.getInt("id");
+				String idEnter = "" + id;
+				String level = rs.getString("level");
+				String group_id = rs.getString("group_id");
+				String title = rs.getString("title");
+				String short_description = rs.getString("short_description");
+				String keywords = rs.getString("keywords");
+				String body = rs.getString("body");
+				String references = rs.getString("reference_links");
+				
+				//write each field on its own line
+				writer.write(idEnter);
+				writer.newLine();
+				writer.write(level);
+				writer.newLine();
+				writer.write(group_id);
+				writer.newLine();
+				writer.write(title);
+				writer.newLine();
+				writer.write(short_description);
+				writer.newLine();
+				writer.write(keywords);
+				writer.newLine();
+				writer.write(body);
+				writer.newLine();
+				writer.write(references);
+				writer.newLine();
+			}
+			System.out.println("Successfully backed up system");
+		} catch (IOException e) {
+				e.printStackTrace();
+		}
+	}
+
 	
 
 	// 1. remove all existing help articles
