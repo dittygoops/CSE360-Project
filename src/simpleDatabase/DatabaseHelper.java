@@ -1,4 +1,9 @@
 package simpleDatabase;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -85,8 +90,8 @@ class DatabaseHelper {
 		statement.execute(otpTable);
 
 		String articlesTable = "CREATE TABLE IF NOT EXISTS articles ("
-                + "id INT AUTO_INCREMENT PRIMARY KEY, "
-                + "level VARCHAR(20), "     				// level (beginner, intermediate, advanced, expert)
+                + "id INT PRIMARY KEY, "
+                + "level VARCHAR(50), "     				// level (beginner, intermediate, advanced, expert)
                 + "group_id VARCHAR(50), "  				// group_id (e.g. CSE360, CSE360-01, CSE360-02)
                 + "title VARCHAR(255) NOT NULL, " 			// title
                 + "short_description CLOB, "				// short_description/abstract
@@ -527,8 +532,62 @@ class DatabaseHelper {
 	// Admin and instruction team roles are enhanced
 	// with commands to back up and restore help system data
 	// to admin/instructor named external file
+	public void backup(String role, String file) throws Exception{
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
+		//Check to see if there is anything to back up at all
+		if(isDatabaseEmpty()) {
+			System.out.println("There are no articles in the system to back up.");
+			return;
+		}
+		
+		//Get all entries in the table
+		String sql = "SELECT * FROM articles"; 
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(sql);
+		
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+		
+			//Each article will have 6 lines in the text file, every 6 lines corresponds to an entry
+			while(rs.next()) {
+				//For each entry - get all fields and store them in their encrypted states
+				int id = rs.getInt("id");
+				String idEnter = "" + id;
+				String level = rs.getString("level");
+				String group_id = rs.getString("group_id");
+				String title = rs.getString("title");
+				String short_description = rs.getString("short_description");
+				String keywords = rs.getString("keywords");
+				String body = rs.getString("body");
+				String references = rs.getString("reference_links");
+				
+				//write each field on its own line
+				writer.write(idEnter);
+				writer.newLine();
+				writer.write(level);
+				writer.newLine();
+				writer.write(group_id);
+				writer.newLine();
+				writer.write(title);
+				writer.newLine();
+				writer.write(short_description);
+				writer.newLine();
+				writer.write(keywords);
+				writer.newLine();
+				writer.write(body);
+				writer.newLine();
+				writer.write(references);
+				writer.newLine();
+			}
+			System.out.println("Successfully backed up system");
+		} catch (IOException e) {
+				e.printStackTrace();
+		}
+	}
+	
 
-	// restore command -->
 	// 1. remove all existing help articles
 	public void deleteAllArticles(String role) throws SQLException {
 		if (role.equals("s")) {
@@ -540,9 +599,134 @@ class DatabaseHelper {
 			stmt.executeUpdate(deleteAllArticles);
 		}
 	}
-	// 2. merge backup with current help articles (when id matches, don't add backup)
 
-	// i dont understand the mechanism to support multiple groups
+	public void restore(String roles, String file) throws Exception{
+		if (roles.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
+		if(!isDatabaseEmpty()) {
+			String sql = "TRUNCATE TABLE articles";
+			
+			try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+				pstmt.executeUpdate();
+				System.out.println("Successfully cleared out all articles");
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			
+		}
+		
+		
+		try(BufferedReader reads = new BufferedReader(new FileReader(file))) {
+			//counter keeps track of lines - every 7 we need to insert an article into the table
+			int counter = 0;
+			//line is what the lines from the file will contain
+			String line = "";
+			String id = "";
+			String level = "";
+			String group_id = "";
+			String title = "";
+			String short_description = "";
+			String keywords = "";
+			String body =  "";
+			String reference_links = "";
+
+			//read the file line by line
+			while((line = reads.readLine()) != null) {
+				switch((counter % 8)) {
+				
+					case 0 ->  {
+						if(counter == 0) break;
+						//ignore the id since it will auto generate upon table entry
+						String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?)";
+						System.out.println("Inserting article: " + id);
+						try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+							
+							//pstmt.setString(1,  id);
+							pstmt.setString(1,  level);
+							pstmt.setString(2, group_id);
+							pstmt.setString(3, title);
+							pstmt.setString(4, short_description);
+							pstmt.setString(5,  keywords);
+							pstmt.setString(6,  body);
+							pstmt.setString(7,  reference_links);
+							
+							
+							pstmt.executeUpdate();
+							System.out.println("An article has been added successfully to the system!");
+						}
+					}
+					/* 
+					case 1 ->  {
+						id = line;
+					}
+						*/
+					case 1 ->  {
+						level = line;
+						break;
+					}
+					case 2 ->  {
+						group_id = line;
+						break;
+					}
+					case 3 ->  {
+						title = line;
+						break;
+					}
+					case 4 ->  {
+						short_description = line;
+						break;
+					}
+					case 5 ->  {
+						keywords = line;
+						break;
+					}
+					case 6 ->  {
+						body = line;
+						break;
+					}
+					
+					case 7 ->  {
+						reference_links = line;
+						break;
+					}
+					/*
+					case 8 ->  {
+						reference_links = line;
+					}
+						*/
+					default ->  {
+						System.out.println("Something went wrong. Try again later.");
+					}
+				}
+				counter++;
+			}
+			
+			if(counter > 0) {
+				String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?)";
+				try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+					
+					//pstmt.setString(1,  id);
+					pstmt.setString(1,  level);
+					pstmt.setString(2, title);
+					pstmt.setString(3, group_id);
+					pstmt.setString(4, short_description);
+					pstmt.setString(5,  keywords);
+					pstmt.setString(6,  body);
+					pstmt.setString(7,  reference_links);
+					
+					
+					pstmt.executeUpdate();
+					System.out.println("An article has been added successfully to the system!");
+				}
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 
 	/**
 	 * Create a new article in the database
