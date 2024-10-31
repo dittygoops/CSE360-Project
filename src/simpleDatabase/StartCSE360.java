@@ -281,7 +281,15 @@ public class StartCSE360 {
 			System.out.println("3. Delete a user account"); //Ask after selected if they are sure to actually delete
 			System.out.println("4. List the user accounts"); //db display users
 			System.out.println("5. Add or Remove a role from a user"); //decide add vs remove later
-			System.out.println("6. Logout");
+			System.out.println("6. Create an Article");
+			System.out.println("7. View an Article");
+			System.out.println("8. View a group of Articles");
+			System.out.println("9. View all Articles");
+			System.out.println("10. Update an Article");
+			System.out.println("11. Delete an Article");
+			System.out.println("12. Restore from a file");
+			System.out.println("13. Backup to a file");
+			System.out.println("14. Logout");
 			
 			choice = scanner.nextLine();			
 			switch(choice) {
@@ -569,8 +577,73 @@ public class StartCSE360 {
 				break;
 			}
 			
-			//Logout
+			//Create an Article
 			case "6": {
+				
+				databaseHelper.createArticle("a");
+				break;
+			}
+			
+			//View an Article
+			case "7": {
+				
+				System.out.println("Please enter the id of the article you would like to view: ");
+				int articleID = scanner.nextInt();
+				databaseHelper.viewArticle("a", articleID);
+				break;
+			}
+			
+			//View a group of Articles
+			case "8": {
+				
+				System.out.println("Please enter the name of the group of articles you would like to view: ");
+				String groupName = scanner.nextLine();
+				System.out.println("Here are the articles: ");
+				databaseHelper.viewGroupedArticles("a", groupName);
+				break;
+			}
+			
+			//View all Articles
+			case "9": {
+				System.out.println("Here are the articles: ");
+				databaseHelper.viewAllArticles("a");			
+				break;
+			}
+			
+			//Update an Article
+			case "10": {
+				
+				databaseHelper.updateArticle("a");
+				System.out.println("The article was successfully updated.");
+				break;
+			}
+			
+			//Delete an Article
+			case "11": {
+				
+				boolean success = databaseHelper.deleteArticle("a");
+				if(success) System.out.println("Article was properly deleted");
+				else System.out.println("Article was not able to be deleted");
+				break;
+			}
+			
+			//Restore from a file
+			case "12": {
+				
+				
+				break;
+			}
+			
+			//Backup to a file
+			case "13": {
+				
+				
+				break;
+			}
+						
+						
+			//Logout
+			case "14": {
 				
 				System.out.println("To Logout, Enter q: ");
 				String logout = scanner.nextLine();
@@ -600,113 +673,6 @@ public class StartCSE360 {
 		return credentials;
 	}
 	
-	/**
-	 * Gets username and password from user input
-	 * 
-	 * @return String array with username and password
-	 */
-	 /*
-	 * Homepage for students/instructors
-	 */
-	private static void regHome() throws SQLException {
-		System.out.println("Welcome to the home page of either a Student or Instructor.");
-		System.out.println("At this time, you can only perform one action - Logout. However, you are welcome to sit here for however long you like.");
-		System.out.print("To Logout, Enter q: ");
-		String logout = scanner.nextLine();
-		if(logout.equals("q")) {
-			System.out.println("You have successfully logged out. See you next time!");
-			mainLogin();
-		} 
-		while(!logout.equals("q")) {
-			System.out.print("Invalid input. To Logout, Enter q: ");
-			logout  = scanner.nextLine();
-		}
-		
-	}
-
-    /**
-     * Main login page for the CSE 360 Help Application.
-     * 
-     */
-    private static void mainLogin() throws SQLException {
-	    String choice = "";
-	    String userName = "";
-	    String password = "";
-	    String oTP = "";
-
-	    // Input for returning user and deals with invalid input
-	    System.out.print("Are you a returning user? (Note - If you had your account reset, choose the second option) 1. Yes 2. No: ");
-	    choice = scanner.nextLine();
-
-	    while (!choice.equals("1") && !choice.equals("2")) {
-	        System.out.println("Invalid option selected. Please try again");
-	        System.out.print("Are you a returning user? 1. Yes 2. No: ");
-	        choice = scanner.nextLine();
-	    }
-
-	    // Choice 1: Returning user
-	    if (choice.equals("1")) {
-	        while (true) {
-	            String[] credentials = get_user_credentials();  // Get username and password
-	            userName = credentials[0];
-	            password = credentials[1];
-
-	            // Check if user exists and credentials are valid
-	            boolean doesUserExist = databaseHelper.doesUserExist(userName);
-	            if(doesUserExist) {
-	            	User user = databaseHelper.login(userName, password);
-	            	System.out.println("You have successfully logged in.");
-	            	
-	            	
-	            	 if(user.isOneTimePasswordFlag()){
-	            	 		settingUpAccount(user);
-	            	 		break;
-	            	 }
-	            	 
-	            	//routes to different pages depending on permissions of a user
-	            	if (user.getRoles().length() == 1) {
-	            		if(user.getRoles().contains("a")) adminHome();
-	            		else regHome();
-	            	} else sessionRoleSelection(user);
-	            	break;
-	            } else System.out.println("Invalid credentials! Try again");
-
-	        }
-	    }
-	    
-	    // Choice 2: First-time user or account reset using OTP
-	    else if (choice.equals("2")) {
-	        System.out.println("You have been invited to the system or had your account reset by an administrator.");
-	        
-	        while (true) {
-	        	System.out.print("Enter your One Time Password: ");
-		        oTP = scanner.nextLine();
-		        
-		        if (databaseHelper.verifyOTP(oTP)) {
-		        	System.out.println("If you had your account reset, Please re-enter your current username and new password.");
-			        System.out.println("If you are a first-time user, continue on to set up your initial username and password.");
-			        
-			        String[] credentials = get_user_credentials();
-			        databaseHelper.register(credentials[0], credentials[1], "s");
-			        
-			        break;
-			        
-		        } else {
-		        	System.out.println("OTP is invalid");
-		        }
-	        }
-	        // You will likely want to implement functionality for OTP verification and account setup here.
-	    }
-	}
-
-	// get user credentials
-	private static String[] get_user_credentials() {
-		String[] credentials = new String[2];
-		System.out.print("Enter your username: ");
-		credentials[0] = scanner.nextLine();
-		System.out.print("Enter your password: ");
-		credentials[1] = scanner.nextLine();
-		return credentials;
-	}
+    
 	
 }

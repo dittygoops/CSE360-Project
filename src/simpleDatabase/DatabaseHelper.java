@@ -90,9 +90,9 @@ class DatabaseHelper {
                 + "group_id VARCHAR(50), "  				// group_id (e.g. CSE360, CSE360-01, CSE360-02)
                 + "title VARCHAR(255) NOT NULL, " 			// title
                 + "short_description CLOB, "				// short_description/abstract
-                + "keywords ARRAY, "						// keywords
+                + "keywords VARCHAR(255), "						// keywords
                 + "body CLOB, "								// body
-                + "reference_links ARRAY"					// reference_links
+                + "reference_links VARCHAR(255)"					// reference_links
                 + ")";
 			statement.execute(articlesTable);
 		
@@ -644,7 +644,7 @@ class DatabaseHelper {
 		}
 	}
 
-	public void viewArticles(String role) throws SQLException {
+	public void viewAllArticles(String role) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
 			return;
@@ -675,7 +675,7 @@ class DatabaseHelper {
 		}
 	}
 	
-	public void viewArticles(String role, String group) throws SQLException {
+	public void viewGroupedArticles(String role, String group) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
 			return;
@@ -708,10 +708,42 @@ class DatabaseHelper {
 		}
 	}
 
-	public void deleteArticle(String role) throws SQLException {
+	public void viewArticle(String role, int id) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
 			return;
+		}
+
+		String query = "SELECT * FROM articles WHERE id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setInt(1, id);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				while (rs.next()) {
+					String level = rs.getString("level");
+					String groupId = rs.getString("group_id");
+					String title = rs.getString("title");
+					String shortDescription = rs.getString("short_description");
+					String[] keywords = (String[]) rs.getArray("keywords").getArray();
+					String body = rs.getString("body");
+					String[] referenceLinks = (String[]) rs.getArray("reference_links").getArray();
+
+					System.out.println("ID: " + id);
+					System.out.println("Level: " + level);
+					System.out.println("Group ID: " + groupId);
+					System.out.println("Title: " + title);
+					System.out.println("Short Description: " + shortDescription);
+					System.out.println("Keywords: " + String.join(", ", keywords));
+					System.out.println("Body: " + body);
+					System.out.println("Reference Links: " + String.join(", ", referenceLinks));
+				}
+			}
+		}
+	}
+	
+	public boolean deleteArticle(String role) throws SQLException {
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return false;
 		}
 
 		System.out.println("Enter article ID: ");
@@ -720,7 +752,8 @@ class DatabaseHelper {
 		String deleteArticle = "DELETE FROM articles WHERE id = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(deleteArticle)) {
 			pstmt.setInt(1, id);
-			pstmt.executeUpdate();
+			int rowsAffected = pstmt.executeUpdate();
+			return rowsAffected > 0;
 		}
 	}
 }
