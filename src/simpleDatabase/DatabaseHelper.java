@@ -564,7 +564,7 @@ class DatabaseHelper {
 		System.out.println("Enter article level (beginner, intermediate, advanced, expert): ");
 		String level = scanner.nextLine();
 		
-		System.out.println("Enter group ID (e.g. CSE360, CSE360-01, CSE360-02): ");
+		System.out.println("Enter group ID (Please make sure there are no spaces and that they are comma separated) (e.g. CSE360,CSE360-01,CSE360-02): ");
 		String groupId = scanner.nextLine() + ",";
 		
 		System.out.println("Enter article title: ");
