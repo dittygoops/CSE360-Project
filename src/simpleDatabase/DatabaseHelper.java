@@ -90,7 +90,7 @@ class DatabaseHelper {
 		statement.execute(otpTable);
 
 		String articlesTable = "CREATE TABLE IF NOT EXISTS articles ("
-                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "id INT PRIMARY KEY, "
                 + "level VARCHAR(50), "     				// level (beginner, intermediate, advanced, expert)
                 + "group_id VARCHAR(50), "  				// group_id (e.g. CSE360, CSE360-01, CSE360-02)
                 + "title VARCHAR(255) NOT NULL, " 			// title
@@ -417,13 +417,13 @@ class DatabaseHelper {
 		}
 		return otp;
 	}
-
-	public int createArticleID() {
-		String tempId = "";
+	
+	public int createArticleId() {
+		String id = "";
 		for (int i = 0; i < 6; i++) {
-			tempId += (int) (Math.random() * 10);
+			id += (int) (Math.random() * 10);
 		}
-		int res = Integer.parseInt(tempId);
+		int res = Integer.parseInt(id);
 		return res;
 	}
 	
@@ -609,6 +609,155 @@ class DatabaseHelper {
 		}
 	}
 
+	
+	public void restoreMerge(String roles, String file) throws Exception {
+		if (roles.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
+		boolean myFlag = false;
+		
+		try(BufferedReader reads = new BufferedReader(new FileReader(file))) {
+			//counter keeps track of lines - every 7 we need to insert an article into the table
+			int counter = 0;
+			//line is what the lines from the file will contain
+			String line = "";
+			String id = "";
+			int tmpId = -1;
+			String level = "";
+			String group_id = "";
+			String title = "";
+			String short_description = "";
+			String keywords = "";
+			String body =  "";
+			String reference_links = "";
+
+			//read the file line by line
+			while((line = reads.readLine()) != null) {
+				switch((counter % 8)) {
+				
+					case 0 ->  {
+						if(counter == 0) {
+							id = line;
+							tmpId = Integer.parseInt(id);
+							String possQuery = "Select count(*) from articles where id = ?";
+							try(PreparedStatement pstmt2 = connection.prepareStatement(possQuery)) {
+								pstmt2.setInt(1, tmpId);
+								try (ResultSet rs = pstmt2.executeQuery()){
+									if (rs.next()) {
+							            // If the count is greater than 0, the user exists
+							            if( rs.getInt(1) == 0) myFlag = true;
+							        }
+								}
+							}
+							break;
+						}
+						//ignore the id since it will auto generate upon table entry
+						String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+						System.out.println("Inserting article: " + id);
+						if(myFlag) {
+							try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+							
+							//pstmt.setString(1,  id);
+							pstmt.setString(1,  level);
+							pstmt.setString(2, group_id);
+							pstmt.setString(3, title);
+							pstmt.setString(4, short_description);
+							pstmt.setString(5,  keywords);
+							pstmt.setString(6,  body);
+							pstmt.setString(7,  reference_links);
+							pstmt.setInt(8, tmpId);
+							
+							
+							pstmt.executeUpdate();
+							System.out.println("An article has been added successfully to the system!");
+						}
+						}
+						
+						if(counter > 0) {
+							id = line;
+							tmpId = Integer.parseInt(id);
+							String possQuery = "Select count(*) from articles where id = ?";
+							try(PreparedStatement pstmt2 = connection.prepareStatement(possQuery)) {
+								pstmt2.setInt(1, tmpId);
+								try (ResultSet rs = pstmt2.executeQuery()){
+									if (rs.next()) {
+							            // If the count is greater than 0, the user exists
+							            if( rs.getInt(1) == 0) myFlag = true;
+							        }
+								}
+							}
+						}
+						break;
+					}
+
+					case 1 ->  {
+						level = line;
+						break;
+					}
+					case 2 ->  {
+						group_id = line;
+						break;
+					}
+					case 3 ->  {
+						title = line;
+						break;
+					}
+					case 4 ->  {
+						short_description = line;
+						break;
+					}
+					case 5 ->  {
+						keywords = line;
+						break;
+					}
+					case 6 ->  {
+						body = line;
+						break;
+					}
+					
+					case 7 ->  {
+						reference_links = line;
+						break;
+					}
+					/*
+					case 8 ->  {
+						reference_links = line;
+					}
+						*/
+					default ->  {
+						System.out.println("Something went wrong. Try again later.");
+					}
+				}
+				counter++;
+			}
+			
+			if(counter > 0 && myFlag) {
+				String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+				try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+					
+					//pstmt.setString(1,  id);
+					pstmt.setString(1,  level);
+					pstmt.setString(2, title);
+					pstmt.setString(3, group_id);
+					pstmt.setString(4, short_description);
+					pstmt.setString(5,  keywords);
+					pstmt.setString(6,  body);
+					pstmt.setString(7,  reference_links);
+					tmpId = Integer.parseInt(id);
+					pstmt.setInt(8, tmpId);
+					
+					
+					pstmt.executeUpdate();
+					System.out.println("An article has been added successfully to the system!");
+				}
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public void restore(String roles, String file) throws Exception{
 		if (roles.equals("s")) {
 			System.out.println("Invalid role");
@@ -633,6 +782,7 @@ class DatabaseHelper {
 			//line is what the lines from the file will contain
 			String line = "";
 			String id = "";
+			int tmpId = -1;
 			String level = "";
 			String group_id = "";
 			String title = "";
@@ -646,9 +796,13 @@ class DatabaseHelper {
 				switch((counter % 8)) {
 				
 					case 0 ->  {
-						if(counter == 0) break;
+						if(counter == 0) {
+							id = line;
+							tmpId = Integer.parseInt(id);
+							break;
+						}
 						//ignore the id since it will auto generate upon table entry
-						String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?)";
+						String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 						System.out.println("Inserting article: " + id);
 						try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 							
@@ -660,17 +814,19 @@ class DatabaseHelper {
 							pstmt.setString(5,  keywords);
 							pstmt.setString(6,  body);
 							pstmt.setString(7,  reference_links);
+							pstmt.setInt(8, tmpId);
 							
 							
 							pstmt.executeUpdate();
 							System.out.println("An article has been added successfully to the system!");
 						}
+						if(counter > 0) {
+							id = line;
+							tmpId = Integer.parseInt(id);
+						}
+						break;
 					}
-					/* 
-					case 1 ->  {
-						id = line;
-					}
-						*/
+
 					case 1 ->  {
 						level = line;
 						break;
@@ -713,7 +869,7 @@ class DatabaseHelper {
 			}
 			
 			if(counter > 0) {
-				String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?)";
+				String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 				try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 					
 					//pstmt.setString(1,  id);
@@ -724,6 +880,8 @@ class DatabaseHelper {
 					pstmt.setString(5,  keywords);
 					pstmt.setString(6,  body);
 					pstmt.setString(7,  reference_links);
+					tmpId = Integer.parseInt(id);
+					pstmt.setInt(8, tmpId);
 					
 					
 					pstmt.executeUpdate();
@@ -775,6 +933,8 @@ class DatabaseHelper {
 		System.out.println("Enter reference links (comma separated): ");
 		String[] referenceLinks = scanner.nextLine().split(",");
 
+		int tempId = createArticleId();
+		
 		String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 			pstmt.setString(1, level);
@@ -784,6 +944,7 @@ class DatabaseHelper {
 			pstmt.setArray(5, connection.createArrayOf("VARCHAR", keywords));
 			pstmt.setString(6, body);
 			pstmt.setArray(7, connection.createArrayOf("VARCHAR", referenceLinks));
+			pstmt.setInt(8, tempId);
 			
 			pstmt.executeUpdate();
 		}

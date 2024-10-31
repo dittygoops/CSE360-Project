@@ -631,7 +631,11 @@ public class StartCSE360 {
 			case "12": {
 				System.out.println("Please enter the name of the file you would like to restore from: ");
 				String fileName = scanner.nextLine();
-				databaseHelper.restore("a", fileName);
+				System.out.println("Would you like to clear all articles before restoring? Please note that if you do not, we will not restore duplicating articles. 1. Yes 2. No");
+				String answer = scanner.nextLine();
+				if(answer.equals("1")) databaseHelper.restore("a", fileName);
+				else if(answer.equals("2")) databaseHelper.restoreMerge("a", fileName);
+				else System.out.println("Invalid choice! Try again");
 				break;
 			}
 			
@@ -667,7 +671,7 @@ public class StartCSE360 {
 	/*
 	 * Home for instructor
 	 */
-	private static void instructorHome() throws SQLException {
+	private static void instructorHome() throws SQLException, Exception {
 		System.out.println("Welcome to the Home Page for Instructors!");
 		System.out.println("Here are the actions you can perform: ");
 		System.out.println("1. Create an Article");
@@ -676,10 +680,14 @@ public class StartCSE360 {
 		System.out.println("4. View all Articles");
 		System.out.println("5. Update an Article");
 		System.out.println("6. Delete an Article");
-		System.out.println("7. Logout");
+		System.out.println("7. Restore articles");
+		System.out.println("8. Backup articles");
+		System.out.println("9. Logout");
 
 		String choice = scanner.nextLine();
-		switch(choice) {
+		
+		do {
+			switch(choice) {
 		case "1": {
 			databaseHelper.createArticle("t");
 			break;
@@ -713,7 +721,26 @@ public class StartCSE360 {
 			else System.out.println("Article was not able to be deleted");
 			break;
 		}
+		
 		case "7": {
+			System.out.println("Please enter the name of the file you would like to restore from: ");
+			String fileName = scanner.nextLine();
+			System.out.println("Would you like to clear all articles before restoring? Please note that if you do not, we will not restore duplicating articles. 1. Yes 2. No");
+			String answer = scanner.nextLine();
+			if(answer.equals("1")) databaseHelper.restore("a", fileName);
+			else if(answer.equals("2")) databaseHelper.restoreMerge("a", fileName);
+			else System.out.println("Invalid choice! Try again");
+			break;
+		}
+		
+		case "8": {
+			System.out.println("Please enter the name of the file you would like to backup to: ");
+			String fileName = scanner.nextLine();
+			databaseHelper.backup("a", fileName);
+			break;
+		}
+		
+		case "9": {
 			System.out.println("To Logout, Enter q: ");
 			String logout = scanner.nextLine();
 			if(logout.equals("q")) {
@@ -725,6 +752,10 @@ public class StartCSE360 {
 			System.out.print("Invalid choice. Please try again.");
 			break;
 		}
+		} while(!choice.equals("9"));
+		
+		mainLogin();
+		
 	}
 
 	private static String[] get_user_credentials() {
