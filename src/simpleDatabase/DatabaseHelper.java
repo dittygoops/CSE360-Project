@@ -622,13 +622,13 @@ class DatabaseHelper {
 		String shortDescription = scanner.nextLine();
 		
 		System.out.println("Enter keywords (comma separated): ");
-		String[] keywords = scanner.nextLine().split(",");
+		String keywords = scanner.nextLine();
 		
 		System.out.println("Enter article body: ");
 		String body = scanner.nextLine();
 		
 		System.out.println("Enter reference links (comma separated): ");
-		String[] referenceLinks = scanner.nextLine().split(",");
+		String referenceLinks = scanner.nextLine();
 
 		String updateArticle = "UPDATE articles SET level = ?, group_id = ?, title = ?, short_description = ?, keywords = ?, body = ?, reference_links = ? WHERE id = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(updateArticle)) {
@@ -636,9 +636,9 @@ class DatabaseHelper {
 			pstmt.setString(2, groupId);
 			pstmt.setString(3, title);
 			pstmt.setString(4, shortDescription);
-			pstmt.setArray(5, connection.createArrayOf("VARCHAR", keywords));
+			pstmt.setString(5, keywords);
 			pstmt.setString(6, body);
-			pstmt.setArray(7, connection.createArrayOf("VARCHAR", referenceLinks));
+			pstmt.setString(7, referenceLinks);
 			pstmt.setInt(8, id);
 			pstmt.executeUpdate();
 		}
@@ -659,18 +659,18 @@ class DatabaseHelper {
 				String groupId = rs.getString("group_id");
 				String title = rs.getString("title");
 				String shortDescription = rs.getString("short_description");
-				String[] keywords = (String[]) rs.getArray("keywords").getArray();
+				String keywords = rs.getString("keyword");
 				String body = rs.getString("body");
-				String[] referenceLinks = (String[]) rs.getArray("reference_links").getArray();
+				String referenceLinks = rs.getString("reference_links");
 
 				System.out.println("ID: " + id);
 				System.out.println("Level: " + level);
 				System.out.println("Group ID: " + groupId);
 				System.out.println("Title: " + title);
 				System.out.println("Short Description: " + shortDescription);
-				System.out.println("Keywords: " + String.join(", ", keywords));
+				System.out.println("Keywords: " + keywords);
 				System.out.println("Body: " + body);
-				System.out.println("Reference Links: " + String.join(", ", referenceLinks));
+				System.out.println("Reference Links: " + referenceLinks);
 			}
 		}
 	}
@@ -691,18 +691,18 @@ class DatabaseHelper {
 					String groupId = rs.getString("group_id");
 					String title = rs.getString("title");
 					String shortDescription = rs.getString("short_description");
-					String[] keywords = (String[]) rs.getArray("keywords").getArray();
+					String keywords = rs.getString("keyword");
 					String body = rs.getString("body");
-					String[] referenceLinks = (String[]) rs.getArray("reference_links").getArray();
+					String referenceLinks = rs.getString("referenceLinks");
 
 					System.out.println("ID: " + id);
 					System.out.println("Level: " + level);
 					System.out.println("Group ID: " + groupId);
 					System.out.println("Title: " + title);
 					System.out.println("Short Description: " + shortDescription);
-					System.out.println("Keywords: " + String.join(", ", keywords));
+					System.out.println("Keywords: " + keywords);
 					System.out.println("Body: " + body);
-					System.out.println("Reference Links: " + String.join(", ", referenceLinks));
+					System.out.println("Reference Links: " + referenceLinks);
 				}
 			}
 		}
@@ -723,9 +723,9 @@ class DatabaseHelper {
 					String groupId = rs.getString("group_id");
 					String title = rs.getString("title");
 					String shortDescription = rs.getString("short_description");
-					String[] keywords = (String[]) rs.getArray("keywords").getArray();
+					String[] keywords = rs.getString("keyword").split(",");
 					String body = rs.getString("body");
-					String[] referenceLinks = (String[]) rs.getArray("reference_links").getArray();
+					String[] referenceLinks = rs.getString("reference_links").split(",");
 
 					System.out.println("ID: " + id);
 					System.out.println("Level: " + level);
