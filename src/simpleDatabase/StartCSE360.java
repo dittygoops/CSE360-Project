@@ -25,7 +25,7 @@ public class StartCSE360 {
 	/*
 	 * Main method that runs the databases and does the main login
 	 */
-	public static void main( String[] args )
+	public static void main( String[] args ) throws Exception
 	{
 
 		try { 
@@ -75,7 +75,7 @@ public class StartCSE360 {
 	/*
 	 * pass in User object here which contains all their role info assigned by Admin at invitation (if reset account - come back in as student)
 	 */
-	private static void settingUpAccount(User currentUser) throws SQLException {
+	private static void settingUpAccount(User currentUser) throws SQLException, Exception {
 		
 		//fields we need information for
 		String first = "";
@@ -122,7 +122,7 @@ public class StartCSE360 {
 	/*
 	 * want a User object from a user class passed as a parameter here to check roles
 	 */
-	private static void sessionRoleSelection(User currentUser) throws SQLException {
+	private static void sessionRoleSelection(User currentUser) throws SQLException, Exception {
 		
 		//From the User object that was a parameter - find the roles or maybe from DB 
 		String roles = currentUser.getRoles();
@@ -163,8 +163,8 @@ public class StartCSE360 {
 	}
 	
 	
-	private static void regHome() throws SQLException {
-		System.out.println("Welcome to the home page of the Student");
+	private static void regHome() throws SQLException, Exception {
+		System.out.println("Welcome to the home page of either a Student or Instructor.");
 		System.out.println("At this time, you can only perform one action - Logout. However, you are welcome to sit here for however long you like.");
 		System.out.println("To Logout, Enter q: ");
 		String logout = scanner.nextLine();
@@ -183,7 +183,7 @@ public class StartCSE360 {
      * Main login page for the CSE 360 Help Application.
      * 
      */
-    private static void mainLogin() throws SQLException {
+    private static void mainLogin() throws SQLException, Exception {
 	    String choice = "";
 	    String userName = "";
 	    String password = "";
@@ -270,7 +270,7 @@ public class StartCSE360 {
 	/*
 	 * Home for admin
 	 */
-	private static void adminHome() throws SQLException {
+	private static void adminHome() throws SQLException, Exception {
 		String choice = "";
 		
 		System.out.println("Welcome to the Home Page for Admins!");
@@ -614,7 +614,6 @@ public class StartCSE360 {
 			
 			//Update an Article
 			case "10": {
-				
 				databaseHelper.updateArticle("a");
 				System.out.println("The article was successfully updated.");
 				break;
@@ -622,7 +621,6 @@ public class StartCSE360 {
 			
 			//Delete an Article
 			case "11": {
-				
 				boolean success = databaseHelper.deleteArticle("a");
 				if(success) System.out.println("Article was properly deleted");
 				else System.out.println("Article was not able to be deleted");
@@ -631,15 +629,17 @@ public class StartCSE360 {
 			
 			//Restore from a file
 			case "12": {
-				
-				
+				System.out.println("Please enter the name of the file you would like to restore from: ");
+				String fileName = scanner.nextLine();
+				databaseHelper.restore("a", fileName);
 				break;
 			}
 			
 			//Backup to a file
 			case "13": {
-				
-				
+				System.out.println("Please enter the name of the file you would like to backup to: ");
+				String fileName = scanner.nextLine();
+				databaseHelper.backup("a", fileName);
 				break;
 			}
 						
