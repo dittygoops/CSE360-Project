@@ -50,8 +50,8 @@ class DatabaseHelper {
 	 * @throws SQLException
 	 */
 	private void createTables() throws SQLException {
-		String dropUsers = "DROP TABLE IF EXISTS cse360users";
-		statement.execute(dropUsers);
+		//String dropUsers = "DROP TABLE IF EXISTS cse360users";
+		//statement.execute(dropUsers);
 		String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "userName VARCHAR(255), "
@@ -70,15 +70,15 @@ class DatabaseHelper {
 				+ "otpFlag BOOLEAN DEFAULT FALSE) ";
 		statement.execute(userTable);
 		
-		String dropOtp = "DROP TABLE IF EXISTS otpTable";
-		statement.execute(dropOtp);		
+		//String dropOtp = "DROP TABLE IF EXISTS otpTable";
+		//statement.execute(dropOtp);		
 
 		// create otp table, with id, otp, expiry time and user role(s)
 		String otpTable = "CREATE TABLE IF NOT EXISTS otpTable ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "otp VARCHAR(255), "
-				+ "expiryTime TIMESTAMP), " 
-				+ "role VARCHAR(3)";
+				+ "expiryTime TIMESTAMP, " 
+				+ "role VARCHAR(3))";
 		statement.execute(otpTable);
 	}
 
@@ -104,11 +104,12 @@ class DatabaseHelper {
 	 * @throws SQLException
 	 */
 	public void register(String userName, String password, String role) throws SQLException {
-		String insertUser = "INSERT INTO cse360users (userName, password, role) VALUES (?, ?, ?)";
+		String insertUser = "INSERT INTO cse360users (userName, password, role, otpFlag) VALUES (?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
 			pstmt.setString(1, userName);
 			pstmt.setString(2, password);
 			pstmt.setString(3, role);
+			pstmt.setBoolean(4, true);
 			pstmt.executeUpdate();
 		}
 	}
@@ -128,7 +129,6 @@ class DatabaseHelper {
 	        try (ResultSet rs = pstmt.executeQuery()) {
 	            if (rs.next()) {
 	                // Extracting values from the result set
-	                String username = rs.getString("userName");
 	                String email = rs.getString("email");
 	                String firstName = rs.getString("firstName");
 	                String middleName = rs.getString("middleName");
@@ -136,11 +136,11 @@ class DatabaseHelper {
 	                String preferredFirst = rs.getString("preferredFirst");
 	                String roles = rs.getString("role");
 	                
-	                boolean otpFlag = false; // default value
+	                boolean otpFlag = rs.getBoolean("otpFlag"); 
 	                LocalDateTime otpExpiration = LocalDateTime.now(); // default value
 
 	                // Constructing and returning the User object
-	                return new User(username, password, email, firstName, middleName, lastName,
+	                return new User(userName, password, email, firstName, middleName, lastName,
 	                        preferredFirst, roles, otpFlag, otpExpiration);
 	            } else {
 	                return null; // User not found
@@ -155,16 +155,17 @@ class DatabaseHelper {
 	 * @throws SQLException
 	 */
 	public void updateUser(User user) throws SQLException {
-	    String query = "UPDATE cse360users SET email = ?, password = ?, firstName = ?, middleName = ?, lastName = ?, preferredFirst = ?, role = ? WHERE userName = ?";
+		System.out.println("Here is the passed in users email: " + user.getEmail());
+	    String query = "UPDATE cse360users SET firstName = ?, middleName = ?, lastName = ?, preferredFirst = ?, role = ?, otpFlag = ?, email = ? WHERE userName = ?";
 	    
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-	        pstmt.setString(1, user.getEmail());
-	        pstmt.setString(2, user.getPassword());
-	        pstmt.setString(3, user.getFirstName());
-	        pstmt.setString(4, user.getMiddleName());
-	        pstmt.setString(5, user.getLastName());
-	        pstmt.setString(6, user.getPreferredFirst());
-	        pstmt.setString(7, user.getRoles());
+	        pstmt.setString(1, user.getFirstName());
+	        pstmt.setString(2, user.getMiddleName());
+	        pstmt.setString(3, user.getLastName());
+	        pstmt.setString(4, user.getPreferredFirst());
+	        pstmt.setString(5, user.getRoles());
+	        pstmt.setBoolean(6, user.getOTP());
+	        pstmt.setString(7, user.getEmail());
 	        pstmt.setString(8, user.getUsername());
 
 	        // update execution
@@ -276,6 +277,41 @@ class DatabaseHelper {
 	    }
 	    return false; // If an error occurs, assume user doesn't exist
 	}
+	
+	public boolean doesUserExistBoth(String userName, String password) {
+	    String query = "SELECT COUNT(*) FROM cse360users WHERE userName = ? AND password = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        
+	        pstmt.setString(1, userName);
+	        pstmt.setString(2, password);
+	        ResultSet rs = pstmt.executeQuery();
+	        
+	        if (rs.next()) {
+	            // If the count is greater than 0, the user exists
+	            return rs.getInt(1) > 0;
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return false; // If an error occurs, assume user doesn't exist
+	}
+	
+	public boolean doesUserExistEmail(String email) {
+		String query = "SELECT COUNT(*) FROM cse360users WHERE email = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        
+	        pstmt.setString(1, email);
+	        ResultSet rs = pstmt.executeQuery();
+	        
+	        if (rs.next()) {
+	            // If the count is greater than 0, the user exists
+	            return rs.getInt(1) > 0;
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return false; // If an error occurs, assume user doesn't exist
+	}
 
 	
 	/**
@@ -291,14 +327,16 @@ class DatabaseHelper {
 			// Retrieve by column name 
 			int id  = rs.getInt("id"); 
 			String  email = rs.getString("email"); 
-			String password = rs.getString("password"); 
+			String firstName = rs.getString("firstName"); 
 			String role = rs.getString("role");  
+			String username = rs.getString("userName");
 
 			// Display values 
 			System.out.print("ID: " + id); 
-			System.out.print(", Age: " + email); 
-			System.out.print(", First: " + password); 
-			System.out.println(", Last: " + role); 
+			System.out.print(", Username: " + username); 
+			System.out.print(", First Name: " + firstName); 
+			System.out.print(", Email: " + email);
+			System.out.println(", Roles: " + role);
 		} 
 	}
 	
@@ -366,7 +404,7 @@ class DatabaseHelper {
 	 * @throws SQLException
 	 */
 	public void insertOTP(String otp, String expiryTime, String roles) throws SQLException {
-		String insertOTP = "INSERT INTO otpTable (otp, expiryTime, roles) VALUES (?, ?, ?)";
+		String insertOTP = "INSERT INTO otpTable (otp, expiryTime, role) VALUES (?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertOTP)) {
 			pstmt.setString(1, otp);
 			pstmt.setString(2, expiryTime);
@@ -398,6 +436,26 @@ class DatabaseHelper {
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * This function is used after an OTP has been verified to return the roles associated with the invitation
+	 * @param otp
+	 * @return string of roles given to this user by the admin who invited them to the system
+	 * @throws SQLException
+	 */
+	public String getRolesFromOTP(String otp) throws SQLException {
+		String query = "SELECT * FROM otpTable WHERE otp = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, otp);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				if (rs.next()) {
+					String roles = rs.getString("role");
+					return roles;
+				}
+			}
+		}
+		return "error";
 	}
 
 	/**

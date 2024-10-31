@@ -141,7 +141,7 @@ public class User {
         this.otpExpiration = otpExpiration;
     }
     
-    public boolean isOneTimePasswordFlag() {
+    public boolean getOTP() {
         return otpFlag;
     }
 
@@ -152,6 +152,7 @@ public class User {
     public LocalDateTime getOneTimePasswordExpiration() {
         return otpExpiration;
     }
+    
 
     /**
      * Method to retrieve the full name of the user, combining first, middle (if present), and last names.
@@ -252,6 +253,7 @@ class Admin extends User {
         String roles = databaseHelper.getUserRoles(username);
         // generate otp code and return
         databaseHelper.createOTP(roles);
+        return "";
     }
 
     /**
@@ -264,12 +266,14 @@ class Admin extends User {
         // delete user acount
         return databaseHelper.deleteUserAccount(username);
     }
-
+}
     /**
      * Retrieves a list of user summaries containing basic information about all users.
      * @return A list of user summaries
      */
+    /*
     public List<UserSummary> getUserSummaries() {
         // get user summaries
         return databaseHelper.getUserSummaries();
     }
+    */
