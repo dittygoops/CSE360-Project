@@ -90,7 +90,7 @@ class DatabaseHelper {
 		statement.execute(otpTable);
 
 		String articlesTable = "CREATE TABLE IF NOT EXISTS articles ("
-                + "id INT PRIMARY KEY, "
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
                 + "level VARCHAR(50), "     				// level (beginner, intermediate, advanced, expert)
                 + "group_id VARCHAR(50), "  				// group_id (e.g. CSE360, CSE360-01, CSE360-02)
                 + "title VARCHAR(255) NOT NULL, " 			// title
@@ -418,6 +418,15 @@ class DatabaseHelper {
 		return otp;
 	}
 
+	public int createArticleID() {
+		String tempId = "";
+		for (int i = 0; i < 6; i++) {
+			tempId += (int) (Math.random() * 10);
+		}
+		int res = Integer.parseInt(tempId);
+		return res;
+	}
+	
 	/**
 	 * insert otp to table with roles
 	 * @param otp
@@ -766,15 +775,16 @@ class DatabaseHelper {
 		System.out.println("Enter reference links (comma separated): ");
 		String[] referenceLinks = scanner.nextLine().split(",");
 
-		String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?)";
+		String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 			pstmt.setString(1, level);
 			pstmt.setString(2, groupId);
 			pstmt.setString(3, title);
 			pstmt.setString(4, shortDescription);
-			pstmt.setArray(5, connection.createArrayOf("VARCHAR", keywords));
+			pstmt.setString(5, keywords)
 			pstmt.setString(6, body);
 			pstmt.setArray(7, connection.createArrayOf("VARCHAR", referenceLinks));
+			
 			pstmt.executeUpdate();
 		}
 	}
