@@ -650,6 +650,7 @@ class DatabaseHelper {
 			return;
 		}
 
+		System.out.println("All articles:");
 		String query = "SELECT * FROM articles";
 		try (Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery(query)) {
