@@ -36,6 +36,10 @@ class DatabaseHelper {
 	 */
 	public DatabaseHelper() {}
  
+	/**
+	 * Connect to the database
+	 * @throws SQLException
+	 */
 	public void connectToDatabase() throws SQLException {
 		try {
 			Class.forName(JDBC_DRIVER); // Load the JDBC driver
@@ -112,6 +116,11 @@ class DatabaseHelper {
 		return true;
 	}
  
+	/**
+	 * Add a user to the database
+	 * @param user
+	 * @throws SQLException
+	 */
 	public void addUser(User user) throws SQLException {
 		String insertUser = "INSERT INTO cse360users (userName, email, password, firstName, middleName, lastName, preferredFirst, role, otpFlag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
@@ -310,6 +319,12 @@ class DatabaseHelper {
 	    return false; // If an error occurs, assume user doesn't exist
 	}
  
+	/**
+	 * check if user in database
+	 * @param userName
+	 * @param password
+	 * @return boolean that represents if user exists
+	 */
 	public boolean doesUserExistBoth(String userName, String password) {
 	    String query = "SELECT COUNT(*) FROM cse360users WHERE userName = ? AND password = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -540,12 +555,11 @@ class DatabaseHelper {
 		} 
 	}
  
-	// Admin and instruction team roles are enhanced
-	// with commands to back up and restore help system data
-	// to admin/instructor named external file
- 
-	// restore command -->
-	// 1. remove all existing help articles
+	/**
+	 * delete all articles from the database
+	 * @param role
+	 * @throws SQLException
+	 */
 	public void deleteAllArticles(String role) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
@@ -611,6 +625,11 @@ class DatabaseHelper {
 		}
 	}
  
+	/**
+	 * Update an existing article in the database
+	 * @param role
+	 * @throws SQLException
+	 */
 	public void createArticle(String level, String groupId, String title, String shortDescription, String[] keywords, String body, String[] referenceLinks, String role) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
@@ -679,6 +698,11 @@ class DatabaseHelper {
 		}
 	}
  
+	/**
+	 * View all articles in the database
+	 * @param role
+	 * @throws SQLException
+	 */
 	public void viewAllArticles(String role) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
@@ -744,6 +768,12 @@ class DatabaseHelper {
 		}
 	}
  
+	/**
+	 * View a specific article in the database
+	 * @param role
+	 * @param id
+	 * @throws SQLException
+	 */
 	public void viewArticle(String role, int id) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
@@ -776,6 +806,12 @@ class DatabaseHelper {
 		}
 	}
  
+	/**
+	 * Delete an article from the database
+	 * @param role
+	 * @return boolean that represents if article was deleted
+	 * @throws SQLException
+	 */
 	public boolean deleteArticle(String role) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
