@@ -90,7 +90,7 @@ class DatabaseHelper {
 		statement.execute(otpTable);
 
 		String articlesTable = "CREATE TABLE IF NOT EXISTS articles ("
-                + "id INT PRIMARY KEY, "
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "		// id
                 + "level VARCHAR(50), "     				// level (beginner, intermediate, advanced, expert)
                 + "group_id VARCHAR(50), "  				// group_id (e.g. CSE360, CSE360-01, CSE360-02)
                 + "title VARCHAR(255) NOT NULL, " 			// title
@@ -605,19 +605,37 @@ class DatabaseHelper {
 			System.out.println("Invalid role");
 			return;
 		}
-		if(!isDatabaseEmpty()) {
-			String sql = "TRUNCATE TABLE articles";
-			
-			try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-				pstmt.executeUpdate();
-				System.out.println("Successfully cleared out all articles");
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-			
+
+		// ask the user if they want to clear out the database before restoring or merging the data into the database
+		System.out.println("Would you like to clear the database and restore or merge into the database?: (c/m)");
+		String response = scanner.nextLine();
+		if (!response.equals("c") && !response.equals("m")) {
+			System.out.println("Invalid response. Please try again.");
+			return;
 		}
-		
-		
+		if (response.equals("c")) {
+			clearDatabase(file);
+		} else {
+			mergeDatabase(file);
+		}
+	}
+
+	// clearDatabase
+	public void clearDatabase(String file) throws Exception {
+		// delete all articles
+		deleteAllArticles("a");
+		// restore the database
+		restoreDatabase(file);
+	}
+
+	// merge database
+	public void mergeDatabase(String file) throws Exception {
+		// restore the database
+		restoreDatabase(file);
+	}
+
+	// restoreDatabase function
+	public void restoreDatabase(String file) throws Exception {
 		try(BufferedReader reads = new BufferedReader(new FileReader(file))) {
 			//counter keeps track of lines - every 7 we need to insert an article into the table
 			int counter = 0;
@@ -639,7 +657,7 @@ class DatabaseHelper {
 					case 0 ->  {
 						if(counter == 0) break;
 						//ignore the id since it will auto generate upon table entry
-						String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?)";
+						String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?) IF NOT EXISTS";
 						System.out.println("Inserting article: " + id);
 						try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 							
