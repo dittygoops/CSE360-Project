@@ -565,7 +565,7 @@ class DatabaseHelper {
 		String level = scanner.nextLine();
 		
 		System.out.println("Enter group ID (e.g. CSE360, CSE360-01, CSE360-02): ");
-		String groupId = scanner.nextLine();
+		String groupId = scanner.nextLine() + ",";
 		
 		System.out.println("Enter article title: ");
 		String title = scanner.nextLine();
@@ -682,9 +682,9 @@ class DatabaseHelper {
 			return;
 		}
 
-		String query = "SELECT * FROM articles WHERE group_id = ?";
+		String query = "SELECT * FROM articles WHERE group_id LIKE ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-			pstmt.setString(1, group + ",");
+			pstmt.setString(1, "%" + group + ",%");
 			try (ResultSet rs = pstmt.executeQuery()) {
 				while (rs.next()) {
 					int id = rs.getInt("id");
