@@ -781,7 +781,7 @@ class DatabaseHelper {
 			pstmt.setString(2, groupId);
 			pstmt.setString(3, title);
 			pstmt.setString(4, shortDescription);
-			pstmt.setString(5, keywords)
+			pstmt.setArray(5, connection.createArrayOf("VARCHAR", keywords));
 			pstmt.setString(6, body);
 			pstmt.setArray(7, connection.createArrayOf("VARCHAR", referenceLinks));
 			
