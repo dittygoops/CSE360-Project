@@ -87,7 +87,7 @@ class DatabaseHelper {
 		String articlesTable = "CREATE TABLE IF NOT EXISTS articles ("
                 + "id INT AUTO_INCREMENT PRIMARY KEY, "
                 + "level VARCHAR(20), "     				// level (beginner, intermediate, advanced, expert)
-                + "group_id VARCHAR(50), "  				// group_id (e.g. CSE360, CSE360-01, CSE360-02)
+                + "group_id VARCHAR(255), "  				// group_id (e.g. CSE360, CSE360-01, CSE360-02)
                 + "title VARCHAR(255) NOT NULL, " 			// title
                 + "short_description CLOB, "				// short_description/abstract
                 + "keywords VARCHAR(255), "						// keywords
@@ -684,7 +684,7 @@ class DatabaseHelper {
 
 		String query = "SELECT * FROM articles WHERE group_id = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-			pstmt.setString(1, group);
+			pstmt.setString(1, group + ",");
 			try (ResultSet rs = pstmt.executeQuery()) {
 				while (rs.next()) {
 					int id = rs.getInt("id");
@@ -692,9 +692,9 @@ class DatabaseHelper {
 					String groupId = rs.getString("group_id");
 					String title = rs.getString("title");
 					String shortDescription = rs.getString("short_description");
-					String keywords = rs.getString("keyword");
+					String keywords = rs.getString("keywords");
 					String body = rs.getString("body");
-					String referenceLinks = rs.getString("referenceLinks");
+					String referenceLinks = rs.getString("reference_links");
 
 					System.out.println("ID: " + id);
 					System.out.println("Level: " + level);
@@ -724,18 +724,18 @@ class DatabaseHelper {
 					String groupId = rs.getString("group_id");
 					String title = rs.getString("title");
 					String shortDescription = rs.getString("short_description");
-					String[] keywords = rs.getString("keyword").split(",");
+					String keywords = rs.getString("keywords");
 					String body = rs.getString("body");
-					String[] referenceLinks = rs.getString("reference_links").split(",");
+					String referenceLinks = rs.getString("reference_links");
 
 					System.out.println("ID: " + id);
 					System.out.println("Level: " + level);
 					System.out.println("Group ID: " + groupId);
 					System.out.println("Title: " + title);
 					System.out.println("Short Description: " + shortDescription);
-					System.out.println("Keywords: " + String.join(", ", keywords));
+					System.out.println("Keywords: " + keywords);
 					System.out.println("Body: " + body);
-					System.out.println("Reference Links: " + String.join(", ", referenceLinks));
+					System.out.println("Reference Links: " + referenceLinks);
 				}
 			}
 		}
