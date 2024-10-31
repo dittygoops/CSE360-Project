@@ -682,7 +682,7 @@ class DatabaseHelper {
 			return;
 		}
 
-		String query = "SELECT * FROM articles WHERE group_id = ?";
+		String query = "SELECT * FROM articles WHERE group_id LIKE ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setString(1, group + ",");
 			try (ResultSet rs = pstmt.executeQuery()) {
