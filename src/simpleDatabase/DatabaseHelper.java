@@ -650,6 +650,7 @@ class DatabaseHelper {
 			return;
 		}
 
+		System.out.println("All articles:");
 		String query = "SELECT * FROM articles";
 		try (Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery(query)) {
@@ -659,9 +660,9 @@ class DatabaseHelper {
 				String groupId = rs.getString("group_id");
 				String title = rs.getString("title");
 				String shortDescription = rs.getString("short_description");
-				String[] keywords = (String[]) rs.getArray("keywords").getArray();
+				String keywords = rs.getString("keywords");
 				String body = rs.getString("body");
-				String[] referenceLinks = (String[]) rs.getArray("reference_links").getArray();
+				String referenceLinks = rs.getString("reference_links");
 
 				System.out.println("ID: " + id);
 				System.out.println("Level: " + level);
