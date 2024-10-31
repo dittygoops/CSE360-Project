@@ -1,25 +1,7 @@
 package simpleDatabase;
 
 import java.sql.SQLException;
-
-/**
- * This file contains the class hierarchy for the user management and role system of the CSE 360 Help Application.
- * 
- * The hierarchy includes:
- * - User: The base class for all user types, containing common attributes and methods.
- * - Admin: Extends User, adding administrative capabilities like user management and account operations.
- * - Student: Extends User, representing a student user with specific student-related functionalities
- * 		(not included in Phase I deliverable).
- * - Instructor: Extends User, representing an instructor user with specific instructor-related functionalities
- * 		(not included in Phase I deliverable).
- *
- * @author Isabella Swanson
- * @version 1.0
- * @since 10/9/2024
- */
-
 import java.time.LocalDateTime;
-import java.util.List;
 
 /* .......... User Superclass ............*/
 /**

@@ -672,7 +672,10 @@ public class StartCSE360 {
 		
 		return credentials;
 	}
+<<<<<<< HEAD
 	
     
 	
+=======
+>>>>>>> 2609ae3e9c0bd9f0ce78fff93dd08d542647e221
 }
