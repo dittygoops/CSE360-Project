@@ -657,7 +657,7 @@ class DatabaseHelper {
 					case 0 ->  {
 						if(counter == 0) break;
 						//ignore the id since it will auto generate upon table entry
-						String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?) IF NOT EXISTS";
+						String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?)";
 						System.out.println("Inserting article: " + id);
 						try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 							
@@ -722,7 +722,8 @@ class DatabaseHelper {
 			}
 			
 			if(counter > 0) {
-				String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?)";
+				// String to insert article into the table;
+				String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?) IF NOT EXISTS";
 				try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 					
 					//pstmt.setString(1,  id);
