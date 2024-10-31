@@ -86,7 +86,7 @@ class DatabaseHelper {
 
 		String articlesTable = "CREATE TABLE IF NOT EXISTS articles ("
                 + "id INT AUTO_INCREMENT PRIMARY KEY, "
-                + "level VARCHAR(20), "     // level (beginner, intermediate, advanced, expert)
+                + "level VARCHAR(20), "     				// level (beginner, intermediate, advanced, expert)
                 + "group_id VARCHAR(50), "  				// group_id (e.g. CSE360, CSE360-01, CSE360-02)
                 + "title VARCHAR(255) NOT NULL, " 			// title
                 + "short_description CLOB, "				// short_description/abstract
