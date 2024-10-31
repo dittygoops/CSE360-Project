@@ -112,6 +112,7 @@ public class StartCSE360 {
 		//  * Below this line goes after the congrats message!
 		if (currentUser.getRoles().length() == 1) {
 	            		if(currentUser.getRoles().contains("a")) adminHome();
+	            		else if(currentUser.getRoles().contains("t")) instructorHome();
 	            		else regHome();
 	            	} else sessionRoleSelection(currentUser);
 		
@@ -155,7 +156,7 @@ public class StartCSE360 {
                 }
 			case "3" -> {
                             System.out.println("Instructor.");
-                            regHome();
+                            instructorHome();
                 }
 			default -> System.out.println("There was an error on our end. We are navigation you back to the login page. Please try again at a later time.");
 		}
@@ -163,9 +164,9 @@ public class StartCSE360 {
 	
 	
 	private static void regHome() throws SQLException {
-		System.out.println("Welcome to the home page of either a Student or Instructor.");
+		System.out.println("Welcome to the home page of the Student");
 		System.out.println("At this time, you can only perform one action - Logout. However, you are welcome to sit here for however long you like.");
-		System.out.print("To Logout, Enter q: ");
+		System.out.println("To Logout, Enter q: ");
 		String logout = scanner.nextLine();
 		if(logout.equals("q")) {
 			System.out.println("You have successfully logged out. See you next time!");
@@ -224,6 +225,7 @@ public class StartCSE360 {
 	            	//routes to different pages depending on permissions of a user
 	            	if (user.getRoles().length() == 1) {
 	            		if(user.getRoles().contains("a")) adminHome();
+	            		else if(user.getRoles().contains("t")) instructorHome();
 	            		else regHome();
 	            	} else sessionRoleSelection(user);
 	            	break;
@@ -588,7 +590,7 @@ public class StartCSE360 {
 			case "7": {
 				
 				System.out.println("Please enter the id of the article you would like to view: ");
-				int articleID = scanner.nextInt();
+				String articleID = scanner.nextLine();
 				databaseHelper.viewArticle("a", articleID);
 				break;
 			}
@@ -657,7 +659,7 @@ public class StartCSE360 {
 				System.out.print("Invalid choice. Please try again.");
 				break;
 			}
-		} while(!choice.equals("6")); 
+		} while(!choice.equals("14")); 
 		
 		mainLogin();
 	}
@@ -684,7 +686,7 @@ public class StartCSE360 {
 		}
 		case "2": {
 			System.out.println("Please enter the id of the article you would like to view: ");
-			int articleID = scanner.nextInt();
+			String articleID = scanner.nextLine();
 			databaseHelper.viewArticle("t", articleID);
 			break;
 		}

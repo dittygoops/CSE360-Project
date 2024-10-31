@@ -660,7 +660,7 @@ class DatabaseHelper {
 				String groupId = rs.getString("group_id");
 				String title = rs.getString("title");
 				String shortDescription = rs.getString("short_description");
-				String keywords = rs.getString("keyword");
+				String keywords = rs.getString("keywords");
 				String body = rs.getString("body");
 				String referenceLinks = rs.getString("reference_links");
 
@@ -709,11 +709,13 @@ class DatabaseHelper {
 		}
 	}
 
-	public void viewArticle(String role, int id) throws SQLException {
+	public void viewArticle(String role, String articleId) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
 			return;
 		}
+		
+		int id = Integer.parseInt(articleId);
 
 		String query = "SELECT * FROM articles WHERE id = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
