@@ -662,6 +662,69 @@ public class StartCSE360 {
 		mainLogin();
 	}
 	
+	/*
+	 * Home for instructor
+	 */
+	private static void instructorHome() throws SQLException {
+		System.out.println("Welcome to the Home Page for Instructors!");
+		System.out.println("Here are the actions you can perform: ");
+		System.out.println("1. Create an Article");
+		System.out.println("2. View an Article");
+		System.out.println("3. View a group of Articles");
+		System.out.println("4. View all Articles");
+		System.out.println("5. Update an Article");
+		System.out.println("6. Delete an Article");
+		System.out.println("7. Logout");
+
+		String choice = scanner.nextLine();
+		switch(choice) {
+		case "1": {
+			databaseHelper.createArticle("t");
+			break;
+		}
+		case "2": {
+			System.out.println("Please enter the id of the article you would like to view: ");
+			int articleID = scanner.nextInt();
+			databaseHelper.viewArticle("t", articleID);
+			break;
+		}
+		case "3": {
+			System.out.println("Please enter the name of the group of articles you would like to view: ");
+			String groupName = scanner.nextLine();
+			System.out.println("Here are the articles: ");
+			databaseHelper.viewGroupedArticles("t", groupName);
+			break;
+		}
+		case "4": {
+			System.out.println("Here are the articles: ");
+			databaseHelper.viewAllArticles("t");
+			break;
+		}
+		case "5": {
+			databaseHelper.updateArticle("t");
+			System.out.println("The article was successfully updated.");
+			break;
+		}
+		case "6": {
+			boolean success = databaseHelper.deleteArticle("t");
+			if(success) System.out.println("Article was properly deleted");
+			else System.out.println("Article was not able to be deleted");
+			break;
+		}
+		case "7": {
+			System.out.println("To Logout, Enter q: ");
+			String logout = scanner.nextLine();
+			if(logout.equals("q")) {
+				System.out.println("You have successfully been logged out of the system.");
+			} else System.out.println("Invalid option.");
+			break;
+		}
+		default: 
+			System.out.print("Invalid choice. Please try again.");
+			break;
+		}
+	}
+
 	private static String[] get_user_credentials() {
 		String[] credentials = new String[2];
 		
