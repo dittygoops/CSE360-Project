@@ -1,23 +1,7 @@
 package simpleDatabase;
 
-/**
- * This file contains the class hierarchy for the user management and role system of the CSE 360 Help Application.
- * 
- * The hierarchy includes:
- * - User: The base class for all user types, containing common attributes and methods.
- * - Admin: Extends User, adding administrative capabilities like user management and account operations.
- * - Student: Extends User, representing a student user with specific student-related functionalities
- * 		(not included in Phase I deliverable).
- * - Instructor: Extends User, representing an instructor user with specific instructor-related functionalities
- * 		(not included in Phase I deliverable).
- *
- * @author Isabella Swanson
- * @version 1.0
- * @since 10/9/2024
- */
-
+import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.List;
 
 /* .......... User Superclass ............*/
 /**
@@ -139,7 +123,7 @@ public class User {
         this.otpExpiration = otpExpiration;
     }
     
-    public boolean isOneTimePasswordFlag() {
+    public boolean getOTP() {
         return otpFlag;
     }
 
@@ -150,6 +134,7 @@ public class User {
     public LocalDateTime getOneTimePasswordExpiration() {
         return otpExpiration;
     }
+    
 
     /**
      * Method to retrieve the full name of the user, combining first, middle (if present), and last names.
@@ -235,10 +220,8 @@ class Admin extends User {
      * @return The generated invitation code
      */
     public String inviteUser(String email, String roles) {
-        // use DatabaseHelper object to generate invitation code
-        String invitationCode = databaseHelper.createOTP();
-        // Logic to send invitation email with the code
-        // Store the invitation code and associated roles
+        // generate otp code and return
+        String invitationCode = databaseHelper.createOTP(roles);
         return invitationCode;
     }
 
@@ -247,13 +230,12 @@ class Admin extends User {
      *
      * @param username The username of the account to reset
      */
-    public void resetUserAccount(String username) {
-        // Generate a one-time password
-        String oneTimePassword = generateOneTimePassword();
-        // Set expiration date and time (24 hours from now)
-        LocalDateTime expiration = LocalDateTime.now().plusHours(24);
-        // Update user account with one-time password and expiration
-        // Logic to send the one-time password to the user
+    public String resetUserAccount(String username) {
+        // get roles from the username
+        String roles = databaseHelper.getUserRoles(username);
+        // generate otp code and return
+        databaseHelper.createOTP(roles);
+        return "";
     }
 
     /**
@@ -262,22 +244,18 @@ class Admin extends User {
      * @param username The username of the account to delete
      * @return True if the account was successfully deleted, otherwise false
      */
-    public boolean deleteUserAccount(String username) {
-        // Display "Are you sure?" message and check for "Yes" response
-        if (confirmDeletion()) {
-            // Logic to delete the user account
-
-            return true;
-        }
-        return false;
+    public boolean deleteUserAccount(String username) throws SQLException {
+        // delete user acount
+        return databaseHelper.deleteUserAccount(username);
     }
-
+}
     /**
      * Retrieves a list of user summaries containing basic information about all users.
-     *
      * @return A list of user summaries
      */
-    public List<UserSummary> listUserAccounts() {
-        // Logic to retrieve and return a list of user summaries
-        // Each summary contains username, full name, and role codes
-        return null;
+    /*
+    public List<UserSummary> getUserSummaries() {
+        // get user summaries
+        return databaseHelper.getUserSummaries();
+    }
+    */

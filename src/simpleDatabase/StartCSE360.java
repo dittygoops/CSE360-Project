@@ -15,6 +15,7 @@ public class StartCSE360 {
 
 	private static final DatabaseHelper databaseHelper = new DatabaseHelper();
 	private static final Scanner scanner = new Scanner(System.in);
+	
 
 	/*
 	 * Blank Constructor
@@ -36,7 +37,6 @@ public class StartCSE360 {
 				System.out.println( "In-Memory Database  is empty" );
 				//set up administrator access
 				setupAdministrator();
-				databaseHelper.register("hi2", "bruh2", "as");
 			}
 			//called here as need to reroute to main login after initial setup or if there are other users
 			mainLogin();
@@ -162,6 +162,108 @@ public class StartCSE360 {
 	}
 	
 	
+	private static void regHome() throws SQLException {
+		System.out.println("Welcome to the home page of either a Student or Instructor.");
+		System.out.println("At this time, you can only perform one action - Logout. However, you are welcome to sit here for however long you like.");
+		System.out.print("To Logout, Enter q: ");
+		String logout = scanner.nextLine();
+		if(logout.equals("q")) {
+			System.out.println("You have successfully logged out. See you next time!");
+			mainLogin();
+		} 
+		while(!logout.equals("q")) {
+			System.out.print("Invalid input. To Logout, Enter q: ");
+			logout  = scanner.nextLine();
+		}
+		
+	}
+
+    /**
+     * Main login page for the CSE 360 Help Application.
+     * 
+     */
+    private static void mainLogin() throws SQLException {
+	    String choice = "";
+	    String userName = "";
+	    String password = "";
+	    String oTP = "";
+
+	    // Input for returning user and deals with invalid input
+	    System.out.print("Are you a returning user? (Note - If you had your account reset, choose 2) 1. Yes 2. No 3. Exit System ");
+	    choice = scanner.nextLine();
+
+	    while (!choice.equals("1") && !choice.equals("2") && !choice.equals("3")) {
+	        System.out.println("Invalid option selected. Please try again");
+	        System.out.print("Are you a returning user? 1. Yes 2. No 3. Exit the System: ");
+	        choice = scanner.nextLine();
+	    }
+
+	    // Choice 1: Returning user
+	    if (choice.equals("1")) {
+	        while (true) {
+	            String[] credentials = get_user_credentials();  // Get username and password
+	            userName = credentials[0];
+	            password = credentials[1];
+
+	            // Check if user exists and credentials are valid
+	            boolean doesUserExist = databaseHelper.doesUserExistBoth(userName, password);
+	            if(doesUserExist) {
+	            	User user = databaseHelper.login(userName, password);
+	            	System.out.println("You have successfully logged in.");
+	            	
+	            	if(user != null) {
+	            		if(user.getOTP()){
+	            	 		settingUpAccount(user);
+	            	 		break;
+	            		}
+	            	} else {
+	            		System.out.println("User is being returned as null.");
+	            	}
+	            	 
+	            	 
+	            	//routes to different pages depending on permissions of a user
+	            	if (user.getRoles().length() == 1) {
+	            		if(user.getRoles().contains("a")) adminHome();
+	            		else regHome();
+	            	} else sessionRoleSelection(user);
+	            	break;
+	            } else System.out.println("Invalid credentials! Try again");
+
+	        }
+	    }
+	    
+	    // Choice 2: First-time user or account reset using OTP
+	    else if (choice.equals("2")) {
+	        System.out.println("You have been invited to the system or had your account reset by an administrator.");
+	        
+	        while (true) {
+	        	System.out.print("Enter your One Time Password: ");
+		        oTP = scanner.nextLine();
+		        
+		        if (databaseHelper.verifyOTP(oTP)) {
+		        	System.out.println("If you had your account reset, Please re-enter your current username and new password.");
+			        System.out.println("If you are a first-time user, continue on to set up your initial username and password.");
+			        
+			        String[] credentials = get_user_credentials();
+			        databaseHelper.register(credentials[0], credentials[1], databaseHelper.getRolesFromOTP(oTP));
+			        System.out.println("Thank you for registering! Please note: ");
+			        System.out.println("The next time you login with these credentials, you will be directed to finish setting up your account. Bye!");
+			        
+			        break;
+			        
+		        } else {
+		        	System.out.println("OTP is invalid");
+		        }
+	        }
+	        
+	        mainLogin();
+	        // You will likely want to implement functionality for OTP verification and account setup here.
+	    } else if(choice.equals("3")) {
+	    	System.out.println("You are now leaving the system.");
+	    	return;
+	    }
+	}
+	
 	
 	/*
 	 * Home for admin
@@ -169,7 +271,7 @@ public class StartCSE360 {
 	private static void adminHome() throws SQLException {
 		String choice = "";
 		
-		System.out.print("Welcome to the Home Page for Admins!");
+		System.out.println("Welcome to the Home Page for Admins!");
 		do {
 			
 			System.out.println("Here are the actions you can perform: ");
@@ -246,9 +348,11 @@ public class StartCSE360 {
 						
 				}
 				
-				//OTP Generation + Sending
-				databaseHelper.createOTP();
+				
 				if(rolesToGive.length() > 0) {
+					//OTP Generation + Sending
+					System.out.print("Here is the OTP sent: ");
+					System.out.println(databaseHelper.createOTP(rolesToGive));
 					//generate OTP + flag on DB side
 					System.out.println("You have successfully invited a student to join the system!");
 					System.out.println("One Time Password has been sent to this user to enable their registration.");
@@ -263,16 +367,19 @@ public class StartCSE360 {
 				String usernameReset = scanner.nextLine();
 				System.out.print("Enter email for the user you would like to reset: ");
 				String emailReset = scanner.nextLine();
-				if(!databaseHelper.doesUserExist(emailReset)) {
+				if(!databaseHelper.doesUserExistEmail(emailReset)) {
 					System.out.println("There is no user with the provided specifications.");
 					break;
 				}
 				
-				//revert back to initial registration or user invitation state for the db
-				//generates OTP
-				System.out.println("You have successfully reset a user in the system.");
-				//OTP generation
-				System.out.println("One Time Password has been sent to this user to enable their registration.");
+				String curRoles = databaseHelper.getUserRoles(usernameReset);
+				if(databaseHelper.deleteUserAccount(usernameReset)) {
+					System.out.println("You have successfully reset a user in the system. They will be notified of this change. They will have the same roles as before once signed back in");
+					String otp = databaseHelper.createOTP(curRoles);
+					System.out.println("One Time Password has been sent to this user: " + otp);
+				}else
+					System.out.println("There was an error on our end and specified user has not been deleted - please try again later.");
+				
 				 
 				break;
 			}
@@ -282,21 +389,23 @@ public class StartCSE360 {
 				
 				System.out.print("Are you sure? 1. Yes 2. No");
 				String confirmDelete = scanner.nextLine();
-				if(confirmDelete == "1") {
+				if(confirmDelete.equals("1")) {
 					System.out.print("Enter username for the user you would like to delete: ");
 					String usernameDelete = scanner.nextLine();
 					System.out.print("Enter email for the user you would like to delete: ");
 					String emailDelete = scanner.nextLine();
-					if(!databaseHelper.doesUserExist(emailDelete)) {
+					if(!databaseHelper.doesUserExistEmail(emailDelete)) {
 						System.out.println("There is no user with the provided specifications.");
 						break;
 					}
 					else {
 						//db user delete - check if exists first
-						System.out.println("You have successfully deleted a user.");
+						boolean successful = databaseHelper.deleteUserAccount(usernameDelete);
+						if(successful) System.out.println("You have successfully deleted a user.");
+						else System.out.println("There was an error on our end. Please try again later");
 						 
 					}
-				} else if(confirmDelete == "2") System.out.println("You have not deleted a user.");
+				} else if(confirmDelete.equals("2")) System.out.println("You have not deleted a user.");
 				else System.out.println("Invalid Option. You have not deletd a user.");
 				break;
 			}
@@ -316,17 +425,18 @@ public class StartCSE360 {
 				String usernameAdjust = scanner.nextLine();
 				System.out.print("Enter email for the user whose roles you would like to adjust: ");
 				String emailAdjust = scanner.nextLine();
-				if(!databaseHelper.doesUserExist(emailAdjust)) {
+				if(!databaseHelper.doesUserExistEmail(emailAdjust)) {
 					System.out.println("There is no user with the provided specifications.");
 					break;
 				}
 				
 				//have this from User object that we have found via db query I assume
-				String userRoles = "";
+				User curUser = databaseHelper.findUser(usernameAdjust, emailAdjust);
+				String userRoles = curUser.getRoles();
 				
 				System.out.print("Please choose if you would like to add or remove a role from this user? 1. Add 2. Remove");
 				String option = scanner.nextLine();
-				if(option == "1") {
+				if(option.equals("1")) {
 					
 					if(userRoles.length() == 3) {
 						System.out.println("This user already has all the roles.");
@@ -388,7 +498,7 @@ public class StartCSE360 {
 					}
 				
 				//Removing a role from the user
-				} else if (option == "2") {
+				} else if (option.equals("2")) {
 					
 					if(userRoles.length() == 0) {
 						System.out.println("This user has no roles.");
@@ -452,6 +562,10 @@ public class StartCSE360 {
 				//Final Check is for invalid input on Adding or Removing roles	
 				} else System.out.println("Invalid Option. The user will remain unchanged.");
 				
+				//updating user once more
+				curUser.setRoles(userRoles);
+				databaseHelper.updateUser(curUser);
+				
 				break;
 			}
 			
@@ -473,6 +587,17 @@ public class StartCSE360 {
 		} while(!choice.equals("6")); 
 		
 		mainLogin();
+	}
+	
+	private static String[] get_user_credentials() {
+		String[] credentials = new String[2];
+		
+		System.out.print("Enter Username: ");
+		credentials[0] = scanner.nextLine();
+		System.out.print("Enter Password: ");
+		credentials[1] = scanner.nextLine();
+		
+		return credentials;
 	}
 	
 	/**
