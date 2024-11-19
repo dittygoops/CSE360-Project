@@ -10,8 +10,8 @@ import java.util.Scanner;
  * (ex. A Phd student accessing articles for their high level classes and also overlooking articles for ones they are teaching)
  * 
  *
- * @author Shiva Rudra, Abhave Abhilash, Aditya Gupta, Isabella Swanson, Justin Miller
- * @version 1.0
+ * @author Shiva Rudra
+ * @version 1.0+
  * @since 10/9/2024
  */
 public class StartCSE360 {
