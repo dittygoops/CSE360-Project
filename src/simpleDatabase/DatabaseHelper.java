@@ -1063,7 +1063,7 @@ class DatabaseHelper {
 				System.out.println("Title: " + title);
 				System.out.println("Short Description: " + shortDescription);
 				System.out.println("Keywords: " + keywords);
-				System.out.println("Body: " + body);
+				System.out.println("Body: " + decryptedBody);
 				System.out.println("Reference Links: " + referenceLinks);
 			}
 		}
