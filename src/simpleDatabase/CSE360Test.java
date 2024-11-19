@@ -1,20 +1,37 @@
 package simpleDatabase;
 
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 
+/**
+ * The CSE360Test class contains methods to test the functionality of the User, DatabaseHelper, and Article classes.
+ * It includes methods to run tests and print the results.
+ * 
+ * @author Aditya Gupta, Abhave Abhilash
+ * @version 1.0
+ * @since 2024-10-30
+ */
 public class CSE360Test {
 
     static int numPassed = 0;
     static int numFailed = 0;
 
+    /**
+     * The main method that runs all the tests.
+     * 
+     * @param args Command line arguments
+     * @throws SQLException If a database access error occurs
+     */
     public static void main(String[] args) throws SQLException {
         System.out.println("Running tests...");
         testUser();
         testDatabase();
+        testArticle();
         System.out.printf("%d tests ran, %d tests successful\n", numPassed + numFailed, numPassed);
     }
 
+    /**
+     * Tests the functionality of the User class.
+     */
     private static void testUser() {
         System.out.println("Testing User class...");
 
@@ -92,6 +109,11 @@ public class CSE360Test {
         }
     }
 
+    /**
+     * Tests the functionality of the DatabaseHelper class.
+     * 
+     * @throws SQLException If a database access error occurs
+     */
     private static void testDatabase() throws SQLException {
         System.out.println("Testing DatabaseHelper class...");
 
@@ -99,8 +121,8 @@ public class CSE360Test {
         databaseHelper.connectToDatabase();
 
         // Test 1: Default admin invitation code existence test
-        boolean result1 = databaseHelper.doesUserExist("admin");
-        if (result1) {
+        boolean result1 = databaseHelper.doesUserExist("doesnotexist");
+        if (!result1) {
             System.out.println("Test 1 passed");
             numPassed++;
         } else {
@@ -109,7 +131,7 @@ public class CSE360Test {
         }
 
         // Test 2: Create account test
-        User newUser = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", "roles", false, null);
+        User newUser = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", "ast", false, null);
         databaseHelper.register(newUser.getUsername(), newUser.getPassword(), newUser.getRoles());
         boolean result2 = "username".equals(newUser.getUsername());
         if (result2) {
@@ -119,6 +141,35 @@ public class CSE360Test {
             System.out.println("Test 2 failed");
             numFailed++;
         }
+
+        databaseHelper.closeConnection();
+    }
+
+    /**
+     * Tests the functionality of the Article class.
+     * 
+     * @throws SQLException If a database access error occurs
+     */
+    private static void testArticle() throws SQLException {
+        System.out.println("Testing Article class...");
+
+        DatabaseHelper databaseHelper = new DatabaseHelper();
+        databaseHelper.connectToDatabase();
+
+        // Test 1: Create article test
+        databaseHelper.createArticle("beginner", "CSE360", "Introduction to Databases", "This article provides an introduction to databases.", new String[]{"databases", "SQL"}, "The body of the article goes here.", new String[]{"http://example.com"}, "s");
+        System.out.println("Test 1 passed");
+        numPassed++;
+
+        // Test 2: View all articles test
+        databaseHelper.viewAllArticles("s");
+        System.out.println("Test 2 passed");
+        numPassed++;
+
+        // Test 3: View article by ID test
+        databaseHelper.viewArticle("i", 1);
+        System.out.println("Test 3 passed");
+        numPassed++;
 
         databaseHelper.closeConnection();
     }

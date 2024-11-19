@@ -13,7 +13,7 @@ import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-
+ 
 /***
  * This class contains all functions that relate/interact with our H2 databases
  * @author Abhave Abhilash and Aditya Gupta
@@ -21,26 +21,31 @@ import java.util.Scanner;
  * @since 10/9/2024
  */
 class DatabaseHelper {
-
+ 
 	// JDBC driver name and database URL 
+	private final EncryptionHelper encryptionHelper = new EncryptionHelper();
 	static final String JDBC_DRIVER = "org.h2.Driver";   
 	static final String DB_URL = "jdbc:h2:~/firstDatabase";  
-
+ 
 	//  Database credentials 
 	static final String USER = "sa"; 
 	static final String PASS = ""; 
-
+ 
 	private Connection connection = null;
 	private Statement statement = null; 
-
+ 
 	private Scanner scanner = new Scanner(System.in);
 	//	PreparedStatement pstmt
-	
+ 
 	/**
 	 * Blank constructor
 	 */
 	public DatabaseHelper() {}
-
+ 
+	/**
+	 * Connect to the database
+	 * @throws SQLException
+	 */
 	public void connectToDatabase() throws SQLException {
 		try {
 			Class.forName(JDBC_DRIVER); // Load the JDBC driver
@@ -52,7 +57,7 @@ class DatabaseHelper {
 			System.err.println("JDBC Driver not found: " + e.getMessage());
 		}
 	}
-
+ 
 	/**
 	 * create and initiate our user and otp tables
 	 * @throws SQLException
@@ -61,6 +66,7 @@ class DatabaseHelper {
 		//String dropUsers = "DROP TABLE IF EXISTS cse360users";
 		//statement.execute(dropUsers);
 		String userTable = "CREATE TABLE IF NOT EXISTS cse360users ("
+
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "userName VARCHAR(255), "
 				+ "email VARCHAR(255) UNIQUE, "
@@ -76,11 +82,8 @@ class DatabaseHelper {
 				// user role sia
 				+ "role VARCHAR(3), "
 				+ "otpFlag BOOLEAN DEFAULT FALSE) ";
-		statement.execute(userTable);
-		
-		//String dropOtp = "DROP TABLE IF EXISTS otpTable";
-		//statement.execute(dropOtp);		
-
+		statement.execute(userTable);		
+ 
 		// create otp table, with id, otp, expiry time and user role(s)
 		String otpTable = "CREATE TABLE IF NOT EXISTS otpTable ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
@@ -88,21 +91,20 @@ class DatabaseHelper {
 				+ "expiryTime TIMESTAMP, " 
 				+ "role VARCHAR(3))";
 		statement.execute(otpTable);
-
+ 
 		String articlesTable = "CREATE TABLE IF NOT EXISTS articles ("
-                + "id INT PRIMARY KEY, "
-                + "level VARCHAR(50), "     				// level (beginner, intermediate, advanced, expert)
-                + "group_id VARCHAR(50), "  				// group_id (e.g. CSE360, CSE360-01, CSE360-02)
+                + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "level VARCHAR(20), "     				// level (beginner, intermediate, advanced, expert)
+                + "group_id VARCHAR(255), "  				// group_id (e.g. CSE360, CSE360-01, CSE360-02)
                 + "title VARCHAR(255) NOT NULL, " 			// title
                 + "short_description CLOB, "				// short_description/abstract
-                + "keywords VARCHAR(255), "						// keywords
+                + "keywords VARCHAR(255), "					// keywords
                 + "body CLOB, "								// body
-                + "reference_links VARCHAR(255)"					// reference_links
+                + "reference_links VARCHAR(255)"			// reference_links
                 + ")";
-			statement.execute(articlesTable);
-		
+		statement.execute(articlesTable);
 	}
-
+ 
 	/**
 	 * Check if the database is empty
 	 * @return boolean that represents empty or not
@@ -116,7 +118,28 @@ class DatabaseHelper {
 		}
 		return true;
 	}
-
+ 
+	/**
+	 * Add a user to the database
+	 * @param user
+	 * @throws SQLException
+	 */
+	public void addUser(User user) throws SQLException {
+		String insertUser = "INSERT INTO cse360users (userName, email, password, firstName, middleName, lastName, preferredFirst, role, otpFlag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+			pstmt.setString(1, user.getUsername());
+			pstmt.setString(2, user.getEmail());
+			pstmt.setString(3, user.getPassword());
+			pstmt.setString(4, user.getFirstName());
+			pstmt.setString(5, user.getMiddleName());
+			pstmt.setString(6, user.getLastName());
+			pstmt.setString(7, user.getPreferredFirst());
+			pstmt.setString(8, user.getRoles());
+			pstmt.setBoolean(9, user.getOTP());
+			pstmt.executeUpdate();
+		}
+	}
+ 
 	/**
 	 * Register a user with username, password, and role
 	 * @param userName
@@ -134,7 +157,7 @@ class DatabaseHelper {
 			pstmt.executeUpdate();
 		}
 	}
-
+ 
 	/**
 	 * login user with username and password
 	 * @param userName
@@ -156,10 +179,10 @@ class DatabaseHelper {
 	                String lastName = rs.getString("lastName");
 	                String preferredFirst = rs.getString("preferredFirst");
 	                String roles = rs.getString("role");
-	                
+ 
 	                boolean otpFlag = rs.getBoolean("otpFlag"); 
 	                LocalDateTime otpExpiration = LocalDateTime.now(); // default value
-
+ 
 	                // Constructing and returning the User object
 	                return new User(userName, password, email, firstName, middleName, lastName,
 	                        preferredFirst, roles, otpFlag, otpExpiration);
@@ -169,7 +192,7 @@ class DatabaseHelper {
 	        }
 	    }
 	}
-	
+ 
 	/**
 	 * update database row with data from user object
 	 * @param user
@@ -178,7 +201,7 @@ class DatabaseHelper {
 	public void updateUser(User user) throws SQLException {
 		System.out.println("Here is the passed in users email: " + user.getEmail());
 	    String query = "UPDATE cse360users SET firstName = ?, middleName = ?, lastName = ?, preferredFirst = ?, role = ?, otpFlag = ?, email = ? WHERE userName = ?";
-	    
+ 
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 	        pstmt.setString(1, user.getFirstName());
 	        pstmt.setString(2, user.getMiddleName());
@@ -188,7 +211,7 @@ class DatabaseHelper {
 	        pstmt.setBoolean(6, user.getOTP());
 	        pstmt.setString(7, user.getEmail());
 	        pstmt.setString(8, user.getUsername());
-
+ 
 	        // update execution
 	        int rowsAffected = pstmt.executeUpdate();
 	        if (rowsAffected == 0) {
@@ -198,7 +221,7 @@ class DatabaseHelper {
 	        }
 	    }
 	}
-
+ 
 	/**
 	 * find user by username and email 
 	 * @param userName
@@ -221,10 +244,10 @@ class DatabaseHelper {
 	                String lastName = rs.getString("lastName");
 	                String preferredFirst = rs.getString("preferredFirst");
 	                String roles = rs.getString("role");
-	                
+ 
 	                boolean otpFlag = rs.getBoolean("otpFlag"); // Get actual otpFlag value from DB
 	                LocalDateTime otpExpiration = LocalDateTime.now(); // You can replace this with actual expiration time if you have it in DB
-
+ 
 	                // Constructing and returning the User object
 	                return new User(username, "", userEmail, firstName, middleName, lastName,
 	                        preferredFirst, roles, otpFlag, otpExpiration);
@@ -234,8 +257,8 @@ class DatabaseHelper {
 	        }
 	    }
 	}
-
-
+ 
+ 
 	/**
 	 * store user information in the database
 	 * @param user
@@ -255,7 +278,7 @@ class DatabaseHelper {
 			pstmt.executeUpdate();
 		}
 	}
-
+ 
 	/**
 	 * get User Roles by username
 	 * @param userName
@@ -263,20 +286,20 @@ class DatabaseHelper {
 	public String getUserRoles(String userName) {
 		String query = "SELECT role FROM cse360users WHERE userName = ?";
 		String roles = "";
-		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-			pstmt.setString(1, userName);
-			ResultSet rs = pstmt.executeQuery();
+		try (PreparedStatement pstmt = connection.prepareStatement(query);
+			 ResultSet rs = pstmt.executeQuery()) {
 			if (rs.next()) {
 				roles = rs.getString("role");	
 			} else {
-				System.out.println("User not found");
+				System.err.println("User not found");
 			}
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.err.println("Database error while getting user roles: " + e.getMessage());
+			return "error";
 		}
 		return roles;
 	}
-
+ 
 	/**
 	 * check if user in database
 	 * @param userName
@@ -285,106 +308,110 @@ class DatabaseHelper {
 	public boolean doesUserExist(String userName) {
 	    String query = "SELECT COUNT(*) FROM cse360users WHERE userName = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-	        
 	        pstmt.setString(1, userName);
-	        ResultSet rs = pstmt.executeQuery();
-	        
-	        if (rs.next()) {
-	            // If the count is greater than 0, the user exists
-	            return rs.getInt(1) > 0;
+	        try (ResultSet rs = pstmt.executeQuery()) {
+	            return rs.next() && rs.getInt(1) > 0;
 	        }
 	    } catch (SQLException e) {
-	        e.printStackTrace();
+	        System.err.println("Database error while checking user existence: " + e.getMessage());
+	        return false;
 	    }
-	    return false; // If an error occurs, assume user doesn't exist
 	}
-	
+ 
+	/**
+	 * check if user in database
+	 * @param userName
+	 * @param password
+	 * @return boolean that represents if user exists
+	 */
 	public boolean doesUserExistBoth(String userName, String password) {
 	    String query = "SELECT COUNT(*) FROM cse360users WHERE userName = ? AND password = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-	        
+ 
 	        pstmt.setString(1, userName);
 	        pstmt.setString(2, password);
-	        ResultSet rs = pstmt.executeQuery();
-	        
-	        if (rs.next()) {
-	            // If the count is greater than 0, the user exists
-	            return rs.getInt(1) > 0;
+	        try (ResultSet rs = pstmt.executeQuery()) {
+	            return rs.next() && rs.getInt(1) > 0;
 	        }
 	    } catch (SQLException e) {
-	        e.printStackTrace();
+	        System.err.println("Database error while checking user existence: " + e.getMessage());
+	        return false;
 	    }
-	    return false; // If an error occurs, assume user doesn't exist
 	}
-	
+ 
+	/**
+	 * check if user in database
+	 * @param email
+	 * @return boolean that represents if user exists
+	 */
 	public boolean doesUserExistEmail(String email) {
 		String query = "SELECT COUNT(*) FROM cse360users WHERE email = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-	        
+ 
 	        pstmt.setString(1, email);
-	        ResultSet rs = pstmt.executeQuery();
-	        
-	        if (rs.next()) {
-	            // If the count is greater than 0, the user exists
-	            return rs.getInt(1) > 0;
+	        try (ResultSet rs = pstmt.executeQuery()) {
+	            return rs.next() && rs.getInt(1) > 0;
 	        }
 	    } catch (SQLException e) {
-	        e.printStackTrace();
+	        System.err.println("Database error while checking user existence: " + e.getMessage());
+	        return false;
 	    }
-	    return false; // If an error occurs, assume user doesn't exist
 	}
 
-	
+ 
+ 
 	/**
 	 * display list of all users
 	 * @throws SQLException
 	 */
 	public void displayUsersByAdmin() throws SQLException{
 		String sql = "SELECT * FROM cse360users"; 
-		Statement stmt = connection.createStatement();
-		ResultSet rs = stmt.executeQuery(sql); 
-
-		while(rs.next()) { 
-			// Retrieve by column name 
-			int id  = rs.getInt("id"); 
-			String  email = rs.getString("email"); 
-			String firstName = rs.getString("firstName"); 
-			String role = rs.getString("role");  
-			String username = rs.getString("userName");
-
-			// Display values 
-			System.out.print("ID: " + id); 
-			System.out.print(", Username: " + username); 
-			System.out.print(", First Name: " + firstName); 
-			System.out.print(", Email: " + email);
-			System.out.println(", Roles: " + role);
-		} 
-	}
+		try (Statement stmt = connection.createStatement();
+			 ResultSet rs = stmt.executeQuery(sql)) {
+ 
+			while(rs.next()) { 
+				// Retrieve by column name 
+				int id  = rs.getInt("id"); 
+				String  email = rs.getString("email"); 
+				String firstName = rs.getString("firstName"); 
+				String role = rs.getString("role");  
+				String username = rs.getString("userName");
 	
+				// Display values 
+				System.out.print("ID: " + id); 
+				System.out.print(", Username: " + username); 
+				System.out.print(", First Name: " + firstName); 
+				System.out.print(", Email: " + email);
+				System.out.println(", Roles: " + role);
+			} 
+		}
+	}
+ 
 	/**
 	 * display user by name
 	 * @throws SQLException
 	 */
 	public void displayUsersByUser() throws SQLException{
 		String sql = "SELECT * FROM cse360users"; 
-		Statement stmt = connection.createStatement();
-		ResultSet rs = stmt.executeQuery(sql); 
-
-		while(rs.next()) { 
-			// Retrieve by column name 
-			int id  = rs.getInt("id"); 
-			String  email = rs.getString("email"); 
-			String password = rs.getString("password"); 
-			String role = rs.getString("role");  
-
+		try (Statement stmt = connection.createStatement();
+			 ResultSet rs = stmt.executeQuery(sql)) {
+ 
+			while(rs.next()) { 
+				// Retrieve by column name 
+				int id  = rs.getInt("id"); 
+				String  email = rs.getString("email"); 
+				String password = rs.getString("password"); 
+				String role = rs.getString("role");
+ 
 			// Display values 
 			System.out.print("ID: " + id); 
 			System.out.print(", Age: " + email); 
 			System.out.print(", First: " + password); 
 			System.out.println(", Last: " + role); 
+			}
 		} 
 	}
-
+ 
 	// delete user by username
 	/**
 	 * delete user by username
@@ -392,6 +419,7 @@ class DatabaseHelper {
 	 * @return boolean that represents if user was deleted
 	 * @throws SQLException
 	 */
+
 	public boolean deleteUserAccount(String userName) throws SQLException {
 		String deleteQuery = "DELETE FROM cse360users WHERE userName = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(deleteQuery)) {
@@ -400,7 +428,7 @@ class DatabaseHelper {
 			return rowsAffected > 0;
 		}
 	}
-
+ 
 	/**
 	 * Create OTP and store it in the database
 	 */
@@ -413,7 +441,7 @@ class DatabaseHelper {
 		try {
 			insertOTP(otp, expiryTime, roles);
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.err.println("Database error while creating OTP: " + e.getMessage());
 		}
 		return otp;
 	}
@@ -442,7 +470,7 @@ class DatabaseHelper {
 			pstmt.executeUpdate();
 		}
 	}
-
+ 
 	/**
 	 * retrieves otp from the database and if the otp is expired, it returns false else it is found in database
 	 * and the otp is not expired, it returns true
@@ -467,7 +495,7 @@ class DatabaseHelper {
 		}
 		return false;
 	}
-	
+ 
 	/**
 	 * This function is used after an OTP has been verified to return the roles associated with the invitation
 	 * @param otp
@@ -487,7 +515,7 @@ class DatabaseHelper {
 		}
 		return "error";
 	}
-
+ 
 	/**
 	 * delete otp from table
 	 * @param otp
@@ -500,7 +528,7 @@ class DatabaseHelper {
 			pstmt.executeUpdate();
 		}
 	}
-
+ 
 	/**
 	 *  check if the otp is expired by checking the otp table for the expiry time
 	 * @param otp
@@ -521,7 +549,7 @@ class DatabaseHelper {
 		}
 		return true;
 	}
-
+ 
 	/**
 	 * close connections with databases
 	 */
@@ -529,7 +557,7 @@ class DatabaseHelper {
 		try{ 
 			if(statement!=null) statement.close(); 
 		} catch(SQLException se2) { 
-			se2.printStackTrace();
+			System.err.println("Database error while closing connection: " + se2.getMessage());
 		} 
 		try { 
 			if(connection!=null) connection.close(); 
@@ -912,25 +940,28 @@ class DatabaseHelper {
 			System.out.println("Invalid role");
 			return;
 		}
-
+ 
 		System.out.println("Enter article level (beginner, intermediate, advanced, expert): ");
 		String level = scanner.nextLine();
 		
 		System.out.println("Enter group ID (Please make sure there are no spaces and that they are comma separated) (e.g. CSE360,CSE360-01,CSE360-02): ");
 		String groupId = scanner.nextLine() + ",";
-		
+ 
 		System.out.println("Enter article title: ");
 		String title = scanner.nextLine();
-		
+ 
 		System.out.println("Enter short description: ");
 		String shortDescription = scanner.nextLine();
-		
+ 
 		System.out.println("Enter keywords (comma separated): ");
 		String[] keywords = scanner.nextLine().split(",");
-		
+ 
 		System.out.println("Enter article body: ");
 		String body = scanner.nextLine();
-		
+
+		// article encryption
+		String encryptedBody = encryptionHelper.encrypt(body);
+ 
 		System.out.println("Enter reference links (comma separated): ");
 		String[] referenceLinks = scanner.nextLine().split(",");
 
@@ -950,7 +981,7 @@ class DatabaseHelper {
 			pstmt.executeUpdate();
 		}
 	}
-
+ 
 	/**
 	 * Update an existing article in the database
 	 * @param role
@@ -961,28 +992,28 @@ class DatabaseHelper {
 			System.out.println("Invalid role");
 			return;
 		}
-
+ 
 		System.out.println("Enter article ID: ");
 		int id = Integer.parseInt(scanner.nextLine());
-		
+ 
 		System.out.println("Enter article level (beginner, intermediate, advanced, expert): ");
 		String level = scanner.nextLine();
-		
+ 
 		System.out.println("Enter group ID (e.g. CSE360, CSE360-01, CSE360-02): ");
 		String groupId = scanner.nextLine();
-		
+ 
 		System.out.println("Enter article title: ");
 		String title = scanner.nextLine();
-		
+ 
 		System.out.println("Enter short description: ");
 		String shortDescription = scanner.nextLine();
-		
+ 
 		System.out.println("Enter keywords (comma separated): ");
 		String keywords = scanner.nextLine();
 		
 		System.out.println("Enter article body: ");
 		String body = scanner.nextLine();
-		
+ 
 		System.out.println("Enter reference links (comma separated): ");
 		String referenceLinks = scanner.nextLine();
 
@@ -999,13 +1030,18 @@ class DatabaseHelper {
 			pstmt.executeUpdate();
 		}
 	}
-
+ 
+	/**
+	 * View all articles in the database
+	 * @param role
+	 * @throws SQLException
+	 */
 	public void viewAllArticles(String role) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
 			return;
 		}
-
+ 
 		System.out.println("All articles:");
 		String query = "SELECT * FROM articles";
 		try (Statement stmt = connection.createStatement();
@@ -1017,9 +1053,10 @@ class DatabaseHelper {
 				String title = rs.getString("title");
 				String shortDescription = rs.getString("short_description");
 				String keywords = rs.getString("keywords");
-				String body = rs.getString("body");
+				String encryptedBody = rs.getString("body");
+				String decryptedBody = encryptionHelper.decrypt(encryptedBody);
 				String referenceLinks = rs.getString("reference_links");
-
+ 
 				System.out.println("ID: " + id);
 				System.out.println("Level: " + level);
 				System.out.println("Group ID: " + groupId);
@@ -1031,13 +1068,13 @@ class DatabaseHelper {
 			}
 		}
 	}
-	
+ 
 	public void viewGroupedArticles(String role, String group) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
 			return;
 		}
-
+ 
 		String query = "SELECT * FROM articles WHERE group_id LIKE ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setString(1, "%" + group + ",%");
@@ -1049,16 +1086,17 @@ class DatabaseHelper {
 					String title = rs.getString("title");
 					String shortDescription = rs.getString("short_description");
 					String keywords = rs.getString("keywords");
-					String body = rs.getString("body");
+					String encryptedBody = rs.getString("body");
+					String decryptedBody = encryptionHelper.decrypt(encryptedBody);
 					String referenceLinks = rs.getString("reference_links");
-
+ 
 					System.out.println("ID: " + id);
 					System.out.println("Level: " + level);
 					System.out.println("Group ID: " + groupId);
 					System.out.println("Title: " + title);
 					System.out.println("Short Description: " + shortDescription);
 					System.out.println("Keywords: " + keywords);
-					System.out.println("Body: " + body);
+					System.out.println("Body: " + decryptedBody);
 					System.out.println("Reference Links: " + referenceLinks);
 				}
 			}
@@ -1083,31 +1121,38 @@ class DatabaseHelper {
 					String title = rs.getString("title");
 					String shortDescription = rs.getString("short_description");
 					String keywords = rs.getString("keywords");
-					String body = rs.getString("body");
+					String encryptedBody = rs.getString("body");
+					String decryptedBody = encryptionHelper.decrypt(encryptedBody);
 					String referenceLinks = rs.getString("reference_links");
-
+ 
 					System.out.println("ID: " + id);
 					System.out.println("Level: " + level);
 					System.out.println("Group ID: " + groupId);
 					System.out.println("Title: " + title);
 					System.out.println("Short Description: " + shortDescription);
 					System.out.println("Keywords: " + keywords);
-					System.out.println("Body: " + body);
+					System.out.println("Body: " + decryptedBody);
 					System.out.println("Reference Links: " + referenceLinks);
 				}
 			}
 		}
 	}
-	
+ 
+	/**
+	 * Delete an article from the database
+	 * @param role
+	 * @return boolean that represents if article was deleted
+	 * @throws SQLException
+	 */
 	public boolean deleteArticle(String role) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
 			return false;
 		}
-
+ 
 		System.out.println("Enter article ID: ");
 		int id = Integer.parseInt(scanner.nextLine());
-
+ 
 		String deleteArticle = "DELETE FROM articles WHERE id = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(deleteArticle)) {
 			pstmt.setInt(1, id);
@@ -1115,4 +1160,5 @@ class DatabaseHelper {
 			return rowsAffected > 0;
 		}
 	}
+
 }
