@@ -167,7 +167,7 @@ public class CSE360Test {
         numPassed++;
 
         // Test 3: View article by ID test
-        databaseHelper.viewArticle("i", 1);
+        databaseHelper.viewArticle("i", "1");
         System.out.println("Test 3 passed");
         numPassed++;
 
