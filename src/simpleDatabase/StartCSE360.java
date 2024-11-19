@@ -15,7 +15,6 @@ public class StartCSE360 {
 
 	private static final DatabaseHelper databaseHelper = new DatabaseHelper();
 	private static final Scanner scanner = new Scanner(System.in);
-	
 
 	/*
 	 * Blank Constructor
