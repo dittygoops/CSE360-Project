@@ -671,6 +671,7 @@ class DatabaseHelper {
 							
 							pstmt.executeUpdate();
 							System.out.println("An article has been added successfully to the system!");
+							myFlag = false;
 						}
 						}
 						
