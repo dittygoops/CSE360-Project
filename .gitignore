@@ -1,3 +1,4 @@
-backup.csv
-backup.txt
-bin
+*.csv
+*.txt
+*.class
+*.DS_Store
