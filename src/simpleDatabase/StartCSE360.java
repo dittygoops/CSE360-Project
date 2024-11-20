@@ -1,6 +1,7 @@
 package simpleDatabase;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
@@ -164,7 +165,7 @@ public class StartCSE360 {
 			if (curUserRoles[0] && (!curUserRoles[1] && !curUserRoles[2])) 
 					adminHome();
 			else if (curUserRoles[1] && (!curUserRoles[0] && !curUserRoles[2]))
-					instructorHome();
+					instructorHome(currentUser);
 			else if (curUserRoles[2] && (!curUserRoles[1] && !curUserRoles[0]))
 					studentHome();
 				// if not - the user gets to choose which home menu to go to
@@ -232,7 +233,7 @@ public class StartCSE360 {
 			}
 			case "3": {
 				System.out.println("Instructor.");
-				instructorHome();
+				instructorHome(currentUser);
 				break;
 			}
 			default: {
@@ -442,7 +443,7 @@ public class StartCSE360 {
 			if (curUserRoles[0] && (!curUserRoles[1] && !curUserRoles[2])) 
 					adminHome();
 			else if (curUserRoles[1] && (!curUserRoles[0] && !curUserRoles[2]))
-					instructorHome();
+					instructorHome(user);
 			else if (curUserRoles[2] && (!curUserRoles[1] && !curUserRoles[0]))
 					studentHome();
 				// if not - the user gets to choose which home menu to go to
@@ -692,15 +693,14 @@ public class StartCSE360 {
 						break;
 					}
 
-					boolean aFlag = false;
-					boolean tFlag = false;
-					boolean sFlag = false;
-
 					// User object populated from query constructed via fields provided
 					User curUser = databaseHelper.findUser(usernameAdjust, emailAdjust);
 					boolean[] userRoles = curUser.getRoles();
 
-					System.out.print(
+					boolean aFlag = userRoles[0];
+					boolean tFlag = userRoles[1];
+					boolean sFlag = userRoles[2];
+					System.out.println(
 							"Please choose if you would like to add or remove a role from this user? 1. Add 2. Remove");
 					String option = scanner.nextLine();
 
@@ -716,7 +716,7 @@ public class StartCSE360 {
 							System.out.println("1. Administrator");
 						if (!userRoles[2])
 							System.out.println("2. Student");
-						if (!userRoles[3])
+						if (!userRoles[1])
 							System.out.println("3. Instructor");
 						System.out.print("Please select a role: ");
 						String rolePick = scanner.nextLine();
@@ -1044,12 +1044,22 @@ public class StartCSE360 {
 					System.out.println("Please enter the name of the Special Access Group you would like to create: ");
 					String groupName = scanner.nextLine();
 					// db function that creates group
+					if(!databaseHelper.createSpecialGroup(groupName)) break;
+
 					System.out.println(
 							"Now provide the identifiers for the first Instructor for this Special Access Group");
 					String firstUsername, firstEmail;
 					String[] firstInstruct = get_user_identifiers();
 					firstUsername = firstInstruct[0];
 					firstEmail = firstInstruct[1];
+
+					if(!databaseHelper.userExist(firstUsername, firstEmail)) {
+						System.out.println("Invalid user. Please try again later.");
+					}
+					int instructorId = databaseHelper.getUserId(firstUsername, firstEmail);
+					if(instructorId == -1) break;
+
+					databaseHelper.linkUserGroup(groupName, instructorId, "t", true, true);
 					// check if user is an instructor
 					// Make sure that this instructor/user can view article bodies and also have
 					// admin rights over the group
@@ -1214,7 +1224,7 @@ public class StartCSE360 {
 	 * @throws Exception    Throws an Exception if there is a SQL error from the
 	 *                      helper file and logs the issue
 	 */
-	private static void instructorHome() throws SQLException, Exception {
+	private static void instructorHome(User curUser) throws SQLException, Exception {
 
 		String choice = "";
 
@@ -1245,13 +1255,21 @@ public class StartCSE360 {
 			switch (choice) {
 
 				case "1": {
-					databaseHelper.createArticle("t");
+					databaseHelper.createInstructArticle(curUser);
 					break;
 				}
 				case "2": {
 					System.out.println("Please enter the id of the article you would like to view: ");
 					String articleID = scanner.nextLine();
-					databaseHelper.viewArticle("t", articleID);
+					int aId = Integer.parseInt(articleID);
+					ArrayList<String> temp = databaseHelper.getGroupsForAnArticle(aId);
+					if(databaseHelper.articleAuth(curUser, temp)) {
+						if(databaseHelper.articleEncrypted(curUser, temp)) databaseHelper.viewArticle("t", articleID, true);
+						else databaseHelper.viewArticle("t", articleID, false);
+					} else {
+						System.out.println("You do not have access rights to one or more of the groups");
+					}
+					
 					break;
 				}
 				case "3": {
