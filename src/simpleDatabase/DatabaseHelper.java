@@ -1064,7 +1064,6 @@ class DatabaseHelper {
 				System.out.println("Short Description: " + shortDescription);
 				System.out.println("Keywords: " + keywords);
 				System.out.println("Body: " + decryptedBody);
-				System.out.println("Body: " + encryptedBody);
 				System.out.println("Reference Links: " + referenceLinks);
 			}
 		}
