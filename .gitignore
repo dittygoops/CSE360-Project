@@ -2,3 +2,4 @@
 *.txt
 *.class
 *.DS_Store
+.classpath
