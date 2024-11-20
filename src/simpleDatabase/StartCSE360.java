@@ -154,21 +154,25 @@ public class StartCSE360 {
 		currentUser.setOTPFlag(false);
 
 		// User object sent to helper method to be put into the database
-		databaseHelper.updateUser(currentUser);
+		if(!databaseHelper.updateUser(currentUser)) {
+			System.out.println("No user was properly updating with the personal information above. Please try again later.");
+			return;
+		}
 
-		// Routes to a specific user home if they only have one role
-		if (currentUser.getRoles().length() == 1) {
-			if (currentUser.getRoles().contains("a"))
-				adminHome();
-			else if (currentUser.getRoles().contains("t"))
-				instructorHome();
+			System.out.println("Congrats! You have finished setting up your account.");
+			// Routes to a specific user home if they only have one role
+			boolean[] curUserRoles = currentUser.getRoles();
+			if (curUserRoles[0] && (!curUserRoles[1] && !curUserRoles[2])) 
+					adminHome();
+			else if (curUserRoles[1] && (!curUserRoles[0] && !curUserRoles[2]))
+					instructorHome();
+			else if (curUserRoles[2] && (!curUserRoles[1] && !curUserRoles[0]))
+					studentHome();
+				// if not - the user gets to choose which home menu to go to
 			else
-				regHome();
-			// if not - the user gets to choose which home menu to go to
-		} else
-			sessionRoleSelection(currentUser);
+				sessionRoleSelection(currentUser);
 
-		System.out.println("Congrats! You have finished setting up your account.");
+		
 	}
 
 	/**
@@ -190,17 +194,17 @@ public class StartCSE360 {
 	private static void sessionRoleSelection(User currentUser) throws SQLException, Exception {
 
 		// Get roles from the curUser
-		String roles = currentUser.getRoles();
+		boolean[] roles = currentUser.getRoles();
 		String choice = "";
 
 		// Displays which roles they have
 		System.out.println("You have multiple roles, but may only use the system through the view of one of them.");
 		System.out.println("Your Roles: ");
-		if (roles.contains("a"))
+		if (roles[0])
 			System.out.println("1. Administrator");
-		if (roles.contains("s"))
+		if (roles[2])
 			System.out.println("2. Student");
-		if (roles.contains("t"))
+		if (roles[1])
 			System.out.println("3. Instructor");
 
 		// Allow user to select which profile or home menu they would like to view
@@ -224,7 +228,7 @@ public class StartCSE360 {
 			}
 			case "2": {
 				System.out.println("Student.");
-				regHome();
+				studentHome();
 				break;
 			}
 			case "3": {
@@ -238,24 +242,6 @@ public class StartCSE360 {
 				break;
 			}
 		}
-	}
-
-	// P3: Get Rid of and Change flow to Student and Instructor Homes
-	private static void regHome() throws SQLException, Exception {
-		System.out.println("Welcome to the home page of either a Student or Instructor.");
-		System.out.println(
-				"At this time, you can only perform one action - Logout. However, you are welcome to sit here for however long you like.");
-		System.out.println("To Logout, Enter q: ");
-		String logout = scanner.nextLine();
-		if (logout.equals("q")) {
-			System.out.println("You have successfully logged out. See you next time!");
-			mainLogin();
-		}
-		while (!logout.equals("q")) {
-			System.out.print("Invalid input. To Logout, Enter q: ");
-			logout = scanner.nextLine();
-		}
-
 	}
 
 	/**
@@ -435,14 +421,13 @@ public class StartCSE360 {
 				password = credentials[1];
 
 				// Check if user exists and credentials are valid
-				boolean doesUserExist = databaseHelper.doesUserExistBoth(userName, password);
-				if (doesUserExist) {
-					User user = databaseHelper.login(userName, password);
-					System.out.println("You have successfully logged in.");
+				if (databaseHelper.doesUserExistBoth(userName, password)) {
 
+					User user = databaseHelper.login(userName, password);
 					// if a user exists in the database and had an OTP - they must finish setting up
 					// their account and will be routed there
 					if (user != null) {
+						System.out.println("You have successfully logged in.");
 						if (user.getOTP()) {
 							settingUpAccount(user);
 							break;
@@ -454,15 +439,16 @@ public class StartCSE360 {
 
 					// routes to different home pages depending on roles of the user
 					// P3: Change to different Homes once setup and get rid of regHome
-					if (user.getRoles().length() == 1) {
-						if (user.getRoles().contains("a"))
-							adminHome();
-						else if (user.getRoles().contains("t"))
-							instructorHome();
-						else
-							regHome();
-					} else
-						sessionRoleSelection(user);
+					boolean[] curUserRoles = user.getRoles();
+			if (curUserRoles[0] && (!curUserRoles[1] && !curUserRoles[2])) 
+					adminHome();
+			else if (curUserRoles[1] && (!curUserRoles[0] && !curUserRoles[2]))
+					instructorHome();
+			else if (curUserRoles[2] && (!curUserRoles[1] && !curUserRoles[0]))
+					studentHome();
+				// if not - the user gets to choose which home menu to go to
+			else
+				sessionRoleSelection(user);
 
 					break;
 				} else
@@ -481,36 +467,30 @@ public class StartCSE360 {
 				oTP = scanner.nextLine();
 
 				// if OTP is still valid then reset or set up credentials for first time
-				if (databaseHelper.verifyOTP(oTP)) {
+				int userId = databaseHelper.verifyOTP(oTP);
+				if (userId != -1) {
 					System.out.println(
-							"If you had your account reset, Please re-enter your current username and new password.");
+							"If you had your account reset, Please re-enter your previous username and new password.");
 					System.out.println(
 							"If you are a first-time user, continue on to set up your initial username and password.");
 
 					String[] credentials = get_user_credentials();
-					databaseHelper.register(credentials[0], credentials[1], databaseHelper.getRolesFromOTP(oTP));
-					System.out.println("Thank you for registering! Please note: ");
-					System.out.println(
-							"The next time you login with these credentials, you will be directed to finish setting up your account. Bye!");
+					if(databaseHelper.register(credentials[0], credentials[1], userId)) {
+						System.out.println("Thank you for registering! Please note: ");
+						System.out.println("The next time you login with these credentials, you will be directed to finish setting up your account. Bye!");
+					} else {
+						System.out.println("No user was registered properly. Please try agian later.");
+					}
 
 					break;
-
 				} else
-					System.out.println("Your OTP is either incorrect or no longer valid. Please try again."); // if OTP
-																												// is
-																												// not
-																												// valid
-																												// -
-																												// have
-																												// them
-																												// try
-																												// again
+					System.out.println("Your OTP is either incorrect or no longer valid. Please try again."); // if OTP is not valid - let them enter again
 			}
 
 			mainLogin(); // route back to the top so user can login again to finish setting up account
 
-			// Exit System
-		} else if (choice.equals("3")) {
+		// Exit System
+		} else {
 			System.out.println("You are now leaving the system.");
 			return;
 		}
@@ -724,6 +704,7 @@ public class StartCSE360 {
 					System.out.print(
 							"Please choose if you would like to add or remove a role from this user? 1. Add 2. Remove");
 					String option = scanner.nextLine();
+
 					if (option.equals("1")) {
 						
 						if (userRoles[0] && (userRoles[1] && userRoles[2])) {
@@ -872,7 +853,7 @@ public class StartCSE360 {
 					userRoles[1] = tFlag;
 					userRoles[2] = sFlag;
 					curUser.setRoles(userRoles);
-					databaseHelper.updateUser(curUser);
+					databaseHelper.updateUserRoles(curUser);
 
 					break;
 				}
@@ -889,6 +870,11 @@ public class StartCSE360 {
 
 					System.out.println("Please enter the name of the group of articles you would like to view: ");
 					String groupName = scanner.nextLine();
+					if(!databaseHelper.groupExist(groupName) || databaseHelper.isGroupSpecial(groupName)) {
+						System.out.println("You have either entered a group that does not exist or a Special Access Group which administrators are not allowed to view. Please try again later.");
+						break;
+					}
+
 					System.out.println("Here are the articles: ");
 					databaseHelper.viewGroupedArticles("a", groupName);
 					break;

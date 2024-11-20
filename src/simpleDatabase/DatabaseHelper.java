@@ -96,12 +96,13 @@ class DatabaseHelper {
 				+ "otp VARCHAR(255) PRIMARY KEY, "
 				+ "expiryTime TIMESTAMP, "
 				+ "user_id INT, "
-				+ "FOREIGN KEY(user_id) REFERENCES cse360users)";
+				+ "FOREIGN KEY(user_id) REFERENCES cse360users(id) ON DELETE CASCADE)";
 		statement.execute(otpTable);
 
 		String articlesTable = "CREATE TABLE IF NOT EXISTS articles ("
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "level VARCHAR(20), " // level (beginner, intermediate, advanced, expert)
+				+ "authors VARCHAR(100), "
 				+ "title VARCHAR(255) NOT NULL, " // title
 				+ "short_description CLOB, " // short_description/abstract
 				+ "keywords VARCHAR(255), " // keywords
@@ -118,8 +119,8 @@ class DatabaseHelper {
 		String articleGroupsTable = "CREATE TABLE IF NOT EXISTS articleGroups ("
 			+ "group_name VARCHAR(255), "
 			+ "article_id INT, " 
-			+ "FOREIGN KEY(group_name) REFERENCES groups, "
-			+ "FOREIGN KEY(article_id) REFERENCES articles)";
+			+ "FOREIGN KEY(group_name) REFERENCES groups(name) ON DELETE CASCADE, "
+			+ "FOREIGN KEY(article_id) REFERENCES articles(id) ON DELETE CASCADE)";
 		statement.execute(articleGroupsTable);
 
 		String groupRightsTable = "CREATE TABLE IF NOT EXISTS groupRights ("
@@ -128,8 +129,8 @@ class DatabaseHelper {
 			+ "accessRole VARCHAR(1), "
 			+ "adminRightsFlag BOOLEAN DEFAULT FALSE, "
 			+ "viewRightsFlag BOOLEAN DEFAULT FALSE, "
-			+ "FOREIGN KEY(user_id) REFERENCES cse360users, "
-			+ "FOREIGN KEY(group_name) REFERENCES groups)";
+			+ "FOREIGN KEY(user_id) REFERENCES cse360users(id) ON DELETE CASCADE, "
+			+ "FOREIGN KEY(group_name) REFERENCES groups(name) ON DELETE CASCADE)";
 		statement.execute(groupRightsTable);
 	}
 
@@ -146,6 +147,32 @@ class DatabaseHelper {
 			return resultSet.getInt("count") == 0;
 		}
 		return true;
+	}
+
+	public boolean groupExist(String checkGroup) {
+		String query = "SELECT COUNT(*) from groups where name = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, checkGroup);
+			ResultSet rs = statement.executeQuery(query);
+			return rs.next() && rs.getInt(1) > 0;	
+		} catch (SQLException e) {
+			System.err.println("DB error checking if group exists" + e.getMessage());
+		}
+		return false;	
+	}
+
+	public boolean isGroupSpecial(String checkGroup) {
+		String query = "SELECT specialFlag from groups where name = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, checkGroup);
+			ResultSet resSet = statement.executeQuery(query);
+			if(resSet.next()) {
+				return resSet.getBoolean("specialFlag");
+			} else return false;
+		} catch (SQLException e) {
+			System.err.println("DB error checking if group is speical" + e.getMessage());
+		}
+		return false;
 	}
 
 	/**
@@ -178,15 +205,20 @@ class DatabaseHelper {
 	 * @param role
 	 * @throws SQLException
 	 */
-	public void register(String userName, String password, String role) throws SQLException {
-		String insertUser = "INSERT INTO cse360users (userName, password, role, otpFlag) VALUES (?, ?, ?, ?)";
+	public boolean register(String userName, String password, int userID) throws SQLException {
+		String insertUser = "UPDATE cse360users SET userName = ?, password = ?, and otpFlag = ? WHERE id = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
 			pstmt.setString(1, userName);
 			pstmt.setString(2, password);
-			pstmt.setString(3, role);
-			pstmt.setBoolean(4, true);
-			pstmt.executeUpdate();
+			pstmt.setBoolean(3, true);
+			pstmt.setInt(4, userID);
+			int rowsAffected = pstmt.executeUpdate();
+			return (rowsAffected > 0); 
+			
+		} catch (SQLException e) {
+			System.err.println("DB issue while registering user: " + e.getMessage());
 		}
+		return false;
 	}
 
 	/**
@@ -210,14 +242,15 @@ class DatabaseHelper {
 					String middleName = rs.getString("middleName");
 					String lastName = rs.getString("lastName");
 					String preferredFirst = rs.getString("preferredFirst");
-					String roles = rs.getString("role");
-
+					boolean aFlag = rs.getBoolean("adminFlag");	
+					boolean tFlag = rs.getBoolean("teachFlag");
+					boolean sFlag = rs.getBoolean("studFlag");
 					boolean otpFlag = rs.getBoolean("otpFlag");
 					LocalDateTime otpExpiration = LocalDateTime.now(); // default value
 
 					// Constructing and returning the User object
 					return new User(userName, password, email, firstName, middleName, lastName,
-							preferredFirst, roles, otpFlag, otpExpiration);
+							preferredFirst, aFlag, tFlag, sFlag, otpFlag, otpExpiration);
 				} else {
 					return null; // User not found
 				}
@@ -231,7 +264,7 @@ class DatabaseHelper {
 	 * @param user
 	 * @throws SQLException
 	 */
-	public void updateUser(User user) throws SQLException {
+	public void updateUserRoles(User user) throws SQLException {
 		String query = "UPDATE cse360users SET adminFlag = ?, teachFlag = ?, studFlag = ? WHERE userName = ? and email = ?";
 
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -249,6 +282,27 @@ class DatabaseHelper {
 				System.out.println("User updated successfully.");
 			}
 		} 
+	}
+
+	public boolean updateUser(User user) throws SQLException {
+		String query = "UPDATE cse360users SET firstName = ?, middleName = ?, lastName = ?, preferredFirst = ?, email = ?, otpFlag = ? WHERE userName = ? and password = ?";
+
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, user.getFirstName());
+			pstmt.setString(2, user.getMiddleName());
+			pstmt.setString(3, user.getLastName());
+			pstmt.setString(4, user.getPreferredFirst());
+			pstmt.setString(5, user.getEmail());
+			pstmt.setBoolean(6, user.getOTP());
+			pstmt.setString(7, user.getUsername());
+			pstmt.setString(8, user.getPassword());	
+			// update execution
+			int rowsAffected = pstmt.executeUpdate();
+			return (rowsAffected > 0);
+		} catch (SQLException e) {
+			System.err.println("DB issue with updating user after setting up account: " + e.getMessage());
+		}
+		return false;
 	}
 
 	/**
@@ -579,16 +633,15 @@ class DatabaseHelper {
 	}
 
 	/**
-	 * retrieves otp from the database and if the otp is expired, it returns false
-	 * else it is found in database
-	 * and the otp is not expired, it returns true
+	 * Returns user_id that is associated with otp 
+	 * If an issue arises - returns -1
 	 * 
 	 * @param otp
-	 * @return boolean representing the verification of OTP
+	 * @return Integer that represents user_id associated with the otp
 	 * @throws SQLException
 	 */
-	public Boolean verifyOTP(String otp) throws SQLException {
-		String query = "SELECT * FROM otpTable WHERE otp = ?";
+	public int verifyOTP(String otp) throws SQLException {
+		String query = "SELECT user_id FROM otpTable WHERE otp = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setString(1, otp);
 			try (ResultSet rs = pstmt.executeQuery()) {
@@ -597,12 +650,12 @@ class DatabaseHelper {
 					DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
 					LocalDateTime expiry = LocalDateTime.parse(expiryTime, formatter);
 					if (LocalDateTime.now().isBefore(expiry)) {
-						return true;
+						return rs.getInt(1);
 					}
 				}
 			}
 		}
-		return false;
+		return -1;
 	}
 
 	/**
@@ -1037,6 +1090,41 @@ class DatabaseHelper {
 		}
 	}
 
+	public void createGroups(String[] groups) throws SQLException {
+		for(String curGroup : groups) {
+			if(!groupExist(curGroup)) {
+				String insertGroup = "INSERT INTO groups (name, specialFlag) VALUES (?, ?)";
+				try(PreparedStatement pstmt = connection.prepareStatement(insertGroup)) {
+					pstmt.setString(1, curGroup);
+					pstmt.setBoolean(2, false);
+
+					pstmt.executeUpdate();
+					System.out.println("A new general article group: " + curGroup + " has been made.");
+				} catch (SQLException e) {
+					System.err.println("DB error while creating new general groups: " + e.getMessage());
+				}
+			}
+		}
+	}
+
+	public void linkArticleGroup(String groupName, int articleID) throws SQLException {
+		if(!groupExist(groupName)) {
+			System.out.println("Trying to link to a group that does not exist");
+			return;
+		}
+
+		String insertQuery = "INSERT INTO articleGroups (group_name, article_id) VALUES (?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(insertQuery)) {
+			pstmt.setString(1, groupName);
+			pstmt.setInt(2, articleID);
+
+			pstmt.executeUpdate();
+			System.out.println("Article linked successfully");
+		} catch (SQLException e) {
+			System.err.println("DB issue while linking article to group");
+		}
+	}
+
 	/**
 	 * Create a new article in the database
 	 * 
@@ -1058,9 +1146,24 @@ class DatabaseHelper {
 		System.out.println("Enter article level (beginner, intermediate, advanced, expert): ");
 		String level = scanner.nextLine();
 
+		System.out.println("Enter the authors of this article (Please make sure there are no spaces and that they are comma separated) (e.g. Einstein,Oppenheimer,Suess): ");
+		String authors = scanner.nextLine();
+
 		System.out.println(
 				"Enter group ID (Please make sure there are no spaces and that they are comma separated) (e.g. CSE360,CSE360-01,CSE360-02): ");
 		String groupId = scanner.nextLine() + ",";
+		String[] groups = groupId.trim().split(",");
+		for(String curGroup : groups) {
+			if(groupExist(curGroup)) {
+				if(isGroupSpecial(curGroup)) {
+					System.out.println("You are unable to create an article for the following group: " + curGroup);
+					System.out.println("As an admin, you are unable to make articles for Special Access Groups");
+					break;
+				}
+			}
+		}
+
+		createGroups(groups);
 
 		System.out.println("Enter article title: ");
 		String title = scanner.nextLine();
@@ -1082,19 +1185,24 @@ class DatabaseHelper {
 
 		int tempId = createArticleId();
 
-		String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		String insertArticle = "INSERT INTO articles (level, title, short_description, keywords, body, reference_links, id, authors) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 			pstmt.setString(1, level);
-			pstmt.setString(2, groupId);
-			pstmt.setString(3, title);
-			pstmt.setString(4, shortDescription);
-			pstmt.setArray(5, connection.createArrayOf("VARCHAR", keywords));
-			pstmt.setString(6, body);
-			pstmt.setArray(7, connection.createArrayOf("VARCHAR", referenceLinks));
-			pstmt.setInt(8, tempId);
+			pstmt.setString(2, title);
+			pstmt.setString(3, shortDescription);
+			pstmt.setArray(4, connection.createArrayOf("VARCHAR", keywords));
+			pstmt.setString(5, body);
+			pstmt.setArray(6, connection.createArrayOf("VARCHAR", referenceLinks));
+			pstmt.setInt(7, tempId);
+			pstmt.setString(8, authors);
 
 			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			System.err.println("DB issue while inserting article into table");
 		}
+
+		//link each group to an article
+		for(String curGroup : groups) linkArticleGroup(curGroup, tempId);
 	}
 
 	/**
@@ -1160,29 +1268,20 @@ class DatabaseHelper {
 		}
 
 		System.out.println("All articles:");
-		String query = "SELECT * FROM articles";
+		String query = "SELECT id, authors, short_description FROM articles";
 		try (Statement stmt = connection.createStatement();
 				ResultSet rs = stmt.executeQuery(query)) {
 			while (rs.next()) {
-				int id = rs.getInt("id");
-				String level = rs.getString("level");
-				String groupId = rs.getString("group_id");
-				String title = rs.getString("title");
-				String shortDescription = rs.getString("short_description");
-				String keywords = rs.getString("keywords");
-				String encryptedBody = rs.getString("body");
-				String decryptedBody = encryptionHelper.decrypt(encryptedBody);
-				String referenceLinks = rs.getString("reference_links");
+				int id = rs.getInt(1);
+				String authors = rs.getString(2);
+				String shortDescription = rs.getString(3);	
 
 				System.out.println("ID: " + id);
-				System.out.println("Level: " + level);
-				System.out.println("Group ID: " + groupId);
-				System.out.println("Title: " + title);
-				System.out.println("Short Description: " + shortDescription);
-				System.out.println("Keywords: " + keywords);
-				System.out.println("Body: " + decryptedBody);
-				System.out.println("Reference Links: " + referenceLinks);
+				System.out.println("Authors: " + authors);
+				System.out.println("Short Description: " + shortDescription);	
 			}
+		} catch(SQLException e) {
+			System.err.println("DB issue trying to view all articles");
 		}
 	}
 
@@ -1192,32 +1291,27 @@ class DatabaseHelper {
 			return;
 		}
 
-		String query = "SELECT * FROM articles WHERE group_id LIKE ?";
+		String query = "SELECT articles.id, articles.short_description, articles.authors FROM articles "
+		+ "JOIN articleGroups on articleGroups.article_id = articles.id "
+		+ "JOIN groups on articleGroups.group_name = groups.name "
+		+ "WHERE groups.name = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-			pstmt.setString(1, "%" + group + ",%");
-			try (ResultSet rs = pstmt.executeQuery()) {
+			pstmt.setString(1, group);
+			ResultSet rs = pstmt.executeQuery();
 				while (rs.next()) {
-					int id = rs.getInt("id");
-					String level = rs.getString("level");
-					String groupId = rs.getString("group_id");
-					String title = rs.getString("title");
-					String shortDescription = rs.getString("short_description");
-					String keywords = rs.getString("keywords");
-					String encryptedBody = rs.getString("body");
-					String decryptedBody = encryptionHelper.decrypt(encryptedBody);
-					String referenceLinks = rs.getString("reference_links");
+					int id = rs.getInt(1);
+					String authors = rs.getString(3);
+					String shortDescription = rs.getString(2);
+				
 
-					System.out.println("ID: " + id);
-					System.out.println("Level: " + level);
-					System.out.println("Group ID: " + groupId);
-					System.out.println("Title: " + title);
-					System.out.println("Short Description: " + shortDescription);
-					System.out.println("Keywords: " + keywords);
-					System.out.println("Body: " + decryptedBody);
-					System.out.println("Reference Links: " + referenceLinks);
+					System.out.println("Article ID: " + id);
+					System.out.println("Authors: " + authors);	
+					System.out.println("Short Description: " + shortDescription);	
 				}
+			
+		} catch (SQLException e) {
+				System.err.println("DB issue while viewing Grouped articles: " + e.getMessage());
 			}
-		}
 	}
 
 	public void viewArticle(String role, String articleId) throws SQLException {
