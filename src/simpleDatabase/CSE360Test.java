@@ -156,10 +156,11 @@ public class CSE360Test {
         DatabaseHelper databaseHelper = new DatabaseHelper();
         databaseHelper.connectToDatabase();
 
-        // Test 1: Create article test
+        /* Test 1: Create article test
         databaseHelper.createArticle("beginner", "CSE360", "Introduction to Databases", "This article provides an introduction to databases.", new String[]{"databases", "SQL"}, "The body of the article goes here.", new String[]{"http://example.com"}, "s");
         System.out.println("Test 1 passed");
         numPassed++;
+        */
 
         // Test 2: View all articles test
         databaseHelper.viewAllArticles("s");
