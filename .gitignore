@@ -3,4 +3,4 @@
 *.class
 *.DS_Store
 *.classpath
-
+bin/
