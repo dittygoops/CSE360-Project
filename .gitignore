@@ -3,3 +3,7 @@
 *.class
 *.DS_Store
 .classpath
+bin/simpleDatabase
+bin/simpleDatabase/DatabaseHelper.class
+bin/simpleDatabase/StartCSE360.class
+bin/simpleDatabase/User.class
