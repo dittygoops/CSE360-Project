@@ -1,9 +1,10 @@
-import java.util.List;
-
 package simpleDatabase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class HelpSystem {
-    private static List<Message> helpMessages;
+    private static List<Message> helpMessages = new ArrayList<>();
 
     public static void sendGenericMessage(String message, User user) {
         Message msg = new Message(message, user);

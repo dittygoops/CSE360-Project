@@ -139,7 +139,7 @@ public class StartCSE360 {
 		if (currentUser.getRoles().length() == 1) {
 	            		if(currentUser.getRoles().contains("a")) adminHome();
 	            		else if(currentUser.getRoles().contains("t")) instructorHome();
-	            		else regHome();
+	            		else studentHome(currentUser);
 	    //if not - the user gets to choose which home menu to go to
 	    } else sessionRoleSelection(currentUser);
 		
@@ -192,7 +192,7 @@ public class StartCSE360 {
             }
 			case "2": {
                 System.out.println("Student.");
-                regHome();
+                studentHome(currentUser);
                 break;
             }
 			case "3": {
@@ -205,23 +205,6 @@ public class StartCSE360 {
 				break;
 			}
 		}
-	}
-	
-	//P3: Get Rid of and Change flow to Student and Instructor Homes
-	private static void regHome() throws SQLException, Exception {
-		System.out.println("Welcome to the home page of either a Student or Instructor.");
-		System.out.println("At this time, you can only perform one action - Logout. However, you are welcome to sit here for however long you like.");
-		System.out.println("To Logout, Enter q: ");
-		String logout = scanner.nextLine();
-		if(logout.equals("q")) {
-			System.out.println("You have successfully logged out. See you next time!");
-			mainLogin();
-		} 
-		while(!logout.equals("q")) {
-			System.out.print("Invalid input. To Logout, Enter q: ");
-			logout  = scanner.nextLine();
-		}
-		
 	}
 
 	/**
@@ -241,7 +224,7 @@ public class StartCSE360 {
 	 * @throws SQLException Throws error if there is a SQL error from our interaction with the database
 	 * @throws Exception Throws an Exception if there is a SQL error from the helper file and logs the issue
 	 */
-	private static void studentHome() throws SQLException, Exception {
+	private static void studentHome(User user) throws SQLException, Exception {
 		String option = "";
 		do {
 		
@@ -270,7 +253,7 @@ public class StartCSE360 {
 			case "2": {
 				System.out.println("Please type your general message below: ");
 				String genMessage = scanner.nextLine();
-				//P3: pass genMessage to db method to be stored for future
+				HelpSystem.sendGenericMessage(genMessage, user);
 				System.out.println("Your message has been sent and stored to improve our system in the future.");
 				break;
 			}
@@ -278,8 +261,8 @@ public class StartCSE360 {
 			//Specific Message - Must contain exact issue
 			case "3": {
 				System.out.println("Please enter your specific message below. Make sure to include exactly what you need and/or cannot find: ");
-				String genMessage = scanner.nextLine();
-				//P3: pass genMessage to db method to be stored for future
+				String specMessage = scanner.nextLine();
+				HelpSystem.sendSpecificMessage(specMessage, user);
 				System.out.println("Your message has been sent and stored to improve our system in the future.");
 				break;
 			}
@@ -398,7 +381,7 @@ public class StartCSE360 {
 	            	if (user.getRoles().length() == 1) {
 	            		if(user.getRoles().contains("a")) adminHome();
 	            		else if(user.getRoles().contains("t")) instructorHome();
-	            		else regHome();
+	            		else studentHome(user);
 	            	} else sessionRoleSelection(user);
 	            	
 	            	break;
