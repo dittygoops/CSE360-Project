@@ -1161,4 +1161,40 @@ class DatabaseHelper {
 		}
 	}
 
+	public void searchArticle(String role, String level, String group, String search) { 
+		String query = "SELECT * FROM articles WHERE level = ? AND group_id LIKE ? AND (title LIKE ? OR short_description LIKE ? OR keywords LIKE ? OR body LIKE ? OR reference_links LIKE ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, level);
+			pstmt.setString(2, "%" + group + "%");
+			pstmt.setString(3, "%" + search + "%");
+			pstmt.setString(4, "%" + search + "%");
+			pstmt.setString(5, "%" + search + "%");
+			pstmt.setString(6, "%" + search + "%");
+			pstmt.setString(7, "%" + search + "%");
+			try (ResultSet rs = pstmt.executeQuery()) {
+				while (rs.next()) {
+					int id = rs.getInt("id");
+					String articleLevel = rs.getString("level");
+					String groupId = rs.getString("group_id");
+					String title = rs.getString("title");
+					String shortDescription = rs.getString("short_description");
+					String keywords = rs.getString("keywords");
+					String encryptedBody = rs.getString("body");
+					String decryptedBody = encryptionHelper.decrypt(encryptedBody);
+					String referenceLinks = rs.getString("reference_links");
+ 
+					System.out.println("ID: " + id);
+					System.out.println("Level: " + articleLevel);
+					System.out.println("Group ID: " + groupId);
+					System.out.println("Title: " + title);
+					System.out.println("Short Description: " + shortDescription);
+					System.out.println("Keywords: " + keywords);
+					System.out.println("Body: " + decryptedBody);
+					System.out.println("Reference Links: " + referenceLinks);
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("Database error while searching for articles: " + e.getMessage());
+		}
+	}
 }
