@@ -974,7 +974,7 @@ class DatabaseHelper {
 			pstmt.setString(3, title);
 			pstmt.setString(4, shortDescription);
 			pstmt.setArray(5, connection.createArrayOf("VARCHAR", keywords));
-			pstmt.setString(6, body);
+			pstmt.setString(6, encryptedBody);
 			pstmt.setArray(7, connection.createArrayOf("VARCHAR", referenceLinks));
 			pstmt.setInt(8, tempId);
 			
