@@ -565,7 +565,9 @@ public class StartCSE360 {
 
 				// User invitation to the system
 				case "1": {
-					String rolesToGive = "";
+					boolean aFlag = false;
+					boolean tFlag = false;
+					boolean sFlag = false;	
 					String roleSelect = "";
 
 					System.out.println("Here are the possible roles this user can have: ");
@@ -584,38 +586,36 @@ public class StartCSE360 {
 
 					switch (roleSelect) {
 						case "1": {
-							rolesToGive = "a";
-
+							aFlag = true;	
 							break;
 						}
 						case "2": {
-							rolesToGive = "s";
-
+							sFlag = true;
 							break;
 						}
 						case "3": {
-							rolesToGive = "t";
-
+							tFlag = true;
 							break;
 						}
 						case "4": {
-							rolesToGive = "as";
-
+							aFlag = true;
+							sFlag = true;
 							break;
 						}
 						case "5": {
-							rolesToGive = "at";
-
+							aFlag = true;
+							tFlag = true;
 							break;
 						}
 						case "6": {
-							rolesToGive = "st";
-
+							tFlag = true;
+							sFlag = true;
 							break;
 						}
 						case "7": {
-							rolesToGive = "ast";
-
+							aFlag = true;
+							tFlag = true;
+							sFlag = true;
 							break;
 						}
 						default:
@@ -624,15 +624,20 @@ public class StartCSE360 {
 
 					}
 
-					if (rolesToGive.length() > 0) {
-						// OTP Generation + Sending
+					if (aFlag || tFlag || sFlag) {
+						//First create shell User
+						int shellUserID = databaseHelper.insertShellUser(aFlag, tFlag, sFlag);
+						if(shellUserID == -1) {
+							System.out.println("DB issue");
+							break;
+						}
+
+
 						System.out.print("Here is the OTP sent: ");
-						System.out.println(databaseHelper.createOTP(rolesToGive));
-						// generate OTP + flag on DB side
+						System.out.println(databaseHelper.createOTP(shellUserID));
 						System.out.println("You have successfully invited a student to join the system!");
-						System.out
-								.println("One Time Password has been sent to this user to enable their registration.");
-					}
+						System.out.println("One Time Password has been sent to this user to enable their registration.");
+					} else System.out.println("There was an issue with inviting the user. Please try again later.");
 					break;
 				}
 
@@ -644,22 +649,26 @@ public class StartCSE360 {
 					usernameReset = reset[0];
 					emailReset = reset[1];
 					// check by both user and email only
-					if (!databaseHelper.doesUserExistEmail(emailReset)) {
+					if (!databaseHelper.userExist(usernameReset, emailReset)) {
 						System.out.println("There is no user with the provided specifications.");
 						break;
 					}
 
 					// Account will reset with the roles they had before
-					String curRoles = databaseHelper.getUserRoles(usernameReset);
-					if (databaseHelper.deleteUserAccount(usernameReset)) {
-						System.out.println(
-								"You have successfully reset a user in the system. They will be notified of this change. They will have the same roles as before once signed back in");
-						String otp = databaseHelper.createOTP(curRoles);
-						System.out.println("One Time Password has been sent to this user: " + otp);
-					} else
-						System.out.println(
-								"There was an error on our end and specified user has not been deleted - please try again later.");
+					boolean[] curRoles = databaseHelper.getUserRoles(usernameReset, emailReset);
+					if (databaseHelper.deleteUserAccount(usernameReset, emailReset)) {
+						System.out.println("You have successfully reset a user in the system. They will be notified of this change. They will have the same roles as before once signed back in");
+						int shellUserID = databaseHelper.insertShellUser(curRoles[0], curRoles[1], curRoles[2]);
 
+						if(shellUserID == -1) {
+							System.out.println("DB issue");
+							break;
+						}
+
+						System.out.print("Here is the OTP sent: ");
+						System.out.println(databaseHelper.createOTP(shellUserID));
+
+					} else System.out.println("There was an error on our end and specified user has not been reset - please try again later.");
 					break;
 				}
 
@@ -671,21 +680,17 @@ public class StartCSE360 {
 					usernameDelete = delete[0];
 					emailDelete = delete[1];
 
-					// Delete user from database - check if they exist first - check via both user
-					// and email
-					if (!databaseHelper.doesUserExistEmail(emailDelete)) {
+					if (!databaseHelper.userExist(usernameDelete, emailDelete)) {
 						System.out.println("There is no user with the provided specifications.");
 						break;
-					} else {
-						boolean successful = databaseHelper.deleteUserAccount(usernameDelete);
+					} 
 
-						// Log result
-						if (successful)
-							System.out.println("You have successfully deleted a user.");
-						else
-							System.out.println("There was an error on our end. Please try again later");
 
-					}
+					if(databaseHelper.deleteUserAccount(usernameDelete, emailDelete))
+						System.out.println("You have successfully deleted a user.");
+					else
+						System.out.println("There was an error on our end. Please try again later");
+
 					break;
 				}
 
@@ -702,32 +707,36 @@ public class StartCSE360 {
 					String[] adjust = get_user_identifiers();
 					usernameAdjust = adjust[0];
 					emailAdjust = adjust[1];
-					// check via both uName and email
-					if (!databaseHelper.doesUserExistEmail(emailAdjust)) {
+					
+					if (!databaseHelper.userExist(usernameAdjust, emailAdjust)) {
 						System.out.println("There is no user with the provided specifications.");
 						break;
 					}
 
+					boolean aFlag = false;
+					boolean tFlag = false;
+					boolean sFlag = false;
+
 					// User object populated from query constructed via fields provided
 					User curUser = databaseHelper.findUser(usernameAdjust, emailAdjust);
-					String userRoles = curUser.getRoles();
+					boolean[] userRoles = curUser.getRoles();
 
 					System.out.print(
 							"Please choose if you would like to add or remove a role from this user? 1. Add 2. Remove");
 					String option = scanner.nextLine();
 					if (option.equals("1")) {
-
-						if (userRoles.length() == 3) {
+						
+						if (userRoles[0] && (userRoles[1] && userRoles[2])) {
 							System.out.println("This user already has all the roles.");
 							break;
 						}
 						// Pick Roles to add - must check if a user does not have one to add it
 						System.out.println("You are now adding a role to this user. Here are the options: ");
-						if (userRoles.indexOf("a") == -1)
+						if (!userRoles[0])
 							System.out.println("1. Administrator");
-						if (userRoles.indexOf("s") == -1)
+						if (!userRoles[2])
 							System.out.println("2. Student");
-						if (userRoles.indexOf("t") == -1)
+						if (!userRoles[3])
 							System.out.println("3. Instructor");
 						System.out.print("Please select a role: ");
 						String rolePick = scanner.nextLine();
@@ -739,14 +748,14 @@ public class StartCSE360 {
 
 								// Initial Check is in case they input a number between 1 and 3 but the user
 								// already has the role (accidental input that would be valid in other cases)
-								if (userRoles.indexOf("a") != -1) {
+								if (userRoles[0]) {
 									System.out.println(
 											"You have selected a role that this user already has. The user's roles will remain the same");
 									break;
 								}
 
 								// Add role to the local String - used for DB update later
-								userRoles += "a";
+								aFlag = true;
 								System.out.println("You have successfully added the Administrator role to this user");
 
 								break;
@@ -754,12 +763,12 @@ public class StartCSE360 {
 							case "2": {
 
 								// same as case 1 but for student role
-								if (userRoles.indexOf("s") != -1) {
+								if (userRoles[2]) {
 									System.out.println(
 											"You have selected a role that this user already has. The user's roles will remain the same");
 									break;
 								}
-								userRoles += "s";
+								sFlag = true;
 								System.out.println("You have successfully added the Student role to this user");
 
 								break;
@@ -767,12 +776,12 @@ public class StartCSE360 {
 							case "3": {
 
 								// same as case 1 but for instructor role
-								if (userRoles.indexOf("t") != -1) {
+								if (userRoles[1]) {
 									System.out.println(
 											"You have selected a role that this user already has. The user's roles will remain the same");
 									break;
 								}
-								userRoles += "t";
+								tFlag = true;
 								System.out.println("You have successfully added the Instructor role to this user");
 
 								break;
@@ -785,18 +794,18 @@ public class StartCSE360 {
 						// Removing a role from the user
 					} else if (option.equals("2")) {
 
-						if (userRoles.length() == 0) {
-							System.out.println("This user has no roles.");
+						if (!userRoles[0] && (!userRoles[1] && !userRoles[2])) {
+							System.out.println("This user has no roles to remove.");
 							break;
 						}
 
 						// Pick Roles to remove - must check if a user has one to remove it
 						System.out.println("You are now removing a role to this user. Here are the options: ");
-						if (userRoles.indexOf("a") != -1)
+						if (userRoles[0])
 							System.out.println("1. Administrator");
-						if (userRoles.indexOf("s") != -1)
+						if (userRoles[2])
 							System.out.println("2. Student");
-						if (userRoles.indexOf("t") != -1)
+						if (userRoles[1])
 							System.out.println("3. Instructor");
 						System.out.print("Please select a role: ");
 						String rolePick = scanner.nextLine();
@@ -807,7 +816,7 @@ public class StartCSE360 {
 
 								// Initial Check is in case they input a number between 1 and 3 but the user
 								// already has the role (accidental input that would be valid in other cases)
-								if (userRoles.indexOf("a") == -1) {
+								if (!userRoles[0]) {
 									System.out.println(
 											"You have selected a role that this user does not have. The user's roles will remain the same");
 									break;
@@ -815,7 +824,7 @@ public class StartCSE360 {
 
 								// Remove role from string - again this string will be used for a DB update
 								// later
-								userRoles = userRoles.replace("a", "");
+								aFlag = false;
 								System.out
 										.println("You have successfully removed the Administrator role from this user");
 
@@ -824,12 +833,12 @@ public class StartCSE360 {
 
 							// Same as case 1 but for Student role
 							case "2": {
-								if (userRoles.indexOf("s") == -1) {
+								if (!userRoles[2]) {
 									System.out.println(
 											"You have selected a role that this user does not have. The user's roles will remain the same");
 									break;
 								}
-								userRoles = userRoles.replace("s", "");
+								sFlag = false;
 								System.out.println("You have successfully removed the Student role from this user");
 
 								break;
@@ -837,12 +846,12 @@ public class StartCSE360 {
 
 							// Same as case 1 but for Instructor role
 							case "3": {
-								if (userRoles.indexOf("t") != -1) {
+								if (!userRoles[1]) {
 									System.out.println(
 											"You have selected a role that this user does not have. The user's roles will remain the same");
 									break;
 								}
-								userRoles = userRoles.replace("t", "");
+								tFlag = false;
 								System.out.println("You have successfully removed the Instructor role from this user");
 
 								break;
@@ -853,10 +862,15 @@ public class StartCSE360 {
 						}
 
 						// Final Check is for invalid input on Adding or Removing roles
-					} else
+					} else {
 						System.out.println("Invalid Option. The user will remain unchanged.");
+						break;
+					}
 
 					// Update the user object and the database entry
+					userRoles[0] = aFlag;
+					userRoles[1] = tFlag;
+					userRoles[2] = sFlag;
 					curUser.setRoles(userRoles);
 					databaseHelper.updateUser(curUser);
 

@@ -16,7 +16,9 @@ public class User {
     private String middleName;     // The user's middle name (optional)
     private String lastName;       // The user's last name
     private String prefName;       // The user's preferred name
-    private String roles;          // The roles assigned to the user
+    private boolean aFlag;          // The roles assigned to the user
+    private boolean tFlag;
+    private boolean sFlag;
     private boolean otpFlag;       // Indicates if a one-time password is required
     private LocalDateTime otpExpiration; // The expiration time for the one-time password
 
@@ -35,7 +37,7 @@ public class User {
      * @param otpExpiration    The expiration time for the one-time password
      */
     public User(String username, String password, String email, String firstName,
-                String middleName, String lastName, String prefName, String roles,
+                String middleName, String lastName, String prefName, boolean aFlag, boolean tFlag, boolean sFlag,
                 boolean otpFlag, LocalDateTime otpExpiration) {
         this.username = username;
         this.password = password;
@@ -44,7 +46,9 @@ public class User {
         this.middleName = middleName;
         this.lastName = lastName;
         this.prefName = prefName;
-        this.roles = roles;
+        this.aFlag = aFlag;
+        this.tFlag = tFlag;
+        this.sFlag = sFlag;
         this.otpFlag = otpFlag;
         this.otpExpiration = otpExpiration;
     }
@@ -74,8 +78,9 @@ public class User {
         return prefName;
     }
 
-    public String getRoles() {
-        return roles;
+    public boolean[] getRoles() {
+        boolean[] res = {aFlag, tFlag, sFlag};
+        return res;
     }
 
     public String getPassword() {
@@ -111,8 +116,10 @@ public class User {
         this.prefName = prefName;
     }
 
-    public void setRoles(String roles) {
-        this.roles = roles;
+    public void setRoles(boolean[] flags) {
+        this.aFlag = flags[0];
+        this.tFlag = flags[1];
+        this.sFlag = flags[2];
     }
 
     public void setOTPFlag(boolean otpFlag) {
@@ -205,9 +212,9 @@ class Admin extends User {
      * @param otpExpiration    The expiration time for the one-time password
      */
     public Admin(String username, String password, String email, String firstName, String middleName, String lastName, String prefName,
-                 String roles, boolean otpFlag, LocalDateTime otpExpiration) {
+    boolean aFlag, boolean tFlag, boolean sFlag, boolean otpFlag, LocalDateTime otpExpiration) {
         super(username, password, email, firstName, middleName, lastName, prefName,
-              roles, otpFlag, otpExpiration);
+     aFlag, tFlag, sFlag, otpFlag, otpExpiration);
         // initiliaze DatabaseHelper object
         databaseHelper = new DatabaseHelper();
     }
