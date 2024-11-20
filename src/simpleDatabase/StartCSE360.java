@@ -101,9 +101,8 @@ public class StartCSE360 {
 		}
 
 		// insert login info to the table
-		databaseHelper.register(userName, password, "a");
-		System.out.println("Administrator setup completed.");
-
+		int firstAdminId = databaseHelper.firstAdmin(userName, password);
+		if(firstAdminId != -1) System.out.println("Administrator setup completed.");
 	}
 
 	/**

@@ -228,8 +228,8 @@ class Admin extends User {
      */
     public String inviteUser(String email, String roles) {
         // generate otp code and return
-        String invitationCode = databaseHelper.createOTP(roles);
-        return invitationCode;
+        //String invitationCode = databaseHelper.createOTP(roles);
+        return "invitationCode";
     }
 
     /**
@@ -237,11 +237,11 @@ class Admin extends User {
      *
      * @param username The username of the account to reset
      */
-    public String resetUserAccount(String username) {
+    public String resetUserAccount(String username, String email) {
         // get roles from the username
-        String roles = databaseHelper.getUserRoles(username);
+       int userID = databaseHelper.getUserId(username, email);
         // generate otp code and return
-        databaseHelper.createOTP(roles);
+        databaseHelper.createOTP(userID);
         return "";
     }
 
@@ -251,9 +251,9 @@ class Admin extends User {
      * @param username The username of the account to delete
      * @return True if the account was successfully deleted, otherwise false
      */
-    public boolean deleteUserAccount(String username) throws SQLException {
+    public boolean deleteUserAccount(String username, String email) throws SQLException {
         // delete user acount
-        return databaseHelper.deleteUserAccount(username);
+        return databaseHelper.deleteUserAccount(username, email);
     }
 }
     /**

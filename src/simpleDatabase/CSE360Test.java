@@ -36,7 +36,7 @@ public class CSE360Test {
         System.out.println("Testing User class...");
 
         // Test 1: Username test
-        User user1 = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", "roles", false, null);
+        User user1 = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", false, false, false, false, null);
         user1.setUsername("testUser");
         if ("testUser".equals(user1.getUsername())) {
             System.out.println("Test 1 passed");
@@ -47,7 +47,7 @@ public class CSE360Test {
         }
 
         // Test 2: Preferred and last name set test
-        User user2 = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", "roles", false, null);
+        User user2 = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", false, false, false, false, null);
         String prefName = "abcd";
         user2.setPreferredName(prefName);
         String lastName = "bcda";
@@ -61,7 +61,7 @@ public class CSE360Test {
         }
 
         // Test 3: Setting OTP flag to true test
-        User user3 = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", "roles", false, null);
+        User user3 = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", false, false, false, false, null);
         boolean flagResultTrue = true;
         user3.setOTPFlag(flagResultTrue);
         if (user3.getOTP() == flagResultTrue) {
@@ -73,7 +73,7 @@ public class CSE360Test {
         }
 
         // Test 4: Setting OTP flag to false test
-        User user4 = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", "roles", false, null);
+        User user4 = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", false, false, false, false, null);
         boolean flagResultFalse = false;
         user4.setOTPFlag(flagResultFalse);
         if (user4.getOTP() == flagResultFalse) {
@@ -85,10 +85,11 @@ public class CSE360Test {
         }
 
         // Test 5: Adding roles test
-        User user5 = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", "roles", false, null);
-        String newRole = "INSTRUCTOR";
-        user5.setRoles(newRole);
-        if (user5.getRoles().equals(newRole)) {
+        User user5 = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", false, false, false, false, null);
+        boolean[] userRoles = user5.getRoles();
+        userRoles[1] = true;
+        user5.setRoles(userRoles);
+        if (user5.getRoles()[1]) {
             System.out.println("Test 5 passed");
             numPassed++;
         } else {
@@ -97,10 +98,13 @@ public class CSE360Test {
         }
 
         // Test 6: Removing roles test
-        User user6 = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", "roles", false, null);
-        user6.setRoles(newRole);
-        user6.setRoles("");
-        if (user6.getRoles().isEmpty()) {
+        User user6 = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", false, false, false, false, null);
+        userRoles = user6.getRoles();
+        userRoles[0] = false;
+        userRoles[1] = false;
+        userRoles[2] = false;
+        boolean[] postChange = user6.getRoles();
+        if (!postChange[0] && (!postChange[1] && !postChange[2])) {
             System.out.println("Test 6 passed");
             numPassed++;
         } else {
@@ -130,17 +134,27 @@ public class CSE360Test {
             numFailed++;
         }
 
-        // Test 2: Create account test
-        User newUser = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", "ast", false, null);
-        databaseHelper.register(newUser.getUsername(), newUser.getPassword(), newUser.getRoles());
-        boolean result2 = "username".equals(newUser.getUsername());
-        if (result2) {
-            System.out.println("Test 2 passed");
-            numPassed++;
+        // Test 2: Login account test
+        User newUser = new User("username", "password", "email", "firstName", "middleName", "lastName", "prefName", false, false, true, false, null);
+        boolean[] newUserRoles = newUser.getRoles();
+        int testNewUserID = databaseHelper.insertShellUser(newUserRoles[0], newUserRoles[1], newUserRoles[2]);
+        String genOTP = databaseHelper.createOTP(testNewUserID);
+        int fromDbNewUserId = databaseHelper.verifyOTP(genOTP);
+        if(databaseHelper.register(newUser.getUsername(), newUser.getPassword(), fromDbNewUserId)) {
+            User fromDB = databaseHelper.login(newUser.getUsername(), newUser.getPassword());
+            boolean result2 = "username".equals(fromDB.getUsername());
+            if (result2) {
+                System.out.println("Test 2 passed");
+                numPassed++;
+            } else {
+                System.out.println("Test 2 failed");
+                numFailed++;
+            }
         } else {
             System.out.println("Test 2 failed");
             numFailed++;
         }
+        
 
         databaseHelper.closeConnection();
     }

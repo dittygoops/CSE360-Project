@@ -175,12 +175,12 @@ class DatabaseHelper {
 		return false;
 	}
 
-	/**
+	/*
 	 * Add a user to the database
 	 * 
 	 * @param user
 	 * @throws SQLException
-	 */
+	 
 	public void addUser(User user) throws SQLException {
 		String insertUser = "INSERT INTO cse360users (userName, email, password, firstName, middleName, lastName, preferredFirst, role, otpFlag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
@@ -196,6 +196,7 @@ class DatabaseHelper {
 			pstmt.executeUpdate();
 		}
 	}
+		*/
 
 	/**
 	 * Register a user with username, password, and role
@@ -220,6 +221,8 @@ class DatabaseHelper {
 		}
 		return false;
 	}
+
+	
 
 	/**
 	 * login user with username and password
@@ -277,7 +280,7 @@ class DatabaseHelper {
 			// update execution
 			int rowsAffected = pstmt.executeUpdate();
 			if (rowsAffected == 0) {
-				System.out.println("No user found with the username: " + user.getUsername() " and email : " + user.getEmail());
+				System.out.println("No user found with the username: " + user.getUsername() + " and email : " + user.getEmail());
 			} else {
 				System.out.println("User updated successfully.");
 			}
@@ -345,12 +348,7 @@ class DatabaseHelper {
 		}
 	}
 
-	/**
-	 * store user information in the database
-	 * 
-	 * @param user
-	 * @throws SQLException
-	 */
+	/*
 	public void storeUser(User user) throws SQLException {
 		String insertUser = "INSERT INTO cse360users (userName, email, password, firstName, middleName, lastName, preferredFirst, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
@@ -365,6 +363,7 @@ class DatabaseHelper {
 			pstmt.executeUpdate();
 		}
 	}
+	*/
 
 	/**
 	 * get User Roles by username
@@ -569,6 +568,55 @@ class DatabaseHelper {
 		return otp;
 	}
 
+	public int getUserId(String userName, String email) {
+
+		String query = "SELECT id FROM cse360users WHERE userName = ? AND email = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, userName);
+			pstmt.setString(2, email);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				return rs.getInt(1);
+			}
+		} catch (SQLException e) {
+			System.err.println("DB issue validating user by userName and Email: " + e.getMessage());
+		}
+		return -1;
+	}
+
+	public int firstAdmin(String userName, String password) throws SQLException{
+		String insertShell = "INSERT INTO cse360users (userName, email, password, firstName, middleName, lastName, preferredFirst, adminFlag, teachFlag, studFlag, otpFlag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(insertShell)) {
+			pstmt.setString(0, userName);
+			pstmt.setString(1, "");
+			pstmt.setString(2, password);
+			pstmt.setString(3, "");
+			pstmt.setString(4, "");
+			pstmt.setString(5, "");
+			pstmt.setString(6, "");
+			pstmt.setString(7, "");
+			pstmt.setBoolean(8, true);
+			pstmt.setBoolean(9, false);
+			pstmt.setBoolean(10, false);
+			pstmt.setBoolean(11, true);
+			int rowsAffected = pstmt.executeUpdate();
+
+			if(rowsAffected > 0) {
+				try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        int generatedId = generatedKeys.getInt(1); // Retrieve the ID
+                        System.out.println("Inserted user ID: " + generatedId);
+						return generatedId;
+					} else System.out.println("First admin was not made properly. Please try again later");
+				} catch (SQLException f) {
+					System.err.println("Databse error during shell user insertion: " + f.getMessage());
+				} 
+			} else System.out.println("First admin was not made properly. Please try again later");
+		} catch (SQLException e) {
+			System.err.println("Database error during shell user insertion: " + e.getMessage());
+		}
+		return -1;
+	}	
+
 	public int insertShellUser(boolean admin, boolean instruct, boolean stud) throws SQLException{
 		String insertShell = "INSERT INTO cse360users (userName, email, password, firstName, middleName, lastName, preferredFirst, adminFlag, teachFlag, studFlag, otpFlag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertShell)) {
@@ -590,7 +638,7 @@ class DatabaseHelper {
 				try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
                         int generatedId = generatedKeys.getInt(1); // Retrieve the ID
-                        System.out.println("Inserted row ID: " + generatedId);
+                        System.out.println("Inserted user ID: " + generatedId);
 						return generatedId;
 					} else System.out.println("Shell user insertion failed");
 				} catch (SQLException f) {
@@ -1178,7 +1226,7 @@ class DatabaseHelper {
 		String body = scanner.nextLine();
 
 		// article encryption
-		String encryptedBody = encryptionHelper.encrypt(body);
+		//String encryptedBody = encryptionHelper.encrypt(body);
 
 		System.out.println("Enter reference links (comma separated): ");
 		String[] referenceLinks = scanner.nextLine().split(",");
