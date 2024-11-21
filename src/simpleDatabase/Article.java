@@ -185,6 +185,15 @@ public class Article {
         this.referenceLinks = referenceLinks;
     }
 
+    public int createArticleId() {
+		String id = "";
+		for (int i = 0; i < 6; i++) {
+			id += (int) (Math.random() * 10);
+		}
+		int res = Integer.parseInt(id);
+		return res;
+	}
+
     public String toString() {
         return "ID: " + id + "\n" +
             "Level: " + level + "\n" +

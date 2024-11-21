@@ -2,7 +2,7 @@ package simpleDatabase;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-
+import java.util.Scanner;
 /* .......... User Superclass ............*/
 /**
  * The User class serves as the base class for all types of users in the system.
@@ -19,7 +19,8 @@ public class User {
     private String roles;          // The roles assigned to the user
     private boolean otpFlag;       // Indicates if a one-time password is required
     private LocalDateTime otpExpiration; // The expiration time for the one-time password
-
+    private static String userAccessGroup;      // The user access group
+    private static Scanner scanner = new Scanner(System.in);
     /**
      * Constructor for creating a new User instance.
      *
@@ -36,7 +37,7 @@ public class User {
      */
     public User(String username, String password, String email, String firstName,
                 String middleName, String lastName, String prefName, String roles,
-                boolean otpFlag, LocalDateTime otpExpiration) {
+                boolean otpFlag, LocalDateTime otpExpiration, String userAccessGroup) {
         this.username = username;
         this.password = password;
         this.email = email;
@@ -47,6 +48,54 @@ public class User {
         this.roles = roles;
         this.otpFlag = otpFlag;
         this.otpExpiration = otpExpiration;
+        this.userAccessGroup = userAccessGroup;
+    }
+
+    public User(String username, String email) {
+        this.username = username;
+        this.email = email;
+    }
+
+    /**
+	 * Asks for login information
+	 * <p>
+	 * Asks the user for the login information and returns their credentials/login information
+	 * </p>
+	 * @return Array of 2 Strings containing the username and password in that order
+	 */
+	public void get_user_credentials() {
+		String[] credentials = new String[2];
+		
+		System.out.print("Enter Username: ");
+		credentials[0] = scanner.nextLine();
+		System.out.print("Enter Password: ");
+		credentials[1] = scanner.nextLine();
+		
+        setUsername(credentials[0]);
+        setPassword(credentials[1]);
+	}
+
+    /**
+     * Asks for login information for resetting a user
+     * @param username
+     * @param email
+     * @param roles
+     */
+    public void reset(String username, String email, String roles) {
+        // reset user credentials
+        setUsername(username);
+        setEmail(email);
+        setRoles(roles);
+        setPassword("");
+        setOTPFlag(false);
+        setOneTimePasswordExpiration(null);
+        setUserAccessGroup("");
+
+        // reset user personal details
+        setFirstName("");
+        setMiddleName("");
+        setLastName("");
+        setPreferredName("");
     }
 
     // Getter methods
@@ -86,6 +135,7 @@ public class User {
     public void setUsername(String username) {
         this.username = username;
     }
+
 
     public void setPassword(String password) {
         this.password = password;
@@ -134,7 +184,14 @@ public class User {
     public LocalDateTime getOneTimePasswordExpiration() {
         return otpExpiration;
     }
-    
+
+    public static String getUserAccessGroup() {
+        return userAccessGroup;
+    }
+
+    public void setUserAccessGroup(String userAccessGroup) {
+        this.userAccessGroup = userAccessGroup;
+    }   
 
     /**
      * Method to retrieve the full name of the user, combining first, middle (if present), and last names.
@@ -205,9 +262,9 @@ class Admin extends User {
      * @param otpExpiration    The expiration time for the one-time password
      */
     public Admin(String username, String password, String email, String firstName, String middleName, String lastName, String prefName,
-                 String roles, boolean otpFlag, LocalDateTime otpExpiration) {
+                 String roles, boolean otpFlag, LocalDateTime otpExpiration, String userAccessGroup) {
         super(username, password, email, firstName, middleName, lastName, prefName,
-              roles, otpFlag, otpExpiration);
+              roles, otpFlag, otpExpiration, userAccessGroup);
         // initiliaze DatabaseHelper object
         databaseHelper = new DatabaseHelper();
     }

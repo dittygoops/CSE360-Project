@@ -97,6 +97,7 @@ class DatabaseHelper {
 		String articlesTable = "CREATE TABLE IF NOT EXISTS articles ("
                 + "id INT AUTO_INCREMENT PRIMARY KEY, "
                 + "level VARCHAR(20), "     				// level (beginner, intermediate, advanced, expert)
+				+ "article_type VARCHAR(), "				// article_type (e.g. help, general, specific_access)
                 + "group_id VARCHAR(255), "  				// group_id (e.g. CSE360, CSE360-01, CSE360-02)
                 + "title VARCHAR(255) NOT NULL, " 			// title
                 + "short_description CLOB, "				// short_description/abstract
@@ -181,13 +182,13 @@ class DatabaseHelper {
 	                String lastName = rs.getString("lastName");
 	                String preferredFirst = rs.getString("preferredFirst");
 	                String roles = rs.getString("role");
- 
+					String userAccessGroup = rs.getString("userAccessGroup");
 	                boolean otpFlag = rs.getBoolean("otpFlag"); 
 	                LocalDateTime otpExpiration = LocalDateTime.now(); // default value
  
 	                // Constructing and returning the User object
 	                return new User(userName, password, email, firstName, middleName, lastName,
-	                        preferredFirst, roles, otpFlag, otpExpiration);
+	                        preferredFirst, roles, otpFlag, otpExpiration, userAccessGroup);
 	            } else {
 	                return null; // User not found
 	            }
@@ -246,13 +247,13 @@ class DatabaseHelper {
 	                String lastName = rs.getString("lastName");
 	                String preferredFirst = rs.getString("preferredFirst");
 	                String roles = rs.getString("role");
- 
+					String userAccessGroup = rs.getString("userAccessGroup");
 	                boolean otpFlag = rs.getBoolean("otpFlag"); // Get actual otpFlag value from DB
 	                LocalDateTime otpExpiration = LocalDateTime.now(); // You can replace this with actual expiration time if you have it in DB
- 
+					
 	                // Constructing and returning the User object
 	                return new User(username, "", userEmail, firstName, middleName, lastName,
-	                        preferredFirst, roles, otpFlag, otpExpiration);
+	                        preferredFirst, roles, otpFlag, otpExpiration, userAccessGroup);
 	            } else {
 	                return null; // User not found
 	            }
@@ -366,7 +367,7 @@ class DatabaseHelper {
 	 * display list of all users
 	 * @throws SQLException
 	 */
-	public void displayUsersByAdmin() throws SQLException{
+	public void displayAllUsers() throws SQLException{
 		String sql = "SELECT * FROM cse360users"; 
 		try (Statement stmt = connection.createStatement();
 			 ResultSet rs = stmt.executeQuery(sql)) {
@@ -389,32 +390,6 @@ class DatabaseHelper {
 		}
 	}
  
-	/**
-	 * display user by name
-	 * @throws SQLException
-	 */
-	public void displayUsersByUser() throws SQLException{
-		String sql = "SELECT * FROM cse360users"; 
-		try (Statement stmt = connection.createStatement();
-			 ResultSet rs = stmt.executeQuery(sql)) {
- 
-			while(rs.next()) { 
-				// Retrieve by column name 
-				int id  = rs.getInt("id"); 
-				String  email = rs.getString("email"); 
-				String password = rs.getString("password"); 
-				String role = rs.getString("role");
- 
-			// Display values 
-			System.out.print("ID: " + id); 
-			System.out.print(", Age: " + email); 
-			System.out.print(", First: " + password); 
-			System.out.println(", Last: " + role); 
-			}
-		} 
-	}
- 
-	// delete user by username
 	/**
 	 * delete user by username
 	 * @param userName
@@ -448,14 +423,7 @@ class DatabaseHelper {
 		return otp;
 	}
 	
-	public int createArticleId() {
-		String id = "";
-		for (int i = 0; i < 6; i++) {
-			id += (int) (Math.random() * 10);
-		}
-		int res = Integer.parseInt(id);
-		return res;
-	}
+	
 	
 	/**
 	 * insert otp to table with roles
@@ -924,7 +892,19 @@ class DatabaseHelper {
 			e.printStackTrace();
 		}
 	}
-	
+
+	/**
+	 * Create a new article ID
+	 * @return a 6-digit integer ID
+	 */
+	public int createArticleId() {
+		String id = "";
+		for (int i = 0; i < 6; i++) {
+			id += (int) (Math.random() * 10);
+		}
+		int res = Integer.parseInt(id);
+		return res;
+	}
 
 	/**
 	 * Create a new article in the database
@@ -938,16 +918,22 @@ class DatabaseHelper {
 	 * @throws SQLException
 	 */
 	public void createArticle(String role) throws SQLException {
-		if (role.equals("s")) {
+		// instructors and admin can create articles
+		if (role.contains("s")) {
 			System.out.println("Invalid role");
 			return;
 		}
  
 		System.out.println("Enter article level (beginner, intermediate, advanced, expert): ");
 		String level = scanner.nextLine();
+
+
 		
 		System.out.println("Enter group ID (Please make sure there are no spaces and that they are comma separated) (e.g. CSE360,CSE360-01,CSE360-02): ");
 		String groupId = scanner.nextLine() + ",";
+
+		System.out.println("Enter article type (help, general, specific_access): ");
+		String articleType = scanner.nextLine();
  
 		System.out.println("Enter article title: ");
 		String title = scanner.nextLine();
@@ -967,18 +953,20 @@ class DatabaseHelper {
 		System.out.println("Enter reference links (comma separated): ");
 		String[] referenceLinks = scanner.nextLine().split(",");
 
+		
 		int tempId = createArticleId();
 		
-		String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		String insertArticle = "INSERT INTO articles (level, group_id, article_type, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 			pstmt.setString(1, level);
 			pstmt.setString(2, groupId);
-			pstmt.setString(3, title);
-			pstmt.setString(4, shortDescription);
-			pstmt.setArray(5, connection.createArrayOf("VARCHAR", keywords));
-			pstmt.setString(6, encryptedBody);
-			pstmt.setArray(7, connection.createArrayOf("VARCHAR", referenceLinks));
-			pstmt.setInt(8, tempId);
+			pstmt.setString(3, articleType);
+			pstmt.setString(4, title);
+			pstmt.setString(5, shortDescription);
+			pstmt.setArray(6, connection.createArrayOf("VARCHAR", keywords));
+			pstmt.setString(7, encryptedBody);
+			pstmt.setArray(8, connection.createArrayOf("VARCHAR", referenceLinks));
+			pstmt.setInt(9, tempId);
 			
 			pstmt.executeUpdate();
 		}
@@ -990,7 +978,8 @@ class DatabaseHelper {
 	 * @throws SQLException
 	 */
 	public void updateArticle(String role) throws SQLException {
-		if (role.equals("s")) {
+		// only instructors can update articles
+		if (role.contains("s") || role.contains("a")) {
 			System.out.println("Invalid role");
 			return;
 		}
@@ -1003,6 +992,9 @@ class DatabaseHelper {
  
 		System.out.println("Enter group ID (e.g. CSE360, CSE360-01, CSE360-02): ");
 		String groupId = scanner.nextLine();
+
+		System.out.println("Enter article type (help, general, specific_access): ");
+		String articleType = scanner.nextLine();
  
 		System.out.println("Enter article title: ");
 		String title = scanner.nextLine();
@@ -1019,16 +1011,17 @@ class DatabaseHelper {
 		System.out.println("Enter reference links (comma separated): ");
 		String referenceLinks = scanner.nextLine();
 
-		String updateArticle = "UPDATE articles SET level = ?, group_id = ?, title = ?, short_description = ?, keywords = ?, body = ?, reference_links = ? WHERE id = ?";
+		String updateArticle = "UPDATE articles SET level = ?, group_id = ?, article_type = ?, title = ?, short_description = ?, keywords = ?, body = ?, reference_links = ? WHERE id = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(updateArticle)) {
 			pstmt.setString(1, level);
 			pstmt.setString(2, groupId);
-			pstmt.setString(3, title);
-			pstmt.setString(4, shortDescription);
-			pstmt.setString(5, keywords);
-			pstmt.setString(6, body);
-			pstmt.setString(7, referenceLinks);
-			pstmt.setInt(8, id);
+			pstmt.setString(3, articleType);
+			pstmt.setString(4, title);
+			pstmt.setString(5, shortDescription);
+			pstmt.setString(6, keywords);
+			pstmt.setString(7, body);
+			pstmt.setString(8, referenceLinks);
+			pstmt.setInt(9, id);
 			pstmt.executeUpdate();
 		}
 	}
@@ -1038,8 +1031,9 @@ class DatabaseHelper {
 	 * @param role
 	 * @throws SQLException
 	 */
-	public void viewAllArticles(String role) throws SQLException {
-		if (role.equals("s")) {
+	public void viewAllArticles(String role, String userAccessGroup) throws SQLException {
+		// only instructors and admin can view all articles
+		if (role.contains("s")) {
 			System.out.println("Invalid role");
 			return;
 		}
@@ -1052,6 +1046,7 @@ class DatabaseHelper {
 				int id = rs.getInt("id");
 				String level = rs.getString("level");
 				String groupId = rs.getString("group_id");
+				String articleType = rs.getString("article_type");
 				String title = rs.getString("title");
 				String shortDescription = rs.getString("short_description");
 				String keywords = rs.getString("keywords");
@@ -1062,6 +1057,7 @@ class DatabaseHelper {
 				System.out.println("ID: " + id);
 				System.out.println("Level: " + level);
 				System.out.println("Group ID: " + groupId);
+				System.out.println("Article Type: " + articleType);
 				System.out.println("Title: " + title);
 				System.out.println("Short Description: " + shortDescription);
 				System.out.println("Keywords: " + keywords);
@@ -1072,7 +1068,8 @@ class DatabaseHelper {
 	}
  
 	public void viewGroupedArticles(String role, String group) throws SQLException {
-		if (role.equals("s")) {
+		// only instructors and admin can view grouped articles
+		if (role.contains("s") || role.contains("a")) {
 			System.out.println("Invalid role");
 			return;
 		}
@@ -1087,6 +1084,7 @@ class DatabaseHelper {
 					String groupId = rs.getString("group_id");
 					String title = rs.getString("title");
 					String shortDescription = rs.getString("short_description");
+					String articleType = rs.getString("article_type");
 					String keywords = rs.getString("keywords");
 					String encryptedBody = rs.getString("body");
 					String decryptedBody = encryptionHelper.decrypt(encryptedBody);
@@ -1095,6 +1093,7 @@ class DatabaseHelper {
 					System.out.println("ID: " + id);
 					System.out.println("Level: " + level);
 					System.out.println("Group ID: " + groupId);
+					System.out.println("Article Type: " + articleType);
 					System.out.println("Title: " + title);
 					System.out.println("Short Description: " + shortDescription);
 					System.out.println("Keywords: " + keywords);
@@ -1106,7 +1105,8 @@ class DatabaseHelper {
 	}
 
 	public void viewArticle(String role, String articleId) throws SQLException {
-		if (role.equals("s")) {
+		// only instructors and admin can view articles
+		if (role.contains("s") || role.contains("a")) {
 			System.out.println("Invalid role");
 			return;
 		}
@@ -1122,6 +1122,7 @@ class DatabaseHelper {
 					String groupId = rs.getString("group_id");
 					String title = rs.getString("title");
 					String shortDescription = rs.getString("short_description");
+					String articleType = rs.getString("article_type");
 					String keywords = rs.getString("keywords");
 					String encryptedBody = rs.getString("body");
 					String decryptedBody = encryptionHelper.decrypt(encryptedBody);
@@ -1130,6 +1131,7 @@ class DatabaseHelper {
 					System.out.println("ID: " + id);
 					System.out.println("Level: " + level);
 					System.out.println("Group ID: " + groupId);
+					System.out.println("Article Type: " + articleType);
 					System.out.println("Title: " + title);
 					System.out.println("Short Description: " + shortDescription);
 					System.out.println("Keywords: " + keywords);
@@ -1147,6 +1149,7 @@ class DatabaseHelper {
 	 * @throws SQLException
 	 */
 	public boolean deleteArticle(String role) throws SQLException {
+		// both instructors and admin can delete articles
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
 			return false;

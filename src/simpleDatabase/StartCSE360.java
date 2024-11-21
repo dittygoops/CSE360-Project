@@ -21,6 +21,7 @@ public class StartCSE360 {
 	
 	/** The scanner used to take in all text inputs for the entire system. Core of the console-based UI*/
 	private static final Scanner scanner = new Scanner(System.in);
+	private static User currentUser;
 	
 	//P3: Removed constructor since Java makes a blank one by default
 	
@@ -359,20 +360,18 @@ public class StartCSE360 {
 	    // Choice 1: Returning user
 	    if (choice.equals("1")) {
 	        while (true) {
-	            String[] credentials = get_user_credentials();  // Get username and password
-	            userName = credentials[0];
-	            password = credentials[1];
+	            currentUser.get_user_credentials();  // Get username and password
 
 	            // Check if user exists and credentials are valid
-	            boolean doesUserExist = databaseHelper.doesUserExistBoth(userName, password);
+	            boolean doesUserExist = databaseHelper.doesUserExistBoth(currentUser.getUsername(), currentUser.getPassword());
 	            if(doesUserExist) {
-	            	User user = databaseHelper.login(userName, password);
+	            	currentUser = databaseHelper.login(currentUser.getUsername(), currentUser.getPassword());
 	            	System.out.println("You have successfully logged in.");
 	            	
 	            	//if a user exists in the database and had an OTP - they must finish setting up their account and will be routed there
-	            	if(user != null) {
-	            		if(user.getOTP()){
-	            	 		settingUpAccount(user);
+	            	if(currentUser != null) {
+	            		if(currentUser.getOTP()){
+	            	 		settingUpAccount(currentUser);
 	            	 		break;
 	            		}
 	            	} else System.out.println("User is being returned as null."); //Error Message log as user was already shown to be in system yet is not being returned properly
@@ -380,11 +379,11 @@ public class StartCSE360 {
 	            	 
 	            	//routes to different home pages depending on roles of the user
 	            	//P3: Change to different Homes once setup and get rid of regHome
-	            	if (user.getRoles().length() == 1) {
-	            		if(user.getRoles().contains("a")) adminHome();
-	            		else if(user.getRoles().contains("t")) instructorHome();
-	            		else studentHome(user);
-	            	} else sessionRoleSelection(user);
+	            	if (currentUser.getRoles().length() == 1) {
+	            		if(currentUser.getRoles().contains("a")) adminHome();
+	            		else if(currentUser.getRoles().contains("t")) instructorHome();
+	            		else studentHome(currentUser);
+	            	} else sessionRoleSelection(currentUser);
 	            	
 	            	break;
 	            } else System.out.println("Invalid credentials! Try again"); //if user does not exist - will be asked to log in again
@@ -405,8 +404,8 @@ public class StartCSE360 {
 		        	System.out.println("If you had your account reset, Please re-enter your current username and new password.");
 			        System.out.println("If you are a first-time user, continue on to set up your initial username and password.");
 			        
-			        String[] credentials = get_user_credentials();
-			        databaseHelper.register(credentials[0], credentials[1], databaseHelper.getRolesFromOTP(oTP));
+			        currentUser.get_user_credentials();
+			        databaseHelper.register(currentUser.getUsername(), currentUser.getPassword(), databaseHelper.getRolesFromOTP(oTP));
 			        System.out.println("Thank you for registering! Please note: ");
 			        System.out.println("The next time you login with these credentials, you will be directed to finish setting up your account. Bye!");
 			        
@@ -461,382 +460,248 @@ public class StartCSE360 {
 			System.out.println("14. Logout");
 			
 			choice = scanner.nextLine();			
-			switch(choice) {
-			
-			//User invitation to the system
-			case "1": {
-				String rolesToGive = "";
-				String roleSelect = "";
-				
-				System.out.println("Here are the possible roles this user can have: ");
-				
-				//Options for role combos
-				System.out.println("1. Administrator only");
-				System.out.println("2. Student only");
-				System.out.println("3. Instructor only");
-				System.out.println("4. Administrator and Student only");
-				System.out.println("5. Administrator and Instructor only");
-				System.out.println("6. Student and Instructor only");
-				System.out.println("7. Administrator, Student, and Instructor");
-				
-				
-				System.out.print("Please select an option: ");
-				roleSelect = scanner.nextLine();
-				
-				switch(roleSelect) {
-					case "1": {
-						rolesToGive = "a";
-						 
-						break;
-					}
-					case "2": {
-						rolesToGive = "s";
-						 
-						break;
-					}
-					case "3": {
-						rolesToGive = "t";
-						 
-						break;
-					}
-					case "4": {
-						rolesToGive = "as";
-						 
-						break;
-					}
-					case "5": {
-						rolesToGive = "at";
-						 
-						break;
-					}
-					case "6": {
-						rolesToGive = "st";
-						 
-						break;
-					}
-					case "7": {
-						rolesToGive = "ast";
-						 
-						break;
-					}
-					default:
-						System.out.println("Invalid option.");
-						break;
-						
-				}
-				
-				
-				if(rolesToGive.length() > 0) {
-					//OTP Generation + Sending
-					System.out.print("Here is the OTP sent: ");
-					System.out.println(databaseHelper.createOTP(rolesToGive));
-					//generate OTP + flag on DB side
-					System.out.println("You have successfully invited a student to join the system!");
-					System.out.println("One Time Password has been sent to this user to enable their registration.");
-				}
-				break;
-			}
-			
-			//User Account Reset
-			case "2": {
-				
-				System.out.print("Enter username for the user you would like to reset: ");
-				String usernameReset = scanner.nextLine();
-				System.out.print("Enter email for the user you would like to reset: ");
-				String emailReset = scanner.nextLine();
-				if(!databaseHelper.doesUserExistEmail(emailReset)) {
-					System.out.println("There is no user with the provided specifications.");
-					break;
-				}
-				
-				//Account will reset with the roles they had before
-				String curRoles = databaseHelper.getUserRoles(usernameReset);
-				if(databaseHelper.deleteUserAccount(usernameReset)) {
-					System.out.println("You have successfully reset a user in the system. They will be notified of this change. They will have the same roles as before once signed back in");
-					String otp = databaseHelper.createOTP(curRoles);
-					System.out.println("One Time Password has been sent to this user: " + otp);
-				}else System.out.println("There was an error on our end and specified user has not been deleted - please try again later.");
-				
-				 
-				break;
-			}
-			
-			//User Deletion
-			case "3": {
-				
-				System.out.print("Are you sure? 1. Yes 2. No");
-				String confirmDelete = scanner.nextLine();
-				if(confirmDelete.equals("1")) {
-					System.out.print("Enter username for the user you would like to delete: ");
-					String usernameDelete = scanner.nextLine();
-					System.out.print("Enter email for the user you would like to delete: ");
-					String emailDelete = scanner.nextLine();
-					
-					//Delete user from database - check if they exist first
-					if(!databaseHelper.doesUserExistEmail(emailDelete)) {
-						System.out.println("There is no user with the provided specifications.");
-						break;
-					} else {
-						boolean successful = databaseHelper.deleteUserAccount(usernameDelete);
-						
-						//Log result
-						if(successful) System.out.println("You have successfully deleted a user.");
-						else System.out.println("There was an error on our end. Please try again later");
-						 
-					}
-					
-				} else if(confirmDelete.equals("2")) System.out.println("You have not deleted a user."); //if choose to not delete - move on
-				else System.out.println("Invalid Option. You have not deletd a user."); //Anything besides 1 or 2 is invalid
-				break;
-			}
-			
-			//List of all Users
-			case "4": {
-				databaseHelper.displayUsersByAdmin(); 
-				break;
-			}
-			
-			//User Role Adjustment
-			case "5": {
-				
-				//Find User in System - put into a User object after found
-				System.out.print("Enter username for the user whose roles you would like to adjust: ");
-				String usernameAdjust = scanner.nextLine();
-				System.out.print("Enter email for the user whose roles you would like to adjust: ");
-				String emailAdjust = scanner.nextLine();
-				if(!databaseHelper.doesUserExistEmail(emailAdjust)) {
-					System.out.println("There is no user with the provided specifications.");
-					break;
-				}
-				
-				//User object populated from query constructed via fields provided
-				User curUser = databaseHelper.findUser(usernameAdjust, emailAdjust);
-				String userRoles = curUser.getRoles();
-				
-				System.out.print("Please choose if you would like to add or remove a role from this user? 1. Add 2. Remove");
-				String option = scanner.nextLine();
-				if(option.equals("1")) {
-					
-					if(userRoles.length() == 3) {
-						System.out.println("This user already has all the roles.");
-						break;
-					}
-					//Pick Roles to add - must check if a user does not have one to add it
-					System.out.println("You are now adding a role to this user. Here are the options: ");
-					if(userRoles.indexOf("a") == -1) System.out.println("1. Administrator");
-					if(userRoles.indexOf("s") == -1) System.out.println("2. Student");
-					if(userRoles.indexOf("t") == -1) System.out.println("3. Instructor");
-					System.out.print("Please select a role: ");
-					String rolePick = scanner.nextLine();
-					
-					
-					switch(rolePick) {
-					
-					//Adding a role to the user
-					case "1": {
-						
-						//Initial Check is in case they input a number between 1 and 3 but the user already has the role (accidental input that would be valid in other cases)
-						if(userRoles.indexOf("a") != -1) {
-							System.out.println("You have selected a role that this user already has. The user's roles will remain the same");
-							break;
-						}
-						
-						//Add role to the local String - used for DB update later
-						userRoles += "a";
-						System.out.println("You have successfully added the Administrator role to this user");
-						 
-						break;
-					}
-					case "2": {
-						
-						//same as case 1 but for student role
-						if(userRoles.indexOf("s") != -1) {
-							System.out.println("You have selected a role that this user already has. The user's roles will remain the same");
-							break;
-						}
-						userRoles += "s";
-						System.out.println("You have successfully added the Student role to this user");
-						 
-						break;
-					}
-					case "3": {
-						
-						//same as case 1 but for instructor role
-						if(userRoles.indexOf("t") != -1) {
-							System.out.println("You have selected a role that this user already has. The user's roles will remain the same");
-							break;
-						}
-						userRoles += "t";
-						System.out.println("You have successfully added the Instructor role to this user");
-						 
-						break;
-					}
-					default:
-						System.out.println("Invalid option. The user will remain unchanged.");
-						break;
-					}
-				
-				//Removing a role from the user
-				} else if (option.equals("2")) {
-					
-					if(userRoles.length() == 0) {
-						System.out.println("This user has no roles.");
-						break;
-					}
-					
-					//Pick Roles to remove - must check if a user has one to remove it
-					System.out.println("You are now removing a role to this user. Here are the options: ");
-					if(userRoles.indexOf("a") != -1) System.out.println("1. Administrator");
-					if(userRoles.indexOf("s") != -1) System.out.println("2. Student");
-					if(userRoles.indexOf("t") != -1) System.out.println("3. Instructor");
-					System.out.print("Please select a role: ");
-					String rolePick = scanner.nextLine();
-					
-					
-					switch(rolePick) {
-					
-					case "1": {
-						
-						//Initial Check is in case they input a number between 1 and 3 but the user already has the role (accidental input that would be valid in other cases)
-						if(userRoles.indexOf("a") == -1) {
-							System.out.println("You have selected a role that this user does not have. The user's roles will remain the same");
-							break;
-						}
-						
-						//Remove role from string - again this string will be used for a DB update later
-						userRoles = userRoles.replace("a", "");
-						System.out.println("You have successfully removed the Administrator role from this user");
-						 
-						break;
-					}
-					
-					//Same as case 1 but for Student role
-					case "2": {
-						if(userRoles.indexOf("s") == -1) {
-							System.out.println("You have selected a role that this user does not have. The user's roles will remain the same");
-							break;
-						}
-						userRoles = userRoles.replace("s", "");
-						System.out.println("You have successfully removed the Student role from this user");
-						 
-						break;
-					}
-					
-					//Same as case 1 but for Instructor role
-					case "3": {
-						if(userRoles.indexOf("t") != -1) {
-							System.out.println("You have selected a role that this user does not have. The user's roles will remain the same");
-							break;
-						}
-						userRoles = userRoles.replace("t", "");
-						System.out.println("You have successfully removed the Instructor role from this user");
-						 
-						break;
-					}
-					default:
-						System.out.println("Invalid option. The user will remain unchanged.");
-						break;
-					}
-					
-				//Final Check is for invalid input on Adding or Removing roles	
-				} else System.out.println("Invalid Option. The user will remain unchanged.");
-				
-				//Update the user object and the database entry
-				curUser.setRoles(userRoles);
-				databaseHelper.updateUser(curUser);
-				
-				break;
-			}
-			
-			//Create an Article
-			case "6": {
-				
-				databaseHelper.createArticle("a");
-				break;
-			}
-			
-			//View an Article
-			case "7": {
-				
-				System.out.println("Please enter the id of the article you would like to view: ");
-				String articleID = scanner.nextLine();
-				databaseHelper.viewArticle("a", articleID); //specify it is admin permissions
-				break;
-			}
-			
-			//View a group of Articles
-			case "8": {
-				
-				System.out.println("Please enter the name of the group of articles you would like to view: ");
-				String groupName = scanner.nextLine();
-				System.out.println("Here are the articles: ");
-				databaseHelper.viewGroupedArticles("a", groupName);
-				break;
-			}
-			
-			//View all Articles
-			case "9": {
-				
-				System.out.println("Here are the articles: ");
-				databaseHelper.viewAllArticles("a");			
-				break;
-			}
-			
-			//Update an Article
-			case "10": {
-				
-				databaseHelper.updateArticle("a");
-				System.out.println("The article was successfully updated.");
-				break;
-			}
-			
-			//Delete an Article
-			case "11": {
-				
-				boolean success = databaseHelper.deleteArticle("a");
-				if(success) System.out.println("Article was properly deleted");
-				else System.out.println("Article was not able to be deleted");
-				break;
-			}
-			
-			//Restore from a file
-			case "12": {
-				
-				System.out.println("Please enter the name of the file you would like to restore from: ");
-				String fileName = scanner.nextLine();
-				System.out.println("Would you like to clear all articles before restoring? Please note that if you do not, we will not restore duplicating articles. 1. Yes 2. No");
-				String answer = scanner.nextLine();
-				if(answer.equals("1")) databaseHelper.restore("a", fileName);
-				else if(answer.equals("2")) databaseHelper.restoreMerge("a", fileName);
-				else System.out.println("Invalid choice! Try again");
-				break;
-			}
-			
-			//Backup to a file
-			case "13": {
-				
-				System.out.println("Please enter the name of the file you would like to backup to: ");
-				String fileName = scanner.nextLine();
-				databaseHelper.backup("a", fileName);
-				break;
-			}
-						
-						
-			//Logout
-			case "14": {
-				
-				System.out.println("To Logout, Enter q: ");
-				String logout = scanner.nextLine();
-				if(logout.equals("q")) {
-					System.out.println("You have successfully been logged out of the system.");
-					 
-				} else System.out.println("Invalid option.");
-				break;
-			}
-			default: 
-				System.out.print("Invalid choice. Please try again.");
-				break;
-			}
+                    OUTER:
+                        OUTER_1:
+                        switch (choice) {
+                            case "1": {
+                                String rolesToGive = "";
+                                String roleSelect = "";
+                                
+                                System.out.println("Here are the possible roles this user can have: ");
+                                
+                                //Options for role combos
+                                System.out.println("1. Administrator only");
+                                System.out.println("2. Student only");
+                                System.out.println("3. Instructor only");
+                                System.out.println("4. Administrator and Student only");
+                                System.out.println("5. Administrator and Instructor only");
+                                System.out.println("6. Student and Instructor only");
+                                System.out.println("7. Administrator, Student, and Instructor");
+                                
+                                
+                                System.out.print("Please select an option: ");
+                                roleSelect = scanner.nextLine();
+                                
+                                switch(roleSelect) {
+                                    case "1": {
+                                        rolesToGive = "a";
+                                        
+                                        break;
+                                    }
+                                    case "2": {
+                                        rolesToGive = "s";
+                                        
+                                        break;
+                                    }
+                                    case "3": {
+                                        rolesToGive = "t";
+                                        
+                                        break;
+                                    }
+                                    case "4": {
+                                        rolesToGive = "as";
+                                        
+                                        break;
+                                    }
+                                    case "5": {
+                                        rolesToGive = "at";
+                                        
+                                        break;
+                                    }
+                                    case "6": {
+                                        rolesToGive = "st";
+                                        
+                                        break;
+                                    }
+                                    case "7": {
+                                        rolesToGive = "ast";
+                                        
+                                        break;
+                                    }
+                                    default:
+                                        System.out.println("Invalid option.");
+                                        break;
+                                        
+                                }
+                                
+                                
+                                if(rolesToGive.length() > 0) {
+                                    //OTP Generation + Sending
+                                    System.out.print("Here is the OTP sent: ");
+                                    System.out.println(databaseHelper.createOTP(rolesToGive));
+                                    //generate OTP + flag on DB side
+                                    System.out.println("You have successfully invited a student to join the system!");
+                                    System.out.println("One Time Password has been sent to this user to enable their registration.");
+                                }
+                                break;
+                            }
+                            case "2": {
+                                System.out.print("Enter username for the user you would like to reset: ");
+                                String usernameReset = scanner.nextLine();
+                                
+                                System.out.print("Enter email for the user you would like to reset: ");
+                                String emailReset = scanner.nextLine();
+                                
+                                User resetUser = databaseHelper.findUser(usernameReset, emailReset);
+                                
+                                if(resetUser == null) {
+                                    System.out.println("There is no user with the provided specifications.");
+                                    break;
+                                }
+                                
+                                resetUser.reset(resetUser.getUsername(), resetUser.getEmail(), resetUser.getRoles());
+                                
+                                if(databaseHelper.deleteUserAccount(resetUser.getUsername())) {
+                                    databaseHelper.storeUser(resetUser);
+                                    System.out.println("You have successfully reset a user in the system. They will be notified of this change. They will have the same roles as before once signed back in");
+                                    String otp = databaseHelper.createOTP(resetUser.getRoles());
+                                    System.out.println("One Time Password has been sent to this user: " + otp);
+                                    resetUser.setOTPFlag(true);
+                                    
+                                }else System.out.println("There was an error on our end and specified user has not been deleted - please try again later.");
+                                
+                                
+                                break;
+                            }
+                            case "3":
+                            {
+                                System.out.print("Are you sure? 1. Yes 2. No");
+                                String confirmDelete = scanner.nextLine();
+
+                                switch (confirmDelete) {
+                                    case "1" -> {
+                                        System.out.print("Enter username for the user you would like to delete: ");
+                                        String usernameDelete = scanner.nextLine();
+
+                                        System.out.print("Enter email for the user you would like to delete: ");
+                                        String emailDelete = scanner.nextLine();
+                                        
+                                        
+                                        User deletedUser = databaseHelper.findUser(usernameDelete, emailDelete);
+                                        //Delete user from database - check if they exist first
+                                        if (deletedUser == null) {
+                                            System.out.println("There is no user with the provided specifications.");
+                                            break OUTER;
+                                        } else {
+                                            System.out.println(databaseHelper.deleteUserAccount(deletedUser.getUsername()) ?
+                                                    "You have successfully deleted a user." :
+                                                    "There was an error on our end. Please try again later");
+                                        }
+                                    }
+                                    case "2" -> System.out.println("You have not deleted a user."); //if choose to not delete - move on
+                                    default -> System.out.println("Invalid Option. You have not deletd a user."); //Anything besides 1 or 2 is invalid
+                                }
+                                break;
+                            }
+                            case "4": {
+                                databaseHelper.displayAllUsers();
+                                break;
+                            }
+                            case "5":
+                                {
+                                    System.out.print("Enter username for the user whose roles you would like to adjust: ");
+                                    String usernameAdjust = scanner.nextLine();
+
+                                    System.out.print("Enter email for the user whose roles you would like to adjust: ");
+                                    String emailAdjust = scanner.nextLine();
+
+                                    User adjustUser = databaseHelper.findUser(usernameAdjust, emailAdjust);
+                                    
+									if(adjustUser == null) {
+                                        System.out.println("There is no user with the provided specifications.");
+                                        break;
+                                    }       String userRoles = adjustUser.getRoles();
+                                    
+									System.out.print("Please choose if you would like to add or remove a role from this user? 1. Add 2. Remove");
+                                    String option = scanner.nextLine();
+                                    
+									switch (option) {
+                                        case "1" ->{
+											// Ask for a string of roles to add
+											System.out.println("Please enter the roles you would like to add to this user: ");
+											String rolesToAdd = scanner.nextLine();
+											adjustUser.setRoles(rolesToAdd);
+											System.out.println("You have successfully added the roles to this user");
+										}	
+                                    //Removing a role from the user
+                                        case "2" -> {
+											// Ask for a string of roles to remove
+											System.out.println("Please enter the roles you would like to remove from this user: ");
+											String rolesToRemove = scanner.nextLine();
+											adjustUser.setRoles(rolesToRemove);
+											System.out.println("You have successfully removed the roles from this user");
+										}
+                                    }
+                                    databaseHelper.updateUser(adjustUser);
+                                    break;
+                                }
+                            case "6": {
+                                databaseHelper.createArticle(currentUser.getRoles());
+                                break;
+                            }
+                            case "7": {
+                                
+                                System.out.println("Please enter the id of the article you would like to view: ");
+                                String articleID = scanner.nextLine();
+                                databaseHelper.viewArticle(currentUser.getRoles(), articleID); //specify it is admin permissions
+                                break;
+                            }
+                            case "8": {
+                                
+                                System.out.println("Please enter the name of the group of articles you would like to view: ");
+                                String groupName = scanner.nextLine();
+                                System.out.println("Here are the articles: ");
+                                databaseHelper.viewGroupedArticles(currentUser.getRoles(), groupName);
+                                break;
+                            }
+                            case "9": {
+                                System.out.println("Here are the articles: ");
+                                databaseHelper.viewAllArticles(currentUser.getRoles(), User.getUserAccessGroup());
+                                break;
+							}
+                            case "10": {
+								// delete article
+                                boolean success = databaseHelper.deleteArticle(currentUser.getRoles());
+                                if(success) System.out.println("Article was properly deleted");
+                                else System.out.println("Article was not able to be deleted");
+                                break;
+                            }
+                            case "11": {
+								// restore article
+                                System.out.println("Please enter the name of the file you would like to restore from: ");
+                                String fileName = scanner.nextLine();
+
+                                System.out.println("Would you like to clear all articles before restoring? Please note that if you do not, we will not restore duplicating articles. 1. Yes 2. No");
+                                String answer = scanner.nextLine();
+								
+                                switch(answer) {
+                                    case "1" -> databaseHelper.restore(currentUser.getRoles(), fileName);
+                                    case "2" -> databaseHelper.restoreMerge(currentUser.getRoles(), fileName);
+                                    default -> System.out.println("Invalid choice! Try again");
+                                }
+                                break;
+                            }
+                            case "12": {
+                                
+                                System.out.println("Please enter the name of the file you would like to backup to: ");
+                                String fileName = scanner.nextLine();
+                                databaseHelper.backup(currentUser.getRoles(), fileName);
+                                break;
+                            }
+                            case "13": {
+                                
+                                System.out.println("To Logout, Enter q: ");
+                                String logout = scanner.nextLine();
+                                if(logout.equals("q")) {
+                                    System.out.println("You have successfully been logged out of the system.");
+                                    
+                                } else System.out.println("Invalid option.");
+                                break;
+                            }
+                            default:
+                                System.out.print("Invalid choice. Please try again.");
+                                break;
+                        }
 		} while(!choice.equals("14")); //Keep looping until admin chooses to logout
 		
 		mainLogin(); //route back to main login after admin ends their session
@@ -853,7 +718,7 @@ public class StartCSE360 {
 	 * @throws Exception Throws an Exception if there is a SQL error from the helper file and logs the issue
 	 */
 	private static void instructorHome() throws SQLException, Exception {
-		
+		String userAccessGroup = User.getUserAccessGroup();
 		String choice = "";
 		
 		do {
@@ -909,7 +774,7 @@ public class StartCSE360 {
 		
 		case "5": {
 			System.out.println("Here are the articles: ");
-			databaseHelper.viewAllArticles("t");
+			databaseHelper.viewAllArticles("t", userAccessGroup);
 			break;
 		}
 		case "6": {
@@ -966,23 +831,5 @@ public class StartCSE360 {
 		
 		mainLogin(); //route back to main login as user has ended their current session as instructor
 		
-	}
-
-	/**
-	 * Asks for login information
-	 * <p>
-	 * Asks the user for the login information and returns their credentials/login information
-	 * </p>
-	 * @return Array of 2 Strings containing the username and password in that order
-	 */
-	private static String[] get_user_credentials() {
-		String[] credentials = new String[2];
-		
-		System.out.print("Enter Username: ");
-		credentials[0] = scanner.nextLine();
-		System.out.print("Enter Password: ");
-		credentials[1] = scanner.nextLine();
-		
-		return credentials;
 	}
 }
