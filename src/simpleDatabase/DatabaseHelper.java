@@ -1,11 +1,9 @@
 package simpleDatabase;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-//import java.security.DrbgParameters.Reseed;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -15,9 +13,8 @@ import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
-
-// import com.apple.laf.resources.aqua;
 
 /***
  * This class contains all functions that relate/interact with our H2 databases
@@ -1536,11 +1533,7 @@ class DatabaseHelper {
 		System.out.println("All articles you can view:");
 
 
-		String query = "SELECT articles.id, articles.short_description, articles.authors, articles.title FROM groupRights "
-		+ "JOIN group on groupRights.group_name = group.name " 
-		+ "JOIN articleGroup on group.name = articleGroup.group_name "
-		+ "JOIN articles on articleGroup.article_id = articles.id "
-		+ "WHERE groupRights.user_id = ?";
+		String query = "SELECT articles.id, articles.short_description, articles.authors, articles.title FROM groupRights JOIN groups on groupRights.group_name = groups.name JOIN articleGroups on groups.name = articleGroups.group_name JOIN articles on articleGroups.article_id = articles.id WHERE groupRights.user_id = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setInt(1, userId);
 			try(ResultSet rs = pstmt.executeQuery()) {
@@ -1558,17 +1551,17 @@ class DatabaseHelper {
 			}
 
 		} catch(SQLException e) {
-			System.err.println("DB issue trying to view all articles");
+			System.err.println("DB issue trying to view all articles: " + e.getMessage());
 		}
 	}
 
 	public void viewGroupedArticles(int uId, String group) throws SQLException {
 
 		String query = "SELECT articles.id, articles.short_description, articles.authors, articles.title FROM groupRights "
-		+ "JOIN group on groupRights.group_name = group.name " 
-		+ "JOIN articleGroup on group.name = articleGroup.group_name "
-		+ "JOIN articles on articleGroup.article_id = articles.id "
-		+ "WHERE groupRights.user_id = ? AND group.name = ?";
+		+ "JOIN groups on groupRights.group_name = groups.name " 
+		+ "JOIN articleGroups on groups.name = articleGroups.group_name "
+		+ "JOIN articles on articleGroups.article_id = articles.id "
+		+ "WHERE groupRights.user_id = ? AND groups.name = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setInt(1, uId);
 			pstmt.setString(2, group);
@@ -1594,9 +1587,9 @@ class DatabaseHelper {
 	public void viewContentArticles(int uId, String contentLevel) throws SQLException {	
 		
 		String query = "SELECT articles.id, articles.short_description, articles.authors, articles.title FROM groupRights "
-		+ "JOIN group on groupRights.group_name = group.name " 
-		+ "JOIN articleGroup on group.name = articleGroup.group_name "
-		+ "JOIN articles on articleGroup.article_id = articles.id "
+		+ "JOIN groups on groupRights.group_name = groups.name " 
+		+ "JOIN articleGroups on groups.name = articleGroups.group_name "
+		+ "JOIN articles on articleGroups.article_id = articles.id "
 		+ "WHERE groupRights.user_id = ? AND articles.level = ?";
 
 
@@ -1852,7 +1845,7 @@ class DatabaseHelper {
 
 	public boolean canDeleteAdmin(int userId) throws SQLException{
 		String query = "SELECT DISTINCT(group_name) from groupRights "
-		+ "WHERE user_id = ? AND acessRole = ?";
+		+ "WHERE user_id = ? AND accessRole = ?";
 		try(PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setInt(1, userId);
 			pstmt.setString(2, "a");
@@ -1906,5 +1899,52 @@ class DatabaseHelper {
 		return false;
 	}
 
+	public void searchArticle(String role, String level, String group, String search) { 
+        if (role.equals("s")) {
+            System.out.println("Invalid role");
+            return;
+        }
 
+        String sql = "SELECT DISTINCT a.* FROM articles a "
+                + "JOIN articleGroups ag ON a.id = ag.article_id "
+                + "WHERE LOWER(a.level) LIKE ? "
+                + "AND LOWER(ag.group_name) LIKE ? "
+                + "AND (LOWER(a.keywords) LIKE ? "
+                + "OR LOWER(a.title) LIKE ? "
+                + "OR LOWER(a.short_description) LIKE ?)";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            String searchPattern = "%" + search.toLowerCase() + "%";
+            String levelPattern = "%" + level.toLowerCase() + "%";
+            String groupPattern = "%" + group.toLowerCase() + "%";
+            
+            pstmt.setString(1, levelPattern);
+            pstmt.setString(2, groupPattern);
+            pstmt.setString(3, searchPattern);
+            pstmt.setString(4, searchPattern);
+            pstmt.setString(5, searchPattern);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                List<Article> articles = new ArrayList<>(); 
+
+                while (rs.next()) {
+                    articles.add(new Article(rs.getInt("id"), rs.getString("level"), rs.getString("group_name"), rs.getString("title"), rs.getString("short_description"), rs.getString("keywords"), rs.getString("body"), rs.getString("reference_links")));
+                }
+
+                System.out.println("Search Level: " + level + "\t\tTotal Results: " + articles.size());
+
+                for (int i = 0; i < articles.size(); i++) {
+                    System.out.println(i+1 + ". " + articles.get(i).toString());
+                }
+
+                System.out.println("Which article would you like to view? (Enter the number)");
+                int choice = Integer.parseInt(scanner.nextLine());
+                viewArticle(role, String.valueOf(articles.get(choice-1).getId()), false);
+            }
+        } catch (SQLException e) {
+            System.err.println("Database error while searching articles: " + e.getMessage());
+        }
+    }
+
+	
 }

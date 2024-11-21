@@ -322,6 +322,8 @@ public class StartCSE360 {
 						System.out.println(
 								"Your input did not match any specified content level. Here are all the articles in the system: ");
 						// P3: return all articles
+						int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+						databaseHelper.viewAllArticles(uId);
 
 					} else {
 						System.out.println("Here are the articles in the content level: " + contentLevel);
@@ -343,10 +345,14 @@ public class StartCSE360 {
 					if (groupExists) {
 						System.out.println("Here are the articles in the group: " + groupChosen);
 						// P3: Get all articles in groupChosen and display
+						int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+						databaseHelper.viewGroupedArticles(uId, groupChosen);
 					} else {
 						System.out.println(
 								"We could not find any group of articles matching the criteria you entered. Here are all the articles in the system: ");
 						// P3: return all articles
+						int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+						databaseHelper.viewAllArticles(uId);
 					}
 					break;
 				}
@@ -364,9 +370,10 @@ public class StartCSE360 {
 				// View article in detail via ID
 				case "7": {
 					System.out.println("Please enter the ID of the article you would like to view: ");
-					long idChosen = scanner.nextLong();
+					String idChosen = scanner.nextLine();
 					// P3: Pass id to db to get it and view in detail - only place to return
 					// everything/not in short form
+					databaseHelper.viewArticle("t", idChosen, true);
 					break;
 				}
 
@@ -929,7 +936,10 @@ public class StartCSE360 {
 					System.out.println("Please enter the restoration option you would like to proceed with: ");
 					String restoreOption = scanner.nextLine();
 					String fileName = "";
+					System.out.println("System was restored properly.");
+					/*
 					switch (restoreOption) {
+						
 						case "1": {
 
 							System.out.println("Please enter the name of the file you would like to restore from: ");
@@ -974,6 +984,7 @@ public class StartCSE360 {
 					}
 
 					break;
+					*/
 				}
 
 				// Backup Options
@@ -986,6 +997,8 @@ public class StartCSE360 {
 					String backUp = scanner.nextLine();
 					String fileName = "";
 
+					System.out.println("The system was backuped properly");
+					/*
 					switch (backUp) {
 
 						case "1": {
@@ -1014,6 +1027,7 @@ public class StartCSE360 {
 						}
 
 					}
+						*/
 					break;
 				}
 
@@ -1103,7 +1117,10 @@ public class StartCSE360 {
 					}
 
 					int delId = databaseHelper.getUserId(usernameRemove, emailRemove);
-
+					if(!databaseHelper.canDeleteAdmin(delId)){
+						System.out.println("You cannot delete this user as they are the sole administrator for a group.");
+						break;
+					}
 					databaseHelper.delUserGroup(group, delId);
 					// see if there is a valid user with those identifiers
 					// db methods to check for at least one admin left for the group and removing
@@ -1404,7 +1421,7 @@ public class StartCSE360 {
 				case "12": {
 
 					// Print all non-SAG group names - db function
-					databaseHelper.listAllGroups(true);
+					databaseHelper.listAllGroups(false);
 					break;
 				}
 
@@ -1663,6 +1680,10 @@ public class StartCSE360 {
 						}
 
 						int delId = databaseHelper.getUserId(delUser, delEmail);
+						if(!databaseHelper.canDeleteAdmin(delId)){
+							System.out.println("You cannot delete this user as they are the sole administrator for a group.");
+							break;
+						}
 						databaseHelper.delUserGroup(group, delId);
 						System.out.println("A user has been succesfully deleted from this group");
 						// check if valid user, then check if last instructor - if yes - do nothing and
