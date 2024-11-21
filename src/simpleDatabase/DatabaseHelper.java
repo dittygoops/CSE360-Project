@@ -1204,21 +1204,37 @@ class DatabaseHelper {
 		}
 	}
 
-	public void linkUserGroup(String groupName, int userId, String roleFlag, boolean adminPerms, boolean viewPerms) {
+	public void linkUserGroup(String groupName, int userId, String roleFlag, boolean adminPerms, boolean viewPerms) throws SQLException {
 		String linkQuery = "INSERT INTO groupRights (user_id, group_name, accessRole, adminRightsFlag, viewRightsFlag) VALUES (?, ?, ?, ?, ?)";
-		try(PreparedStatement pstmt = connection.prepareStatement(linkQuery)) {
+		try (PreparedStatement pstmt = connection.prepareStatement(linkQuery)) {
 			pstmt.setInt(1, userId);
 			pstmt.setString(2, groupName);
 			pstmt.setString(3, roleFlag);
 			pstmt.setBoolean(4, adminPerms);
 			pstmt.setBoolean(5, viewPerms);
-
 			pstmt.executeUpdate();
-			System.out.println("A user has been successfully linked to a group.");
-		} catch(SQLException e) {
-			System.err.println("DB issue with linking user to groups: " + e.getMessage());
+			System.out.println("User successfully linked to group: " + groupName);
+		} catch (SQLException e) {
+			System.err.println("DB issue linking user to group: " + e.getMessage());
+			throw e; // Re-throw for transactional consistency
 		}
 	}
+
+	public boolean delUserGroup(String gName, int userId) throws SQLException{
+		String delQuery = "DELETE FROM groupRights WHERE group_name = ? AND user_id = ?";
+		try(PreparedStatement pstmt = connection.prepareStatement(delQuery)) {
+			pstmt.setString(1, gName);
+			pstmt.setInt(2, userId);
+
+			int rowsAffected = pstmt.executeUpdate();
+			return rowsAffected > 0;	
+		} catch (SQLException e) {
+			System.err.println("DB issue with deleting a user's access to a speical group: " + e.getMessage());
+
+		}
+		return false;
+	}
+	
 
 	/**
 	 * Create a new article in the database
@@ -1303,23 +1319,23 @@ class DatabaseHelper {
 	}
 
 	//Only to check if Instructors have Admin Rights for a SAG
-	public boolean checkSpecialAdminAccess(int instructId, String groupName) throws SQLException{
-
-		String checkSpecial = "SELECT adminRightsFlag from groupRights where user_id = ? and group_name = ?";
-		try(PreparedStatement pstmt = connection.prepareStatement(checkSpecial)) {
+	public boolean checkSpecialAdminAccess(int instructId, String groupName) throws SQLException {
+		String checkSpecial = "SELECT adminRightsFlag FROM groupRights WHERE user_id = ? AND group_name = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(checkSpecial)) {
 			pstmt.setInt(1, instructId);
 			pstmt.setString(2, groupName);
-
-			try(ResultSet rs = pstmt.executeQuery()) {
-				if(rs.next()) {
+			try (ResultSet rs = pstmt.executeQuery()) {
+				if (rs.next()) {
 					return rs.getBoolean(1);
 				}
 			}
 		} catch (SQLException e) {
-			System.err.println("DB issue: unable to check if instructor has admin access to a special group");
+			System.err.println("DB issue: Unable to check admin access for the group: " + groupName + ". " + e.getMessage());
+			throw e; // Re-throw for better error handling
 		}
 		return false;
 	}
+	
 
 	public boolean checkSpecialViewAccess(int userId, String groupName) throws SQLException {
 		String checkSpecial = "SELECT viewRightsFlag from groupRights where user_id = ? and group_name = ?";
@@ -1340,77 +1356,75 @@ class DatabaseHelper {
 
 	public void createInstructArticle(User curUser) throws SQLException {
 		
-		System.out.println("Enter article level (beginner, intermediate, advanced, expert): ");
-		String level = scanner.nextLine();
-
-		System.out.println("Enter the authors of this article (Please make sure there are no spaces and that they are comma separated) (e.g. Einstein,Oppenheimer,Suess): ");
-		String authors = scanner.nextLine();
-
-		System.out.println(
-				"Enter group ID (Please make sure there are no spaces and that they are comma separated) (e.g. CSE360,CSE360-01,CSE360-02): ");
-		String groupId = scanner.nextLine() + ",";
-
 		int curId = getUserId(curUser.getUsername(), curUser.getEmail());
-
-		String[] groups = groupId.trim().split(",");
-
-		boolean failed = false;
-		boolean needEncryption = false;
-		for(String curGroup : groups) {
-			if(groupExist(curGroup)) {
-				if(isGroupSpecial(curGroup)) {
-					if(!checkSpecialAdminAccess(curId, groupId)) {
-						System.out.println("You do not have admin rights for this Special Access Group and cannot create this article with these groups. Please try again later.");
-						failed = true;
-						break;
-					} else needEncryption = true;
-				} 
-			}
+		if (curId == -1) {
+			System.out.println("User not found. Cannot create article.");
+			return;
 		}
 
-		if(failed) return;
+		System.out.println("Enter article level (Beginner, Intermediate, Advanced, or Expert): ");
+		String level = scanner.nextLine();
+		System.out.println("Enter authors (comma-seprated with no spaces): ");
+		String authors = scanner.nextLine();
+		authors.concat(",");
+		System.out.println("Enter group IDs (comma-seprated with no spaces): ");
+		String groupId = scanner.nextLine();
+		groupId.concat(",");
+		String[] groups = groupId.split(",");
+
+		boolean needEncryption = false;
+		for (String group : groups) {
+			if (groupExist(group)) {
+				if (isGroupSpecial(group) && !checkSpecialAdminAccess(curId, group)) {
+					System.out.println("No admin rights for special group: " + group);
+					return;
+				}
+				needEncryption = true;
+			} else {
+				System.out.println("Group " + group + " does not exist.");
+				return;
+			}
+		}
 
 		createGroups(groups);
 
 		System.out.println("Enter article title: ");
-		String title = scanner.nextLine();
+        String title = scanner.nextLine();
+        System.out.println("Enter description: ");
+        String shortDescription = scanner.nextLine();
+        System.out.println("Enter keywords (comma-seprated with no spaces): ");
+        String[] keywords = scanner.nextLine().split(",");
+        System.out.println("Enter body: ");
+        String body = scanner.nextLine();
 
-		System.out.println("Enter short description: ");
-		String shortDescription = scanner.nextLine();
+        if (needEncryption) {
+            body = encryptionHelper.encrypt(body);
+        }
 
-		System.out.println("Enter keywords (comma separated): ");
-		String[] keywords = scanner.nextLine().split(",");
+        System.out.println("Enter reference links (comma-seprated with no spaces): ");
+        String[] referenceLinks = scanner.nextLine().split(",");
 
-		System.out.println("Enter article body: ");
-		String body = scanner.nextLine();
+        int tempId = createArticleId();
+        String insertArticle = "INSERT INTO articles (level, title, short_description, keywords, body, reference_links, id, authors) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-		// article encryption
-		if(needEncryption)
-		body = encryptionHelper.encrypt(body);
-
-		System.out.println("Enter reference links (comma separated): ");
-		String[] referenceLinks = scanner.nextLine().split(",");
-
-		int tempId = createArticleId();
-
-		String insertArticle = "INSERT INTO articles (level, title, short_description, keywords, body, reference_links, id, authors) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-		try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
-			pstmt.setString(1, level);
-			pstmt.setString(2, title);
-			pstmt.setString(3, shortDescription);
-			pstmt.setArray(4, connection.createArrayOf("VARCHAR", keywords));
-			pstmt.setString(5, body);
-			pstmt.setArray(6, connection.createArrayOf("VARCHAR", referenceLinks));
-			pstmt.setInt(7, tempId);
-			pstmt.setString(8, authors);
-
-			pstmt.executeUpdate();
-		} catch (SQLException e) {
-			System.err.println("DB issue while inserting article into table");
+        try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+            pstmt.setString(1, level);
+            pstmt.setString(2, title);
+            pstmt.setString(3, shortDescription);
+            pstmt.setArray(4, connection.createArrayOf("VARCHAR", keywords));
+            pstmt.setString(5, body);
+            pstmt.setArray(6, connection.createArrayOf("VARCHAR", referenceLinks));
+            pstmt.setInt(7, tempId);
+            pstmt.setString(8, authors);
+            pstmt.executeUpdate();
+        } catch(SQLException e) {
+			System.err.println("DB issue: could not properly create article for instructor: " + e.getMessage());
 		}
 
-		//link each group to an article
-		for(String curGroup : groups) linkArticleGroup(curGroup, tempId);
+        // Link groups to article
+        for (String group : groups) {
+            linkArticleGroup(group, tempId);
+        }
 	}
 
 
@@ -1432,8 +1446,27 @@ class DatabaseHelper {
 		System.out.println("Enter article level (beginner, intermediate, advanced, expert): ");
 		String level = scanner.nextLine();
 
-		System.out.println("Enter group ID (e.g. CSE360, CSE360-01, CSE360-02): ");
-		String groupId = scanner.nextLine();
+		System.out.println("Enter author(s) (Please make sure there are no spaces and that they are comma separated) (e.g. Einstein,Oppenheimer,Suess)");
+		String authors = scanner.nextLine();
+		authors.concat(",");
+
+		System.out.println(
+				"Enter group ID (Please make sure there are no spaces and that they are comma separated) (e.g. CSE360,CSE360-01,CSE360-02): ");
+		String groupId = scanner.nextLine() + ",";
+
+		String[] groups = groupId.trim().split(",");
+		boolean failed = false;
+		for(String curGroup : groups) {
+			if(groupExist(curGroup) && isGroupSpecial(curGroup)) {
+					System.out.println("You are unable to update and assign an article to following Speical Access group: " + curGroup);
+					System.out.println("Please do not attempt to promote existing articles to Special Access Groups in the future");
+					failed = true;
+					break;
+			}
+		}
+		if(failed) return;
+
+		createGroups(groups);
 
 		System.out.println("Enter article title: ");
 		String title = scanner.nextLine();
@@ -1450,17 +1483,19 @@ class DatabaseHelper {
 		System.out.println("Enter reference links (comma separated): ");
 		String referenceLinks = scanner.nextLine();
 
-		String updateArticle = "UPDATE articles SET level = ?, group_id = ?, title = ?, short_description = ?, keywords = ?, body = ?, reference_links = ? WHERE id = ?";
+		String updateArticle = "UPDATE articles SET level = ?, title = ?, short_description = ?, keywords = ?, body = ?, reference_links = ?, authors = ? WHERE id = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(updateArticle)) {
 			pstmt.setString(1, level);
-			pstmt.setString(2, groupId);
-			pstmt.setString(3, title);
-			pstmt.setString(4, shortDescription);
-			pstmt.setString(5, keywords);
-			pstmt.setString(6, body);
-			pstmt.setString(7, referenceLinks);
+			pstmt.setString(2, title);
+			pstmt.setString(3, shortDescription);
+			pstmt.setString(4, keywords);
+			pstmt.setString(5, body);
+			pstmt.setString(6, referenceLinks);
+			pstmt.setString(7, authors);
 			pstmt.setInt(8, id);
 			pstmt.executeUpdate();
+		} catch(SQLException e) {
+			System.err.println("DB issue while instructor updating articles");
 		}
 	}
 
@@ -1527,6 +1562,38 @@ class DatabaseHelper {
 			}
 	}
 
+	public void viewContentArticles(String role, String contentLevel) throws SQLException {
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
+
+		String query = "SELECT articles.id, articles.short_description, articles.authors, articles.title FROM articles "
+		+ "JOIN articleGroups on articleGroups.article_id = articles.id "
+		+ "JOIN groups on articleGroups.group_name = groups.name "
+		+ "WHERE articles.level = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, contentLevel);
+			ResultSet rs = pstmt.executeQuery();
+				while (rs.next()) {
+					int id = rs.getInt(1);
+					String authors = rs.getString(3);
+					String shortDescription = rs.getString(2);
+					String title = rs.getString(4);
+				
+
+					System.out.println("Article ID: " + id);
+					System.out.println("Authors: " + authors);
+					System.out.println("Title: " + title);
+					System.out.println("Short Description: " + shortDescription);	
+				}
+			
+		} catch (SQLException e) {
+				System.err.println("DB issue while viewing Grouped articles: " + e.getMessage());
+			}
+	}
+	
+
 	//Gets all groups for one article
 	public ArrayList<String> getGroupsForAnArticle(int articleId) {
 		ArrayList<String> tempList = new ArrayList<>();
@@ -1560,12 +1627,23 @@ class DatabaseHelper {
 		return true;
 	}
 
+	public boolean articleDelAuth(User curUser, ArrayList<String> groups) throws SQLException{
+		int userId = getUserId(curUser.getUsername(), curUser.getEmail());
+		for(int i = 0; i < groups.size(); i++) {
+			String curGroup = groups.get(i);
+			if(isGroupSpecial(curGroup)) {
+				if(!checkSpecialAdminAccess(userId, curGroup)) return false;
+			}
+		}
+		return true;
+	}
+
 	public boolean articleEncrypted(User curUser, ArrayList<String> groups) throws SQLException{
 		int userId = getUserId(curUser.getUsername(), curUser.getEmail());
 		for(int i = 0; i < groups.size(); i++) {
 			String curGroup = groups.get(i);
 			if(isGroupSpecial(curGroup)) {
-				if(!checkSpecialViewAccess(userId, curGroup)) return true;
+				if(checkSpecialViewAccess(userId, curGroup)) return true;
 			}
 		}
 		return false;
@@ -1613,21 +1691,122 @@ class DatabaseHelper {
 	 * @return boolean that represents if article was deleted
 	 * @throws SQLException
 	 */
-	public boolean deleteArticle(String role) throws SQLException {
-		if (role.equals("s")) {
-			System.out.println("Invalid role");
-			return false;
-		}
+	public boolean deleteArticle(User curUser) throws SQLException {
 
 		System.out.println("Enter article ID: ");
 		int id = Integer.parseInt(scanner.nextLine());
+
+		ArrayList<String> temp = getGroupsForAnArticle(id);
+		if(!articleDelAuth(curUser, temp)) {
+			System.out.println("You are not authorized to delete this article.");
+			return false;
+		}
 
 		String deleteArticle = "DELETE FROM articles WHERE id = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(deleteArticle)) {
 			pstmt.setInt(1, id);
 			int rowsAffected = pstmt.executeUpdate();
 			return rowsAffected > 0;
+		} catch(SQLException e) {
+			System.err.println("DB issue while trying to delete an article");
 		}
+		return false;
+	}
+
+	public void listSpecUsers(String roleFlag, boolean adminRights, String gName) throws SQLException {
+		String username, email, pref;
+		
+		if(adminRights) {
+			String sql = "SELECT cse360users.username, cse360users.email, cse360users.preferredFirst from cse360users "
+				+ "JOIN groupRights on cse360.id = groupRights.user_id "
+				+ "WHERE groupRights.group_name = ?, groupRights.roleFlag = ?, groupRights.adminRightsFlag = ?";
+
+				try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
+					pstmt.setString(1, gName);
+					pstmt.setString(2, roleFlag);
+					pstmt.setBoolean(3, true);
+
+					try(ResultSet rs = pstmt.executeQuery()) {
+						while(rs.next()) {
+							username = rs.getString(1);
+							email = rs.getString(2);
+							pref = rs.getString(3);
+
+							System.out.print("Username: " + username);
+							System.out.print(", Email: " + email);
+							System.out.println(", Preferred First Name: " + pref);	
+						}
+					}
+				} catch (SQLException e) {
+					System.err.println("DB issue displaying special users with varying admin permissions: " + e.getMessage());
+				}
+		} else {
+			String sql = "SELECT cse360users.username, cse360users.email, cse360users.preferredFirst from cse360users "
+				+ "JOIN groupRights on cse360.id = groupRights.user_id "
+				+ "WHERE groupRights.group_name = ?, roleFlag = ?, viewRightsFlag = ?";
+
+				try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
+					pstmt.setString(1, gName);
+					pstmt.setString(2, roleFlag);
+					pstmt.setBoolean(3, true);
+
+					try(ResultSet rs = pstmt.executeQuery()) {
+						while(rs.next()) {
+							username = rs.getString(1);
+							email = rs.getString(2);
+							pref = rs.getString(3);
+
+							System.out.print("Username: " + username);
+							System.out.print(", Email: " + email);
+							System.out.println(", Preferred First Name: " + pref);	
+						}
+					}
+				} catch (SQLException e) {
+					System.err.println("DB issue displaying special users with varying viewing permissions: " + e.getMessage());
+				}	
+		}
+				
+
+			
+	}
+
+
+	public void listAllSpecUsers(String gName) throws SQLException {
+		String username, email, pref, accessRole;
+		boolean admin, view;
+		
+		
+			String sql = "SELECT cse360users.username, cse360users.email, cse360users.preferredFirst, groupRights.accessRole, groupRights.adminRightsFlag, group.viewRightsFlag from cse360users "
+				+ "JOIN groupRights on cse360.id = groupRights.user_id "
+				+ "WHERE groupRights.group_name = ?";
+
+				try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
+					pstmt.setString(1, gName);
+
+					try(ResultSet rs = pstmt.executeQuery()) {
+						while(rs.next()) {
+							username = rs.getString(1);
+							email = rs.getString(2);
+							pref = rs.getString(3);
+							accessRole = rs.getString(4);
+
+							admin = rs.getBoolean(5);
+							view = rs.getBoolean(6);
+
+							System.out.print("Username: " + username);
+							System.out.print(", Email: " + email);
+							System.out.print(", Preferred First Name: " + pref);
+							if(admin) System.out.print(", Admin Rights");
+							if(view) System.out.print(", View Rights");
+							System.out.println();	
+						}
+					}
+				} catch (SQLException e) {
+					System.err.println("DB issue displaying all special users: " + e.getMessage());
+				}
+				
+
+			
 	}
 
 }

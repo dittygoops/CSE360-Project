@@ -103,7 +103,8 @@ public class StartCSE360 {
 
 		// insert login info to the table
 		int firstAdminId = databaseHelper.firstAdmin(userName, password);
-		if(firstAdminId != -1) System.out.println("Administrator setup completed.");
+		if (firstAdminId != -1)
+			System.out.println("Administrator setup completed.");
 	}
 
 	/**
@@ -154,25 +155,25 @@ public class StartCSE360 {
 		currentUser.setOTPFlag(false);
 
 		// User object sent to helper method to be put into the database
-		if(!databaseHelper.updateUser(currentUser)) {
-			System.out.println("No user was properly updating with the personal information above. Please try again later.");
+		if (!databaseHelper.updateUser(currentUser)) {
+			System.out.println(
+					"No user was properly updating with the personal information above. Please try again later.");
 			return;
 		}
 
-			System.out.println("Congrats! You have finished setting up your account.");
-			// Routes to a specific user home if they only have one role
-			boolean[] curUserRoles = currentUser.getRoles();
-			if (curUserRoles[0] && (!curUserRoles[1] && !curUserRoles[2])) 
-					adminHome();
-			else if (curUserRoles[1] && (!curUserRoles[0] && !curUserRoles[2]))
-					instructorHome(currentUser);
-			else if (curUserRoles[2] && (!curUserRoles[1] && !curUserRoles[0]))
-					studentHome();
-				// if not - the user gets to choose which home menu to go to
-			else
-				sessionRoleSelection(currentUser);
+		System.out.println("Congrats! You have finished setting up your account.");
+		// Routes to a specific user home if they only have one role
+		boolean[] curUserRoles = currentUser.getRoles();
+		if (curUserRoles[0] && (!curUserRoles[1] && !curUserRoles[2]))
+			adminHome(currentUser);
+		else if (curUserRoles[1] && (!curUserRoles[0] && !curUserRoles[2]))
+			instructorHome(currentUser);
+		else if (curUserRoles[2] && (!curUserRoles[1] && !curUserRoles[0]))
+			studentHome(currentUser);
+		// if not - the user gets to choose which home menu to go to
+		else
+			sessionRoleSelection(currentUser);
 
-		
 	}
 
 	/**
@@ -223,12 +224,12 @@ public class StartCSE360 {
 		switch (choice) {
 			case "1": {
 				System.out.println("Administrator.");
-				adminHome();
+				adminHome(currentUser);
 				break;
 			}
 			case "2": {
 				System.out.println("Student.");
-				studentHome();
+				studentHome(currentUser);
 				break;
 			}
 			case "3": {
@@ -266,7 +267,7 @@ public class StartCSE360 {
 	 * @throws Exception    Throws an Exception if there is a SQL error from the
 	 *                      helper file and logs the issue
 	 */
-	private static void studentHome() throws SQLException, Exception {
+	private static void studentHome(User curUser) throws SQLException, Exception {
 		String option = "";
 		do {
 
@@ -440,15 +441,15 @@ public class StartCSE360 {
 					// routes to different home pages depending on roles of the user
 					// P3: Change to different Homes once setup and get rid of regHome
 					boolean[] curUserRoles = user.getRoles();
-			if (curUserRoles[0] && (!curUserRoles[1] && !curUserRoles[2])) 
-					adminHome();
-			else if (curUserRoles[1] && (!curUserRoles[0] && !curUserRoles[2]))
-					instructorHome(user);
-			else if (curUserRoles[2] && (!curUserRoles[1] && !curUserRoles[0]))
-					studentHome();
-				// if not - the user gets to choose which home menu to go to
-			else
-				sessionRoleSelection(user);
+					if (curUserRoles[0] && (!curUserRoles[1] && !curUserRoles[2]))
+						adminHome(user);
+					else if (curUserRoles[1] && (!curUserRoles[0] && !curUserRoles[2]))
+						instructorHome(user);
+					else if (curUserRoles[2] && (!curUserRoles[1] && !curUserRoles[0]))
+						studentHome(user);
+					// if not - the user gets to choose which home menu to go to
+					else
+						sessionRoleSelection(user);
 
 					break;
 				} else
@@ -475,21 +476,29 @@ public class StartCSE360 {
 							"If you are a first-time user, continue on to set up your initial username and password.");
 
 					String[] credentials = get_user_credentials();
-					if(databaseHelper.register(credentials[0], credentials[1], userId)) {
+					if (databaseHelper.register(credentials[0], credentials[1], userId)) {
 						System.out.println("Thank you for registering! Please note: ");
-						System.out.println("The next time you login with these credentials, you will be directed to finish setting up your account. Bye!");
+						System.out.println(
+								"The next time you login with these credentials, you will be directed to finish setting up your account. Bye!");
 					} else {
 						System.out.println("No user was registered properly. Please try agian later.");
 					}
 
 					break;
 				} else
-					System.out.println("Your OTP is either incorrect or no longer valid. Please try again."); // if OTP is not valid - let them enter again
+					System.out.println("Your OTP is either incorrect or no longer valid. Please try again."); // if OTP
+																												// is
+																												// not
+																												// valid
+																												// - let
+																												// them
+																												// enter
+																												// again
 			}
 
 			mainLogin(); // route back to the top so user can login again to finish setting up account
 
-		// Exit System
+			// Exit System
 		} else {
 			System.out.println("You are now leaving the system.");
 			return;
@@ -513,7 +522,7 @@ public class StartCSE360 {
 	 * @throws Exception    Throws an Exception if there is a SQL error from the
 	 *                      helper file and logs the issue
 	 */
-	private static void adminHome() throws SQLException, Exception {
+	private static void adminHome(User curUser) throws SQLException, Exception {
 		String choice = "";
 
 		System.out.println("Welcome to the Home Page for Admins!");
@@ -547,7 +556,7 @@ public class StartCSE360 {
 				case "1": {
 					boolean aFlag = false;
 					boolean tFlag = false;
-					boolean sFlag = false;	
+					boolean sFlag = false;
 					String roleSelect = "";
 
 					System.out.println("Here are the possible roles this user can have: ");
@@ -566,7 +575,7 @@ public class StartCSE360 {
 
 					switch (roleSelect) {
 						case "1": {
-							aFlag = true;	
+							aFlag = true;
 							break;
 						}
 						case "2": {
@@ -605,19 +614,20 @@ public class StartCSE360 {
 					}
 
 					if (aFlag || tFlag || sFlag) {
-						//First create shell User
+						// First create shell User
 						int shellUserID = databaseHelper.insertShellUser(aFlag, tFlag, sFlag);
-						if(shellUserID == -1) {
+						if (shellUserID == -1) {
 							System.out.println("DB issue");
 							break;
 						}
 
-
 						System.out.print("Here is the OTP sent: ");
 						System.out.println(databaseHelper.createOTP(shellUserID));
 						System.out.println("You have successfully invited a student to join the system!");
-						System.out.println("One Time Password has been sent to this user to enable their registration.");
-					} else System.out.println("There was an issue with inviting the user. Please try again later.");
+						System.out
+								.println("One Time Password has been sent to this user to enable their registration.");
+					} else
+						System.out.println("There was an issue with inviting the user. Please try again later.");
 					break;
 				}
 
@@ -637,10 +647,11 @@ public class StartCSE360 {
 					// Account will reset with the roles they had before
 					boolean[] curRoles = databaseHelper.getUserRoles(usernameReset, emailReset);
 					if (databaseHelper.deleteUserAccount(usernameReset, emailReset)) {
-						System.out.println("You have successfully reset a user in the system. They will be notified of this change. They will have the same roles as before once signed back in");
+						System.out.println(
+								"You have successfully reset a user in the system. They will be notified of this change. They will have the same roles as before once signed back in");
 						int shellUserID = databaseHelper.insertShellUser(curRoles[0], curRoles[1], curRoles[2]);
 
-						if(shellUserID == -1) {
+						if (shellUserID == -1) {
 							System.out.println("DB issue");
 							break;
 						}
@@ -648,7 +659,9 @@ public class StartCSE360 {
 						System.out.print("Here is the OTP sent: ");
 						System.out.println(databaseHelper.createOTP(shellUserID));
 
-					} else System.out.println("There was an error on our end and specified user has not been reset - please try again later.");
+					} else
+						System.out.println(
+								"There was an error on our end and specified user has not been reset - please try again later.");
 					break;
 				}
 
@@ -663,10 +676,9 @@ public class StartCSE360 {
 					if (!databaseHelper.userExist(usernameDelete, emailDelete)) {
 						System.out.println("There is no user with the provided specifications.");
 						break;
-					} 
+					}
 
-
-					if(databaseHelper.deleteUserAccount(usernameDelete, emailDelete))
+					if (databaseHelper.deleteUserAccount(usernameDelete, emailDelete))
 						System.out.println("You have successfully deleted a user.");
 					else
 						System.out.println("There was an error on our end. Please try again later");
@@ -687,14 +699,14 @@ public class StartCSE360 {
 					String[] adjust = get_user_identifiers();
 					usernameAdjust = adjust[0];
 					emailAdjust = adjust[1];
-					
+
 					if (!databaseHelper.userExist(usernameAdjust, emailAdjust)) {
 						System.out.println("There is no user with the provided specifications.");
 						break;
 					}
 
 					// User object populated from query constructed via fields provided
-					User curUser = databaseHelper.findUser(usernameAdjust, emailAdjust);
+					User currentUser = databaseHelper.findUser(usernameAdjust, emailAdjust);
 					boolean[] userRoles = curUser.getRoles();
 
 					boolean aFlag = userRoles[0];
@@ -705,7 +717,7 @@ public class StartCSE360 {
 					String option = scanner.nextLine();
 
 					if (option.equals("1")) {
-						
+
 						if (userRoles[0] && (userRoles[1] && userRoles[2])) {
 							System.out.println("This user already has all the roles.");
 							break;
@@ -851,8 +863,8 @@ public class StartCSE360 {
 					userRoles[0] = aFlag;
 					userRoles[1] = tFlag;
 					userRoles[2] = sFlag;
-					curUser.setRoles(userRoles);
-					databaseHelper.updateUserRoles(curUser);
+					currentUser.setRoles(userRoles);
+					databaseHelper.updateUserRoles(currentUser);
 
 					break;
 				}
@@ -869,8 +881,9 @@ public class StartCSE360 {
 
 					System.out.println("Please enter the name of the group of articles you would like to view: ");
 					String groupName = scanner.nextLine();
-					if(!databaseHelper.groupExist(groupName) || databaseHelper.isGroupSpecial(groupName)) {
-						System.out.println("You have either entered a group that does not exist or a Special Access Group which administrators are not allowed to view. Please try again later.");
+					if (!databaseHelper.groupExist(groupName) || databaseHelper.isGroupSpecial(groupName)) {
+						System.out.println(
+								"You have either entered a group that does not exist or a Special Access Group which administrators are not allowed to view. Please try again later.");
 						break;
 					}
 
@@ -890,7 +903,7 @@ public class StartCSE360 {
 				// Delete an Article
 				case "9": {
 
-					boolean success = databaseHelper.deleteArticle("a");
+					boolean success = databaseHelper.deleteArticle(curUser);
 					if (success)
 						System.out.println("Article was properly deleted");
 					else
@@ -1044,7 +1057,8 @@ public class StartCSE360 {
 					System.out.println("Please enter the name of the Special Access Group you would like to create: ");
 					String groupName = scanner.nextLine();
 					// db function that creates group
-					if(!databaseHelper.createSpecialGroup(groupName)) break;
+					if (!databaseHelper.createSpecialGroup(groupName))
+						break;
 
 					System.out.println(
 							"Now provide the identifiers for the first Instructor for this Special Access Group");
@@ -1053,11 +1067,12 @@ public class StartCSE360 {
 					firstUsername = firstInstruct[0];
 					firstEmail = firstInstruct[1];
 
-					if(!databaseHelper.userExist(firstUsername, firstEmail)) {
+					if (!databaseHelper.userExist(firstUsername, firstEmail)) {
 						System.out.println("Invalid user. Please try again later.");
 					}
 					int instructorId = databaseHelper.getUserId(firstUsername, firstEmail);
-					if(instructorId == -1) break;
+					if (instructorId == -1)
+						break;
 
 					databaseHelper.linkUserGroup(groupName, instructorId, "t", true, true);
 					// check if user is an instructor
@@ -1074,123 +1089,7 @@ public class StartCSE360 {
 
 				// Manage Rights to a Special Access Group
 				case "16": {
-
-					System.out.println("Please enter the name of the Special Access Group: ");
-					String group = scanner.nextLine();
-					// check if a valid group and if this user has admin rights over group as an
-					// admin
-					System.out.println("You now have the following options: ");
-					System.out.println("1. Grant a user access to this group");
-					System.out.println("2. View all users who have access to this group");
-					System.out.println("3. Grant an instructor admin rights to this group");
-					System.out.println("4. Delete a user's access to this group");
-					System.out.println("5. List of all administrators with admin rights to this group");
-					System.out.println("6. List of all instructors with decrypted view rights");
-					System.out.println("7. List of all instructors with admin rights");
-					System.out.println("8. List of all students with decrypted view rights");
-					String access = scanner.nextLine();
-
-					switch (access) {
-
-						// Grant user access
-						case "1": {
-
-							String userToAdd, emailToAdd;
-							String[] toAdd = get_user_identifiers();
-							userToAdd = toAdd[0];
-							emailToAdd = toAdd[1];
-							// check if real user
-							// Check to see what roles they have - set student and instructor Flags
-							System.out.println("The user has the following role(s): ");
-							// if student =
-							System.out.println("1. Student");
-							// if instructor =
-							System.out.println("2. Instructor");
-							String roleToAdd = scanner.nextLine();
-							// add && studentFlag or && teachFlag to conditions so that only if option
-							// selected and role user has match do they get added - otherwise adding to
-							// system without a role
-							if (roleToAdd.equals("1")) {
-								// add as student = only view rights
-							} else if (roleToAdd.equals("2")) {
-								// add as instructor - only view rights and no admin rights
-							} else
-								System.out.println("You picked an invalid role");
-							break;
-						}
-
-						// View all users with access to SAG
-						case "2": {
-
-							// List all users with access to SAG
-							// Display as userName, Email, accessRole, Rights: Admin, View (either or both
-							// depending on user)
-							break;
-						}
-
-						// Grant instructor admin rights
-						case "3": {
-
-							String instructAdminUser, instructAdminEmail;
-							String[] toBeAdmin = get_user_identifiers();
-							instructAdminUser = toBeAdmin[0];
-							instructAdminEmail = toBeAdmin[1];
-							// check if valid user and if they have access to the SAG
-							// if so - allow them to have admin rights
-							break;
-						}
-
-						// Delete a user's access to the system
-						case "4": {
-
-							String delUser, delEmail;
-							String[] toDel = get_user_identifiers();
-							delUser = toDel[0];
-							delEmail = toDel[1];
-							// check if valid user, then check if last instructor - if yes - do nothing and
-							// display issue, if not - remove them from group
-							break;
-						}
-
-						// List of all admins with admin rights
-						case "5": {
-
-							// db method that lists all admins with admin rights
-							// only display username, email, prefFirstName
-							break;
-						}
-
-						// List of instructors with decrypted view rights
-						case "6": {
-
-							// db method that lists instructors with these rights
-							// only display username, email, prefFirstName
-							break;
-						}
-
-						// List of all instructors with admin rights
-						case "7": {
-
-							// db method that lists all instructors with admin rights
-							// only display username, email, prefFirstName
-							break;
-						}
-
-						// List of all students with decrypted view rights
-						case "8": {
-
-							// db method that lists all students that can view bodies
-							// only display username, email, prefFirstName
-							break;
-						}
-
-						default: {
-							System.out.println("Invalid option. Try again Later.");
-							break;
-						}
-					}
-
-					break;
+					specialAccessGroupAdminRights(curUser);
 				}
 
 				// Logout
@@ -1226,6 +1125,7 @@ public class StartCSE360 {
 	 */
 	private static void instructorHome(User curUser) throws SQLException, Exception {
 
+		// Need more group checking for finding articles
 		String choice = "";
 
 		do {
@@ -1263,18 +1163,25 @@ public class StartCSE360 {
 					String articleID = scanner.nextLine();
 					int aId = Integer.parseInt(articleID);
 					ArrayList<String> temp = databaseHelper.getGroupsForAnArticle(aId);
-					if(databaseHelper.articleAuth(curUser, temp)) {
-						if(databaseHelper.articleEncrypted(curUser, temp)) databaseHelper.viewArticle("t", articleID, true);
-						else databaseHelper.viewArticle("t", articleID, false);
+					if (databaseHelper.articleAuth(curUser, temp)) {
+						if (databaseHelper.articleEncrypted(curUser, temp))
+							databaseHelper.viewArticle("t", articleID, true);
+						else
+							databaseHelper.viewArticle("t", articleID, false);
 					} else {
 						System.out.println("You do not have access rights to one or more of the groups");
 					}
-					
+
 					break;
 				}
 				case "3": {
 					System.out.println("Please enter the name of the group of articles you would like to view: ");
 					String groupName = scanner.nextLine();
+					int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+					if (!databaseHelper.checkSpecialViewAccess(uId, groupName)) {
+						System.out.println("You do not have viewing rights for this group of articles");
+						break;
+					}
 					System.out.println("Here are the articles: ");
 					databaseHelper.viewGroupedArticles("t", groupName);
 					break;
@@ -1289,9 +1196,11 @@ public class StartCSE360 {
 						System.out.println(
 								"Your input did not match any specified content level. Here are all the articles in the system: ");
 						// P3: return all articles
+						databaseHelper.viewAllArticles("t");
 					} else {
 						System.out.println("Here are the articles in the content level: " + contentLevel);
 						// P3: dbHelper function call with level passed in
+						databaseHelper.viewContentArticles("t", contentLevel);
 					}
 					break;
 				}
@@ -1307,7 +1216,7 @@ public class StartCSE360 {
 					break;
 				}
 				case "7": {
-					boolean success = databaseHelper.deleteArticle("t");
+					boolean success = databaseHelper.deleteArticle(curUser);
 					if (success)
 						System.out.println("Article was properly deleted");
 					else
@@ -1389,7 +1298,8 @@ public class StartCSE360 {
 
 						case "2": {
 
-							System.out.println("Please enter the name of the general group or Special Access Group of articles you would like to backup: ");
+							System.out.println(
+									"Please enter the name of the general group or Special Access Group of articles you would like to backup: ");
 							String group = scanner.nextLine();
 							// check if group exists in system - if no - say invalid and exit
 							System.out.println("Please enter the name of the file you would like to backup to: ");
@@ -1408,7 +1318,8 @@ public class StartCSE360 {
 				}
 
 				case "10": {
-					System.out.println("Please search for an article via words, names, or phrases in the Title, Author(s), or Abstract: ");
+					System.out.println(
+							"Please search for an article via words, names, or phrases in the Title, Author(s), or Abstract: ");
 					String searchCond = scanner.nextLine();
 					// P3: Send to DB to find all associated articles - need condition block to say
 					// whether any articles matching criteria were found
@@ -1454,123 +1365,7 @@ public class StartCSE360 {
 
 				// Manage Rights to a Special Access Group
 				case "17": {
-
-					System.out.println("Please enter the name of the Special Access Group: ");
-					String group = scanner.nextLine();
-					// check if a valid group and if this user has admin rights over group as an
-					// admin
-					System.out.println("You now have the following options: ");
-					System.out.println("1. Grant a user access to this group");
-					System.out.println("2. View all users who have access to this group");
-					System.out.println("3. Grant an instructor admin rights to this group");
-					System.out.println("4. Delete a user's access to this group");
-					System.out.println("5. List of all administrators with admin rights to this group");
-					System.out.println("6. List of all instructors with decrypted view rights");
-					System.out.println("7. List of all instructors with admin rights");
-					System.out.println("8. List of all students with decrypted view rights");
-					String access = scanner.nextLine();
-
-					switch (access) {
-
-						// Grant user access
-						case "1": {
-
-							String userToAdd, emailToAdd;
-							String[] toAdd = get_user_identifiers();
-							userToAdd = toAdd[0];
-							emailToAdd = toAdd[1];
-							// check if real user
-							// Check to see what roles they have - set student and instructor Flags
-							System.out.println("The user has the following role(s): ");
-							// if student =
-							System.out.println("1. Student");
-							// if instructor =
-							System.out.println("2. Instructor");
-							String roleToAdd = scanner.nextLine();
-							// add && studentFlag or && teachFlag to conditions so that only if option
-							// selected and role user has match do they get added - otherwise adding to
-							// system without a role
-							if (roleToAdd.equals("1")) {
-								// add as student = only view rights
-							} else if (roleToAdd.equals("2")) {
-								// add as instructor - only view rights and no admin rights
-							} else
-								System.out.println("You picked an invalid role");
-							break;
-						}
-
-						// View all users with access to SAG
-						case "2": {
-
-							// List all users with access to SAG
-							// Display as userName, Email, accessRole, Rights: Admin, View (either or both
-							// depending on user)
-							break;
-						}
-
-						// Grant instructor admin rights
-						case "3": {
-
-							String instructAdminUser, instructAdminEmail;
-							String[] toBeAdmin = get_user_identifiers();
-							instructAdminUser = toBeAdmin[0];
-							instructAdminEmail = toBeAdmin[1];
-							// check if valid user and if they have access to the SAG
-							// if so - allow them to have admin rights
-							break;
-						}
-
-						// Delete a user's access to the system
-						case "4": {
-
-							String delUser, delEmail;
-							String[] toDel = get_user_identifiers();
-							delUser = toDel[0];
-							delEmail = toDel[1];
-							// check if valid user, then check if last instructor - if yes - do nothing and
-							// display issue, if not - remove them from group
-							break;
-						}
-
-						// List of all admins with admin rights
-						case "5": {
-
-							// db method that lists all admins with admin rights
-							// only display username, email, prefFirstName
-							break;
-						}
-
-						// List of instructors with decrypted view rights
-						case "6": {
-
-							// db method that lists instructors with these rights
-							// only display username, email, prefFirstName
-							break;
-						}
-
-						// List of all instructors with admin rights
-						case "7": {
-
-							// db method that lists all instructors with admin rights
-							// only display username, email, prefFirstName
-							break;
-						}
-
-						// List of all students with decrypted view rights
-						case "8": {
-
-							// db method that lists all students that can view bodies
-							// only display username, email, prefFirstName
-							break;
-						}
-
-						default: {
-							System.out.println("Invalid option. Try again Later.");
-							break;
-						}
-					}
-
-					break;
+					specialAccessGroupAdminRights(curUser);
 				}
 
 				// Logout
@@ -1629,5 +1424,156 @@ public class StartCSE360 {
 		identifiers[1] = scanner.nextLine();
 
 		return identifiers;
+	}
+
+	private static void specialAccessGroupAdminRights(User curUser) throws SQLException{
+			try {
+
+				System.out.println("Please enter the name of the Special Access Group: ");
+				String group = scanner.nextLine();
+				int aId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+				if (!databaseHelper.checkSpecialAdminAccess(aId, group)) {
+					System.out.println("You do not have access to this Special Access Group.");
+				}
+				// check if a valid group and if this user has admin rights over group as an
+				// admin
+				System.out.println("You now have the following options: ");
+				System.out.println("1. Grant a user access to this group");
+				System.out.println("2. View all users who have access to this group");
+				System.out.println("3. Grant an instructor admin rights to this group");
+				System.out.println("4. Delete a user's access to this group");
+				System.out.println("5. List of all administrators with admin rights to this group");
+				System.out.println("6. List of all instructors with decrypted view rights");
+				System.out.println("7. List of all instructors with admin rights");
+				System.out.println("8. List of all students with decrypted view rights");
+				String access = scanner.nextLine();
+
+				switch (access) {
+
+					// Grant user access
+					case "1": {
+
+						String userToAdd, emailToAdd;
+						String[] toAdd = get_user_identifiers();
+						userToAdd = toAdd[0];
+						emailToAdd = toAdd[1];
+						if (!databaseHelper.userExist(userToAdd, emailToAdd)) {
+							System.out.println("This user does not exist in the system.");
+							break;
+						}
+						int uId = databaseHelper.getUserId(userToAdd, emailToAdd);
+						System.out.println("The user has the following role(s): ");
+						boolean[] userRoles = databaseHelper.getUserRoles(userToAdd, emailToAdd);
+						if (userRoles[2])
+							System.out.println("1. Student");
+						if (userRoles[1])
+							System.out.println("2. Instructor");
+						String roleToAdd = scanner.nextLine();
+						// add && studentFlag or && teachFlag to conditions so that only if option
+						// selected and role user has match do they get added - otherwise adding to
+						// system without a role
+						if (roleToAdd.equals("1") && userRoles[2]) {
+							// add as student = only view rights
+							databaseHelper.linkUserGroup(group, uId, "s", false, true);
+						} else if (roleToAdd.equals("2") && userRoles[1]) {
+							// add as instructor - only view rights and no admin rights
+							databaseHelper.linkUserGroup(group, uId, "t", false, true);
+						} else
+							System.out.println("You picked an invalid option or role.");
+						break;
+					}
+
+					// View all users with access to SAG
+					case "2": {
+
+						System.out.println("Here are all the users with either Admin or View rights to this group");
+						databaseHelper.listAllSpecUsers(group);
+						// List all users with access to SAG
+						// Display as userName, Email, accessRole, Rights: Admin, View (either or both
+						// depending on user)
+						break;
+					}
+
+					// Grant instructor admin rights
+					case "3": {
+
+						String instructAdminUser, instructAdminEmail;
+						String[] toBeAdmin = get_user_identifiers();
+						instructAdminUser = toBeAdmin[0];
+						instructAdminEmail = toBeAdmin[1];
+						if (!databaseHelper.userExist(instructAdminUser, instructAdminEmail)) {
+							System.out.println("There does not exist such a user");
+						}
+						int uId = databaseHelper.getUserId(instructAdminUser, instructAdminEmail);
+						if (!databaseHelper.delUserGroup(group, uId)) {
+							System.out.println("An issue occurred with overlapping user rights. Please try again later");
+							break;
+						}
+						databaseHelper.linkUserGroup(group, uId, "t", true, true);
+						// check if valid user and if they have access to the SAG
+						// if so - allow them to have admin rights
+						break;
+					}
+
+					// Delete a user's access to the system
+					case "4": {
+
+						String delUser, delEmail;
+						String[] toDel = get_user_identifiers();
+						delUser = toDel[0];
+						delEmail = toDel[1];
+						if (!databaseHelper.userExist(delUser, delEmail)) {
+							System.out.println("No such user exists. Try again later!");
+							break;
+						}
+
+						int delId = databaseHelper.getUserId(delUser, delEmail);
+						if (!databaseHelper.delUserGroup(group, delId)) {
+							System.out.println(
+									"Something went wrong with deleting the user from this group. Please try again later!");
+							break;
+						} else
+							System.out.println("A user has been succesfully deleted from this group");
+						// check if valid user, then check if last instructor - if yes - do nothing and
+						// display issue, if not - remove them from group
+						break;
+					}
+
+					// List of all admins with admin rights
+					case "5": {
+
+						databaseHelper.listSpecUsers("a", true, group);
+						break;
+					}
+
+					// List of instructors with decrypted view rights
+					case "6": {
+
+						databaseHelper.listSpecUsers("t", false, group);
+						break;
+					}
+
+					// List of all instructors with admin rights
+					case "7": {
+
+						databaseHelper.listSpecUsers("t", true, group);
+						break;
+					}
+
+					// List of all students with decrypted view rights
+					case "8": {
+
+						databaseHelper.listSpecUsers("s", false, group);
+						break;
+					}
+
+					default: {
+						System.out.println("Invalid option. Try again Later.");
+						break;
+					}
+				}
+			} catch(SQLException e) {
+				System.err.println("DB issue with SAG Admin Rights");
+			}
 	}
 }
