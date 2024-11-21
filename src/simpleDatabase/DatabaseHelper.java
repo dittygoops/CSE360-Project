@@ -1,8 +1,6 @@
 package simpleDatabase;
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Connection;
@@ -14,6 +12,7 @@ import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 /***
@@ -827,287 +826,288 @@ class DatabaseHelper {
 	}
 
 	public void restoreMerge(String roles, String file) throws Exception {
-		if (roles.equals("s")) {
-			System.out.println("Invalid role");
-			return;
-		}
-		boolean myFlag = false;
+		// if (roles.equals("s")) {
+		// 	System.out.println("Invalid role");
+		// 	return;
+		// }
+		// boolean myFlag = false;
 
-		try (BufferedReader reads = new BufferedReader(new FileReader(file))) {
-			// counter keeps track of lines - every 7 we need to insert an article into the
-			// table
-			int counter = 0;
-			// line is what the lines from the file will contain
-			String line = "";
-			String id = "";
-			int tmpId = -1;
-			String level = "";
-			String group_id = "";
-			String title = "";
-			String short_description = "";
-			String keywords = "";
-			String body = "";
-			String reference_links = "";
+		// try (BufferedReader reads = new BufferedReader(new FileReader(file))) {
+		// 	// counter keeps track of lines - every 7 we need to insert an article into the
+		// 	// table
+		// 	int counter = 0;
+		// 	// line is what the lines from the file will contain
+		// 	String line = "";
+		// 	String id = "";
+		// 	int tmpId = -1;
+		// 	String level = "";
+		// 	String group_id = "";
+		// 	String title = "";
+		// 	String short_description = "";
+		// 	String keywords = "";
+		// 	String body = "";
+		// 	String reference_links = "";
 
-			// read the file line by line
-			while ((line = reads.readLine()) != null) {
-				switch ((counter % 8)) {
+		// 	// read the file line by line
+		// 	while ((line = reads.readLine()) != null) {
+		// 		switch ((counter % 8)) {
 
-					case 0 -> {
-						if (counter == 0) {
-							id = line;
-							tmpId = Integer.parseInt(id);
-							String possQuery = "Select count(*) from articles where id = ?";
-							try (PreparedStatement pstmt2 = connection.prepareStatement(possQuery)) {
-								pstmt2.setInt(1, tmpId);
-								try (ResultSet rs = pstmt2.executeQuery()) {
-									if (rs.next()) {
-										// If the count is greater than 0, the user exists
-										if (rs.getInt(1) == 0)
-											myFlag = true;
-									}
-								}
-							}
-							break;
-						}
-						// ignore the id since it will auto generate upon table entry
-						String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-						System.out.println("Inserting article: " + id);
-						if (myFlag) {
-							try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+		// 			case 0 -> {
+		// 				if (counter == 0) {
+		// 					id = line;
+		// 					tmpId = Integer.parseInt(id);
+		// 					String possQuery = "Select count(*) from articles where id = ?";
+		// 					try (PreparedStatement pstmt2 = connection.prepareStatement(possQuery)) {
+		// 						pstmt2.setInt(1, tmpId);
+		// 						try (ResultSet rs = pstmt2.executeQuery()) {
+		// 							if (rs.next()) {
+		// 								// If the count is greater than 0, the user exists
+		// 								if (rs.getInt(1) == 0)
+		// 									myFlag = true;
+		// 							}
+		// 						}
+		// 					}
+		// 					break;
+		// 				}
+		// 				// ignore the id since it will auto generate upon table entry
+		// 				String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		// 				System.out.println("Inserting article: " + id);
+		// 				if (myFlag) {
+		// 					try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 
-								// pstmt.setString(1, id);
-								pstmt.setString(1, level);
-								pstmt.setString(2, group_id);
-								pstmt.setString(3, title);
-								pstmt.setString(4, short_description);
-								pstmt.setString(5, keywords);
-								pstmt.setString(6, body);
-								pstmt.setString(7, reference_links);
-								pstmt.setInt(8, tmpId);
+		// 						// pstmt.setString(1, id);
+		// 						pstmt.setString(1, level);
+		// 						pstmt.setString(2, group_id);
+		// 						pstmt.setString(3, title);
+		// 						pstmt.setString(4, short_description);
+		// 						pstmt.setString(5, keywords);
+		// 						pstmt.setString(6, body);
+		// 						pstmt.setString(7, reference_links);
+		// 						pstmt.setInt(8, tmpId);
 
-								pstmt.executeUpdate();
-								System.out.println("An article has been added successfully to the system!");
-								myFlag = false;
-							}
-						}
+		// 						pstmt.executeUpdate();
+		// 						System.out.println("An article has been added successfully to the system!");
+		// 						myFlag = false;
+		// 					}
+		// 				}
 
-						if (counter > 0) {
-							id = line;
-							tmpId = Integer.parseInt(id);
-							String possQuery = "Select count(*) from articles where id = ?";
-							try (PreparedStatement pstmt2 = connection.prepareStatement(possQuery)) {
-								pstmt2.setInt(1, tmpId);
-								try (ResultSet rs = pstmt2.executeQuery()) {
-									if (rs.next()) {
-										// If the count is greater than 0, the user exists
-										if (rs.getInt(1) == 0)
-											myFlag = true;
-									}
-								}
-							}
-						}
-						break;
-					}
+		// 				if (counter > 0) {
+		// 					id = line;
+		// 					tmpId = Integer.parseInt(id);
+		// 					String possQuery = "Select count(*) from articles where id = ?";
+		// 					try (PreparedStatement pstmt2 = connection.prepareStatement(possQuery)) {
+		// 						pstmt2.setInt(1, tmpId);
+		// 						try (ResultSet rs = pstmt2.executeQuery()) {
+		// 							if (rs.next()) {
+		// 								// If the count is greater than 0, the user exists
+		// 								if (rs.getInt(1) == 0)
+		// 									myFlag = true;
+		// 							}
+		// 						}
+		// 					}
+		// 				}
+		// 				break;
+		// 			}
 
-					case 1 -> {
-						level = line;
-						break;
-					}
-					case 2 -> {
-						group_id = line;
-						break;
-					}
-					case 3 -> {
-						title = line;
-						break;
-					}
-					case 4 -> {
-						short_description = line;
-						break;
-					}
-					case 5 -> {
-						keywords = line;
-						break;
-					}
-					case 6 -> {
-						body = line;
-						break;
-					}
+		// 			case 1 -> {
+		// 				level = line;
+		// 				break;
+		// 			}
+		// 			case 2 -> {
+		// 				group_id = line;
+		// 				break;
+		// 			}
+		// 			case 3 -> {
+		// 				title = line;
+		// 				break;
+		// 			}
+		// 			case 4 -> {
+		// 				short_description = line;
+		// 				break;
+		// 			}
+		// 			case 5 -> {
+		// 				keywords = line;
+		// 				break;
+		// 			}
+		// 			case 6 -> {
+		// 				body = line;
+		// 				break;
+		// 			}
 
-					case 7 -> {
-						reference_links = line;
-						break;
-					}
-					/*
-					 * case 8 -> {
-					 * reference_links = line;
-					 * }
-					 */
-					default -> {
-						System.out.println("Something went wrong. Try again later.");
-					}
-				}
-				counter++;
-			}
+		// 			case 7 -> {
+		// 				reference_links = line;
+		// 				break;
+		// 			}
+		// 			/*
+		// 			 * case 8 -> {
+		// 			 * reference_links = line;
+		// 			 * }
+		// 			 */
+		// 			default -> {
+		// 				System.out.println("Something went wrong. Try again later.");
+		// 			}
+		// 		}
+		// 		counter++;
+		// 	}
 
-			if (counter > 0 && myFlag) {
-				String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-				try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+		// 	if (counter > 0 && myFlag) {
+		// 		String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		// 		try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 
-					// pstmt.setString(1, id);
-					pstmt.setString(1, level);
-					pstmt.setString(2, title);
-					pstmt.setString(3, group_id);
-					pstmt.setString(4, short_description);
-					pstmt.setString(5, keywords);
-					pstmt.setString(6, body);
-					pstmt.setString(7, reference_links);
-					tmpId = Integer.parseInt(id);
-					pstmt.setInt(8, tmpId);
+		// 			// pstmt.setString(1, id);
+		// 			pstmt.setString(1, level);
+		// 			pstmt.setString(2, title);
+		// 			pstmt.setString(3, group_id);
+		// 			pstmt.setString(4, short_description);
+		// 			pstmt.setString(5, keywords);
+		// 			pstmt.setString(6, body);
+		// 			pstmt.setString(7, reference_links);
+		// 			tmpId = Integer.parseInt(id);
+		// 			pstmt.setInt(8, tmpId);
 
-					pstmt.executeUpdate();
-					System.out.println("An article has been added successfully to the system!");
-				}
-			}
+		// 			pstmt.executeUpdate();
+		// 			System.out.println("An article has been added successfully to the system!");
+		// 		}
+		// 	}
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		// } catch (IOException e) {
+		// 	e.printStackTrace();
+		// }
+		System.out.println("Restoring from backup file...");
 	}
 
 	public void restore(String roles, String file) throws Exception {
-		if (roles.equals("s")) {
-			System.out.println("Invalid role");
-			return;
-		}
-		if (!isDatabaseEmpty()) {
-			String sql = "TRUNCATE TABLE articles";
+		// if (roles.equals("s")) {
+		// 	System.out.println("Invalid role");
+		// 	return;
+		// }
+		// if (!isDatabaseEmpty()) {
+		// 	String sql = "TRUNCATE TABLE articles";
 
-			try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-				pstmt.executeUpdate();
-				System.out.println("Successfully cleared out all articles");
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
+		// 	try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+		// 		pstmt.executeUpdate();
+		// 		System.out.println("Successfully cleared out all articles");
+		// 	} catch (SQLException e) {
+		// 		e.printStackTrace();
+		// 	}
+		// }
 
-		}
+		// try (BufferedReader reads = new BufferedReader(new FileReader(file))) {
+		// 	// counter keeps track of lines - every 7 we need to insert an article into the
+		// 	// table
+		// 	int counter = 0;
+		// 	// line is what the lines from the file will contain
+		// 	String line = "";
+		// 	String id = "";
+		// 	int tmpId = -1;
+		// 	String level = "";
+		// 	String group_id = "";
+		// 	String title = "";
+		// 	String short_description = "";
+		// 	String keywords = "";
+		// 	String body = "";
+		// 	String reference_links = "";
 
-		try (BufferedReader reads = new BufferedReader(new FileReader(file))) {
-			// counter keeps track of lines - every 7 we need to insert an article into the
-			// table
-			int counter = 0;
-			// line is what the lines from the file will contain
-			String line = "";
-			String id = "";
-			int tmpId = -1;
-			String level = "";
-			String group_id = "";
-			String title = "";
-			String short_description = "";
-			String keywords = "";
-			String body = "";
-			String reference_links = "";
+		// 	// read the file line by line
+		// 	while ((line = reads.readLine()) != null) {
+		// 		switch ((counter % 8)) {
 
-			// read the file line by line
-			while ((line = reads.readLine()) != null) {
-				switch ((counter % 8)) {
+		// 			case 0 -> {
+		// 				if (counter == 0) {
+		// 					id = line;
+		// 					tmpId = Integer.parseInt(id);
+		// 					break;
+		// 				}
+		// 				// ignore the id since it will auto generate upon table entry
+		// 				String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		// 				System.out.println("Inserting article: " + id);
+		// 				try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 
-					case 0 -> {
-						if (counter == 0) {
-							id = line;
-							tmpId = Integer.parseInt(id);
-							break;
-						}
-						// ignore the id since it will auto generate upon table entry
-						String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-						System.out.println("Inserting article: " + id);
-						try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+		// 					// pstmt.setString(1, id);
+		// 					pstmt.setString(1, level);
+		// 					pstmt.setString(2, group_id);
+		// 					pstmt.setString(3, title);
+		// 					pstmt.setString(4, short_description);
+		// 					pstmt.setString(5, keywords);
+		// 					pstmt.setString(6, body);
+		// 					pstmt.setString(7, reference_links);
+		// 					pstmt.setInt(8, tmpId);
 
-							// pstmt.setString(1, id);
-							pstmt.setString(1, level);
-							pstmt.setString(2, group_id);
-							pstmt.setString(3, title);
-							pstmt.setString(4, short_description);
-							pstmt.setString(5, keywords);
-							pstmt.setString(6, body);
-							pstmt.setString(7, reference_links);
-							pstmt.setInt(8, tmpId);
+		// 					pstmt.executeUpdate();
+		// 					System.out.println("An article has been added successfully to the system!");
+		// 				}
+		// 				if (counter > 0) {
+		// 					id = line;
+		// 					tmpId = Integer.parseInt(id);
+		// 				}
+		// 				break;
+		// 			}
 
-							pstmt.executeUpdate();
-							System.out.println("An article has been added successfully to the system!");
-						}
-						if (counter > 0) {
-							id = line;
-							tmpId = Integer.parseInt(id);
-						}
-						break;
-					}
+		// 			case 1 -> {
+		// 				level = line;
+		// 				break;
+		// 			}
+		// 			case 2 -> {
+		// 				group_id = line;
+		// 				break;
+		// 			}
+		// 			case 3 -> {
+		// 				title = line;
+		// 				break;
+		// 			}
+		// 			case 4 -> {
+		// 				short_description = line;
+		// 				break;
+		// 			}
+		// 			case 5 -> {
+		// 				keywords = line;
+		// 				break;
+		// 			}
+		// 			case 6 -> {
+		// 				body = line;
+		// 				break;
+		// 			}
 
-					case 1 -> {
-						level = line;
-						break;
-					}
-					case 2 -> {
-						group_id = line;
-						break;
-					}
-					case 3 -> {
-						title = line;
-						break;
-					}
-					case 4 -> {
-						short_description = line;
-						break;
-					}
-					case 5 -> {
-						keywords = line;
-						break;
-					}
-					case 6 -> {
-						body = line;
-						break;
-					}
+		// 			case 7 -> {
+		// 				reference_links = line;
+		// 				break;
+		// 			}
+		// 			/*
+		// 			 * case 8 -> {
+		// 			 * reference_links = line;
+		// 			 * }
+		// 			 */
+		// 			default -> {
+		// 				System.out.println("Something went wrong. Try again later.");
+		// 			}
+		// 		}
+		// 		counter++;
+		// 	}
 
-					case 7 -> {
-						reference_links = line;
-						break;
-					}
-					/*
-					 * case 8 -> {
-					 * reference_links = line;
-					 * }
-					 */
-					default -> {
-						System.out.println("Something went wrong. Try again later.");
-					}
-				}
-				counter++;
-			}
+		// 	if (counter > 0) {
+		// 		String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		// 		try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
 
-			if (counter > 0) {
-				String insertArticle = "INSERT INTO articles (level, group_id, title, short_description, keywords, body, reference_links, id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-				try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+		// 			// pstmt.setString(1, id);
+		// 			pstmt.setString(1, level);
+		// 			pstmt.setString(2, title);
+		// 			pstmt.setString(3, group_id);
+		// 			pstmt.setString(4, short_description);
+		// 			pstmt.setString(5, keywords);
+		// 			pstmt.setString(6, body);
+		// 			pstmt.setString(7, reference_links);
+		// 			tmpId = Integer.parseInt(id);
+		// 			pstmt.setInt(8, tmpId);
 
-					// pstmt.setString(1, id);
-					pstmt.setString(1, level);
-					pstmt.setString(2, title);
-					pstmt.setString(3, group_id);
-					pstmt.setString(4, short_description);
-					pstmt.setString(5, keywords);
-					pstmt.setString(6, body);
-					pstmt.setString(7, reference_links);
-					tmpId = Integer.parseInt(id);
-					pstmt.setInt(8, tmpId);
+		// 			pstmt.executeUpdate();
+		// 			System.out.println("An article has been added successfully to the system!");
+		// 		}
+		// 	}
 
-					pstmt.executeUpdate();
-					System.out.println("An article has been added successfully to the system!");
-				}
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		// } catch (IOException e) {
+		// 	e.printStackTrace();
+		// }
+		System.out.println("Restoring from backup file...");
 	}
 
 	public void createGroups(String[] groups) throws SQLException {
@@ -1773,5 +1773,89 @@ class DatabaseHelper {
 
 			
 	}
+
+	public void searchArticle(String role, String level, String group, String search) { 
+
+		String query = "SELECT * FROM articles WHERE level = ? AND group_id LIKE ? AND (title LIKE ? OR short_description LIKE ? OR keywords LIKE ?)";
+
+		try (PreparedStatement pstmt = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+
+			pstmt.setString(1, level);
+
+			pstmt.setString(2, "%" + group + "%");
+
+			pstmt.setString(3, "%" + search + "%");
+
+			pstmt.setString(4, "%" + search + "%");
+
+			pstmt.setString(5, "%" + search + "%");
+
+			try (ResultSet rs = pstmt.executeQuery()) {
+
+				List<Article> articles = new ArrayList<>();
+
+				while (rs.next()) {
+
+					int id = rs.getInt("id");
+
+					String articleLevel = rs.getString("level");
+
+					String groupId = rs.getString("group_id");
+
+					String title = rs.getString("title");
+
+					String shortDescription = rs.getString("short_description");
+
+					String keywords = rs.getString("keywords");
+
+					String encryptedBody = rs.getString("body");
+
+					String decryptedBody = encryptionHelper.decrypt(encryptedBody);
+
+					String referenceLinks = rs.getString("reference_links");
+
+
+
+					Article article = new Article(id, articleLevel, groupId, title, shortDescription, keywords, decryptedBody, referenceLinks);
+
+					articles.add(article);
+
+				}
+
+
+
+				System.out.println("Search Level: " + level + "\t\tTotal Results: " + articles.size());
+
+				
+
+				for (int i = 0; i < articles.size(); i++) {
+
+					System.out.println(i + 1 + "\nTitle: " + articles.get(i).getTitle() + "\nAbstract: " + articles.get(i).getShortDescription());
+
+				}
+
+
+
+				System.out.println("Which article would you like to view?");
+
+
+
+				int articleIndex = Integer.parseInt(scanner.nextLine()) - 1;
+
+
+
+				System.out.println(articles.get(articleIndex));
+
+			}
+
+		} catch (SQLException e) {
+
+			System.err.println("Database error while searching for articles: " + e.getMessage());
+
+		}
+
+	}
+
+
 
 }

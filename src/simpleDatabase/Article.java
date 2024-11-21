@@ -184,4 +184,15 @@ public class Article {
     public void setReferenceLinks(String referenceLinks) {
         this.referenceLinks = referenceLinks;
     }
+
+    public String toString() {
+        return "ID: " + id + "\n" +
+            "Level: " + level + "\n" +
+            "Group ID: " + groupId + "\n" +
+            "Title: " + title + "\n" +
+            "Short Description: " + shortDescription + "\n" +
+            "Keywords: " + keywords + "\n" +
+            "Body: " + body + "\n" +
+            "Reference Links: " + referenceLinks;
+    }
 }
