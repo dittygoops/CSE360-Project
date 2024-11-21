@@ -322,9 +322,12 @@ public class StartCSE360 {
 						System.out.println(
 								"Your input did not match any specified content level. Here are all the articles in the system: ");
 						// P3: return all articles
+
 					} else {
 						System.out.println("Here are the articles in the content level: " + contentLevel);
 						// P3: dbHelper function call with level passed in
+						int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+						databaseHelper.viewContentArticles(uId, contentLevel);
 					}
 					break;
 				}
@@ -678,7 +681,11 @@ public class StartCSE360 {
 						System.out.println("There is no user with the provided specifications.");
 						break;
 					}
-
+					int uId = databaseHelper.getUserId(usernameDelete, emailDelete);
+					if(!databaseHelper.canDeleteAdmin(uId)){
+						System.out.println("You cannot delete this user as they are the sole administrator for a group.");
+						break;
+					}
 					if (databaseHelper.deleteUserAccount(usernameDelete, emailDelete))
 						System.out.println("You have successfully deleted a user.");
 					else
@@ -889,7 +896,8 @@ public class StartCSE360 {
 					}
 
 					System.out.println("Here are the articles: ");
-					databaseHelper.viewGroupedArticles("a", groupName);
+					int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+					databaseHelper.viewGroupedArticles(uId, groupName);
 					break;
 				}
 
@@ -897,7 +905,8 @@ public class StartCSE360 {
 				case "8": {
 
 					System.out.println("Here are the articles: ");
-					databaseHelper.viewAllArticles("a");
+					int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+					databaseHelper.viewAllArticles(uId);
 					break;
 				}
 
@@ -1014,6 +1023,12 @@ public class StartCSE360 {
 					System.out
 							.println("Please enter the name of the general group whose users you would like to list: ");
 					String group = scanner.nextLine();
+					if(!databaseHelper.groupExist(group)) {
+						System.out.println("This is not a valid group.");
+						break;
+					}
+
+					databaseHelper.listAllGroupUsers(group);
 					// check if group exists - if no = invalid choice and break
 					// if yes = dbmethod to list all users in group (Only display same as what admin
 					// sees for all users)
@@ -1026,10 +1041,43 @@ public class StartCSE360 {
 					System.out.println("Please enter the name of the general group: ");
 					String group = scanner.nextLine();
 					// check if group exists - if no = invalid choice and break
+					if(!databaseHelper.groupExist(group)) {
+						System.out.println("This group does not exist");
+						break;
+					}
 					String usernameAdd, emailAdd;
 					String[] add = get_user_identifiers();
 					usernameAdd = add[0];
 					emailAdd = add[1];
+					if(!databaseHelper.userExist(usernameAdd, emailAdd)) {
+						System.out.println("This user does not exist in the system");
+						break;
+					}
+					int uId = databaseHelper.getUserId(usernameAdd, emailAdd);
+					boolean[] userRoles = databaseHelper.getUserRoles(usernameAdd, emailAdd);
+					System.out.println("The user has the following roles: ");
+						if(!userRoles[1] && (!userRoles[2] && !userRoles[0])) {
+							System.out.println("This user does not have any roles and thus cannot be added to any group.");
+							break;
+						}
+						if(userRoles[0]) 
+							System.out.println("1. Administrator");
+						if (userRoles[2])
+							System.out.println("2. Student");
+						if (userRoles[1])
+							System.out.println("3. Instructor");
+
+					String roleToAdd = scanner.nextLine();
+					if (roleToAdd.equals("1") && userRoles[0]) {
+						// add as student = only view rights
+						databaseHelper.linkUserGroup(group, uId, "a", true, true);
+					} else if (roleToAdd.equals("2") && userRoles[2]) {
+						// add as instructor - only view rights and no admin rights
+						databaseHelper.linkUserGroup(group, uId, "s", false, true);
+					} else if (roleToAdd.equals("3") && userRoles[1]) 
+						databaseHelper.linkUserGroup(group, uId, "t", true, true);
+					else 
+						System.out.println("An invalid option was chosen.");
 					// see if there is a valid user with those identifiers
 					// db method that handles adding a user to the general group
 					break;
@@ -1041,10 +1089,22 @@ public class StartCSE360 {
 					System.out.println("Please enter the name of the general group: ");
 					String group = scanner.nextLine();
 					// check if group exists - if no = invalid choice and break
+					if(!databaseHelper.groupExist(group)) {
+						System.out.println("This group does not exist.");
+						break;
+					}
 					String usernameRemove, emailRemove;
 					String[] remove = get_user_identifiers();
 					usernameRemove = remove[0];
 					emailRemove = remove[1];
+					if(!databaseHelper.userExist(usernameRemove, emailRemove)) {
+						System.out.println("This user does not exist.");
+						break;
+					}
+
+					int delId = databaseHelper.getUserId(usernameRemove, emailRemove);
+
+					databaseHelper.delUserGroup(group, delId);
 					// see if there is a valid user with those identifiers
 					// db methods to check for at least one admin left for the group and removing
 					// user from the group
@@ -1091,6 +1151,7 @@ public class StartCSE360 {
 				// Manage Rights to a Special Access Group
 				case "16": {
 					specialAccessGroupAdminRights(curUser);
+					break;
 				}
 
 				// Logout
@@ -1184,7 +1245,7 @@ public class StartCSE360 {
 						break;
 					}
 					System.out.println("Here are the articles: ");
-					databaseHelper.viewGroupedArticles("t", groupName);
+					databaseHelper.viewGroupedArticles(uId, groupName);
 					break;
 				}
 
@@ -1197,18 +1258,21 @@ public class StartCSE360 {
 						System.out.println(
 								"Your input did not match any specified content level. Here are all the articles in the system: ");
 						// P3: return all articles
-						databaseHelper.viewAllArticles("t");
+						int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+						databaseHelper.viewAllArticles(uId);
 					} else {
 						System.out.println("Here are the articles in the content level: " + contentLevel);
 						// P3: dbHelper function call with level passed in
-						databaseHelper.viewContentArticles("t", contentLevel);
+						int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+						databaseHelper.viewContentArticles(uId, contentLevel);
 					}
 					break;
 				}
 
 				case "5": {
 					System.out.println("Here are the articles: ");
-					databaseHelper.viewAllArticles("t");
+					int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+					databaseHelper.viewAllArticles(uId);
 					break;
 				}
 				case "6": {
@@ -1331,13 +1395,16 @@ public class StartCSE360 {
 
 					System.out.println("Please enter the name of the general article group you would like to create: ");
 					String group = scanner.nextLine();
-					// insert entry into group table
+					String[] tmp = {group};
+					databaseHelper.createGroups(tmp);
+					// insert entry into tmp table
 					break;
 				}
 
 				case "12": {
 
 					// Print all non-SAG group names - db function
+					databaseHelper.listAllGroups(true);
 					break;
 				}
 
@@ -1345,20 +1412,77 @@ public class StartCSE360 {
 
 					System.out.println("Please enter the name of the general article group you would like to delete: ");
 					String group = scanner.nextLine();
+					if(!databaseHelper.groupExist(group)) {
+						System.out.println("This group does not exist");
+						break;
+					}
+					int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+					if(!databaseHelper.checkSpecialAdminAccess(uId, group)) {
+						System.out.println("You do not have admin rights over this group");
+						break;
+					}
+
+					databaseHelper.delEntireGroup(group);
+
+
 					// check if group exists
 					// delete on cascade
 				}
 
+				case "14": {
+					System.out.println("Please enter the general group name: ");
+					String group = scanner.nextLine();
+					if(!databaseHelper.groupExist(group)) {
+						System.out.println("This group does not exist");
+						break;
+					}
+					String[] toAdd = get_user_identifiers();
+					if(!databaseHelper.userExist(toAdd[0], toAdd[1])) {
+						System.out.println("This user does not exist");
+						break;
+					}
+					boolean[] roles = databaseHelper.getUserRoles(toAdd[0], toAdd[1]);
+					if(!roles[2]) {
+						System.out.println("This user is not a student");
+						break;
+					}
+					int uId = databaseHelper.getUserId(toAdd[0], toAdd[1]);
+					databaseHelper.linkUserGroup(group, uId, "s", false, true);
+					break;
+
+				}
+
+				case "15": {
+					//listallGroupUsers
+					System.out.println("Please enter the general group name: ");
+					String group = scanner.nextLine();
+					if(!databaseHelper.groupExist(group)) {
+						System.out.println("This group does not exist");
+						break;
+					}
+					System.out.println("Here are all the students in the group: " + group);
+					databaseHelper.listSpecUsers("s", false, group);
+				}
 				// Cases 14-16 ask team about
 				case "16": {
 
 					System.out.println("Please enter general article group name: ");
 					String group = scanner.nextLine();
 					// check if valid group then move on to user
+					if(!databaseHelper.groupExist(group)) {
+						System.out.println("This group does not exist");
+						break;
+					}
 					String userDel, emailDel;
 					String[] toDel = get_user_identifiers();
 					userDel = toDel[0];
 					emailDel = toDel[1];
+					if(!databaseHelper.userExist(userDel, emailDel)) {
+						System.out.println("This user does not exist");
+						break;
+					}
+					int delId = databaseHelper.getUserId(userDel, emailDel);
+					databaseHelper.delUserGroup(group, delId);
 					// verify user
 					// remove student from group
 					break;
@@ -1455,6 +1579,7 @@ public class StartCSE360 {
 				System.out.println("7. List of all instructors with admin rights");
 				System.out.println("8. List of all students with decrypted view rights");
 				System.out.println("9. Grant an administrator access to this group");
+				System.out.println("10. Exit this menu");
 				access = scanner.nextLine();
 
 				switch (access) {
@@ -1500,7 +1625,7 @@ public class StartCSE360 {
 					case "2": {
 
 						System.out.println("Here are all the users with either Admin or View rights to this group");
-						databaseHelper.listAllSpecUsers(group);
+						databaseHelper.listAllGroupUsers(group);
 						// List all users with access to SAG
 						// Display as userName, Email, accessRole, Rights: Admin, View (either or both
 						// depending on user)

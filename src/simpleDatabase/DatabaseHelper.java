@@ -5,6 +5,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+//import java.security.DrbgParameters.Reseed;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -15,6 +16,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Scanner;
+
+// import com.apple.laf.resources.aqua;
 
 /***
  * This class contains all functions that relate/interact with our H2 databases
@@ -75,7 +78,7 @@ class DatabaseHelper {
 
 				+ "id INT AUTO_INCREMENT PRIMARY KEY, "
 				+ "userName VARCHAR(255), "
-				+ "email VARCHAR(255) UNIQUE, "
+				+ "email VARCHAR(255), "
 				+ "password VARCHAR(255), "
 				// first name
 				+ "firstName VARCHAR(255), "
@@ -1166,6 +1169,21 @@ class DatabaseHelper {
 		}
 	}
 
+	public void listAllGroups(boolean general) throws SQLException{
+		String query = "SELECT name from groups where specialFlag = ?";
+		try(PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setBoolean(1, general);
+			try(ResultSet rs = pstmt.executeQuery()) {
+				System.out.println("Here are the group names: ");
+				while(rs.next()) {
+					System.out.println(rs.getString(1));
+				}	
+			}
+		} catch (SQLException e) {
+			System.err.println("DB issue that lists all general or specific groups: " + e.getMessage());
+		}
+	}
+
 	public boolean createSpecialGroup(String name) throws SQLException {
 		if(groupExist(name) || isGroupSpecial(name)) {
 			System.out.println("This group either already exits or is a special group already. Please try again later.");
@@ -1229,6 +1247,18 @@ class DatabaseHelper {
 			pstmt.executeUpdate();	
 		} catch (SQLException e) {
 			System.err.println("DB issue with deleting a user's access to a speical group: " + e.getMessage());
+		}
+	}
+	
+	public void delEntireGroup(String gName) throws SQLException {
+		String delQuery = "DELETE FROM groups where name = ?";
+		try(PreparedStatement pstmt = connection.prepareStatement(delQuery)) {
+			pstmt.setString(1, gName);
+			int rowsAffected = pstmt.executeUpdate();
+			if(rowsAffected > 1) System.out.println("A group was deleted");
+			else System.out.println("There was no group to delete");
+		} catch(SQLException e) {
+			System.err.println("DB issue with trying to delete an entire group");
 		}
 	}
 	
@@ -1379,7 +1409,6 @@ class DatabaseHelper {
 				needEncryption = true;
 			} else {
 				System.out.println("Group " + group + " does not exist.");
-				return;
 			}
 		}
 
@@ -1502,17 +1531,20 @@ class DatabaseHelper {
 	 * @param role
 	 * @throws SQLException
 	 */
-	public void viewAllArticles(String role) throws SQLException {
-		if (role.equals("s")) {
-			System.out.println("Invalid role");
-			return;
-		}
+	public void viewAllArticles(int userId) throws SQLException {	
 
-		System.out.println("All articles:");
-		String query = "SELECT id, authors, short_description, title FROM articles";
-		try (Statement stmt = connection.createStatement();
-				ResultSet rs = stmt.executeQuery(query)) {
-			while (rs.next()) {
+		System.out.println("All articles you can view:");
+
+
+		String query = "SELECT articles.id, articles.short_description, articles.authors, articles.title FROM groupRights "
+		+ "JOIN group on groupRights.group_name = group.name " 
+		+ "JOIN articleGroup on group.name = articleGroup.group_name "
+		+ "JOIN articles on articleGroup.article_id = articles.id "
+		+ "WHERE groupRights.user_id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setInt(1, userId);
+			try(ResultSet rs = pstmt.executeQuery()) {
+				while (rs.next()) {
 				int id = rs.getInt(1);
 				String authors = rs.getString(2);
 				String shortDescription = rs.getString(3);
@@ -1522,24 +1554,24 @@ class DatabaseHelper {
 				System.out.println("Authors: " + authors);
 				System.out.println("Title: " + title);
 				System.out.println("Short Description: " + shortDescription);	
+				}
 			}
+
 		} catch(SQLException e) {
 			System.err.println("DB issue trying to view all articles");
 		}
 	}
 
-	public void viewGroupedArticles(String role, String group) throws SQLException {
-		if (role.equals("s")) {
-			System.out.println("Invalid role");
-			return;
-		}
+	public void viewGroupedArticles(int uId, String group) throws SQLException {
 
-		String query = "SELECT articles.id, articles.short_description, articles.authors, articles.title FROM articles "
-		+ "JOIN articleGroups on articleGroups.article_id = articles.id "
-		+ "JOIN groups on articleGroups.group_name = groups.name "
-		+ "WHERE groups.name = ?";
+		String query = "SELECT articles.id, articles.short_description, articles.authors, articles.title FROM groupRights "
+		+ "JOIN group on groupRights.group_name = group.name " 
+		+ "JOIN articleGroup on group.name = articleGroup.group_name "
+		+ "JOIN articles on articleGroup.article_id = articles.id "
+		+ "WHERE groupRights.user_id = ? AND group.name = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-			pstmt.setString(1, group);
+			pstmt.setInt(1, uId);
+			pstmt.setString(2, group);
 			ResultSet rs = pstmt.executeQuery();
 				while (rs.next()) {
 					int id = rs.getInt(1);
@@ -1559,18 +1591,22 @@ class DatabaseHelper {
 			}
 	}
 
-	public void viewContentArticles(String role, String contentLevel) throws SQLException {
-		if (role.equals("s")) {
-			System.out.println("Invalid role");
-			return;
-		}
+	public void viewContentArticles(int uId, String contentLevel) throws SQLException {	
+		
+		String query = "SELECT articles.id, articles.short_description, articles.authors, articles.title FROM groupRights "
+		+ "JOIN group on groupRights.group_name = group.name " 
+		+ "JOIN articleGroup on group.name = articleGroup.group_name "
+		+ "JOIN articles on articleGroup.article_id = articles.id "
+		+ "WHERE groupRights.user_id = ? AND articles.level = ?";
 
-		String query = "SELECT articles.id, articles.short_description, articles.authors, articles.title FROM articles "
-		+ "JOIN articleGroups on articleGroups.article_id = articles.id "
-		+ "JOIN groups on articleGroups.group_name = groups.name "
-		+ "WHERE articles.level = ?";
+
+		// String query = "SELECT articles.id, articles.short_description, articles.authors, articles.title FROM articles "
+		// + "JOIN articleGroups on articleGroups.article_id = articles.id "
+		// + "JOIN groups on articleGroups.group_name = groups.name "
+		// + "WHERE articles.level = ?";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-			pstmt.setString(1, contentLevel);
+			pstmt.setInt(1, uId);
+			pstmt.setString(2, contentLevel);
 			ResultSet rs = pstmt.executeQuery();
 				while (rs.next()) {
 					int id = rs.getInt(1);
@@ -1716,7 +1752,7 @@ class DatabaseHelper {
 		if(adminRights) {
 			String sql = "SELECT cse360users.username, cse360users.email, cse360users.preferredFirst from cse360users "
 				+ "JOIN groupRights on cse360users.id = groupRights.user_id "
-				+ "WHERE groupRights.group_name = ? AND groupRights.roleFlag = ? AND groupRights.adminRightsFlag = ?";
+				+ "WHERE groupRights.group_name = ? AND groupRights.accessRole = ? AND groupRights.adminRightsFlag = ?";
 
 				try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
 					pstmt.setString(1, gName);
@@ -1739,8 +1775,8 @@ class DatabaseHelper {
 				}
 		} else {
 			String sql = "SELECT cse360users.username, cse360users.email, cse360users.preferredFirst from cse360users "
-				+ "JOIN groupRights on cse360.id = groupRights.user_id "
-				+ "WHERE groupRights.group_name = ? AND roleFlag = ? AND viewRightsFlag = ?";
+				+ "JOIN groupRights on cse360users.id = groupRights.user_id "
+				+ "WHERE groupRights.group_name = ? AND groupRights.accessRole = ? AND groupRights.viewRightsFlag = ?";
 
 				try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
 					pstmt.setString(1, gName);
@@ -1768,7 +1804,7 @@ class DatabaseHelper {
 	}
 
 
-	public void listAllSpecUsers(String gName) throws SQLException {
+	public void listAllGroupUsers(String gName) throws SQLException {
 		String username, email, pref, accRole;
 		boolean admin, view;
 		
@@ -1793,9 +1829,10 @@ class DatabaseHelper {
 							email = rs.getString(2);
 							pref = rs.getString(3);
 							accRole = rs.getString(4);
-
-							admin = rs.getBoolean(5);
-							view = rs.getBoolean(6);
+							
+								admin = rs.getBoolean(5);
+								view = rs.getBoolean(6);
+							
 
 							System.out.print("Username: " + username);
 							System.out.print(", Email: " + email);
@@ -1812,5 +1849,62 @@ class DatabaseHelper {
 
 			
 	}
+
+	public boolean canDeleteAdmin(int userId) throws SQLException{
+		String query = "SELECT DISTINCT(group_name) from groupRights "
+		+ "WHERE user_id = ? AND acessRole = ?";
+		try(PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setInt(1, userId);
+			pstmt.setString(2, "a");
+
+			try(ResultSet rs = pstmt.executeQuery()) {
+				while(rs.next()) {
+					if(!multAdminsToGroup(rs.getString(1))) return false;
+				}
+				return true;
+			}
+		} catch(SQLException e) {
+			System.err.println("DB issue with checking all groups that this user is an admin for: " + e.getMessage());
+		}
+		return false;
+	}
+
+	public boolean isUserAdminOfGroup(int userId, String gName) throws SQLException{
+		String query = "SELECT accessRole FROM groupRights "
+		+ "WHERE user_id = ? AND group_name = ? AND accessRole = ?";
+
+		try(PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setInt(1, userId);
+			pstmt.setString(2, gName);
+			pstmt.setString(3, "a");
+			try(ResultSet rs = pstmt.executeQuery()) {
+				return rs.next();	
+			}
+		} catch(SQLException e) {
+			System.err.println("DB issue with determinig if user is admin of a group");
+		}
+		return false;
+	}
+
+	public boolean multAdminsToGroup(String gName) throws SQLException{
+		String query = "SELECT COUNT(accessRole) FROM groupRights "
+		+ "WHERE accessRole = ? AND group_name =?";
+
+		try(PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, "a");
+			pstmt.setString(2, gName);
+
+			try(ResultSet rs = pstmt.executeQuery()) {
+				if(rs.next()) {
+					return rs.getInt(1) > 1;
+				}
+			}
+		} catch (SQLException e) {
+			System.err.println("DB issue with determining if a group has multipler users: ");
+		}
+
+		return false;
+	}
+
 
 }
