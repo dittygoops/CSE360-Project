@@ -603,6 +603,15 @@ class DatabaseHelper {
 		return -1;
 	}	
 
+	/**
+	 * Insert a shell user into the database
+	 * 
+	 * @param admin
+	 * @param instruct
+	 * @param stud
+	 * @return the id of the inserted user
+	 * @throws SQLException
+	 */
 	public int insertShellUser(boolean admin, boolean instruct, boolean stud) throws SQLException{
 		String insertShell = "INSERT INTO cse360users (userName, email, password, firstName, middleName, lastName, preferredFirst, adminFlag, teachFlag, studFlag, otpFlag) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(insertShell, Statement.RETURN_GENERATED_KEYS)) {
@@ -637,6 +646,11 @@ class DatabaseHelper {
 		return -1;
 	}
 
+	/**
+	 * Create a random article id
+	 * 
+	 * @return the id of the article
+	 */
 	public int createArticleId() {
 		String id = "";
 		for (int i = 0; i < 6; i++) {
@@ -777,7 +791,13 @@ class DatabaseHelper {
 		}
 	}
 
-	// backup method
+	/**
+	 * Backup the articles to a file
+	 * 
+	 * @param role
+	 * @param file
+	 * @throws Exception
+	 */
 	public void backup(String role, String file) throws Exception {
 		if(role.equals("s")) {
 			System.out.println("Invalid role");
@@ -825,6 +845,13 @@ class DatabaseHelper {
 		}
 	}
 
+	/**
+	 * Restore the articles from a file
+	 * 
+	 * @param roles
+	 * @param file
+	 * @throws Exception
+	 */
 	public void restoreMerge(String roles, String file) throws Exception {
 		// if (roles.equals("s")) {
 		// 	System.out.println("Invalid role");
@@ -976,6 +1003,13 @@ class DatabaseHelper {
 		System.out.println("Restoring from backup file...");
 	}
 
+	/**
+	 * Restore the articles from a file
+	 * 
+	 * @param roles
+	 * @param file
+	 * @throws Exception
+	 */
 	public void restore(String roles, String file) throws Exception {
 		// if (roles.equals("s")) {
 		// 	System.out.println("Invalid role");
@@ -1110,6 +1144,12 @@ class DatabaseHelper {
 		System.out.println("Restoring from backup file...");
 	}
 
+	/**
+	 * Create a new group in the database
+	 * 
+	 * @param groups
+	 * @throws SQLException
+	 */
 	public void createGroups(String[] groups) throws SQLException {
 		for(String curGroup : groups) {
 			if(!groupExist(curGroup)) {
@@ -1127,6 +1167,13 @@ class DatabaseHelper {
 		}
 	}
 
+	/**
+	 * Create a new special group in the database
+	 * 
+	 * @param name
+	 * @return true if the group was created successfully, false otherwise
+	 * @throws SQLException
+	 */
 	public boolean createSpecialGroup(String name) throws SQLException {
 		if(groupExist(name) || isGroupSpecial(name)) {
 			System.out.println("This group either already exits or is a special group already. Please try again later.");
@@ -1147,6 +1194,13 @@ class DatabaseHelper {
 		return false;
 	}
 
+	/**
+	 * Link an article to a group in the database
+	 * 
+	 * @param groupName
+	 * @param articleID
+	 * @throws SQLException
+	 */
 	public void linkArticleGroup(String groupName, int articleID) throws SQLException {
 		if(!groupExist(groupName)) {
 			System.out.println("Trying to link to a group that does not exist");
@@ -1165,6 +1219,16 @@ class DatabaseHelper {
 		}
 	}
 
+	/**
+	 * Link a user to a group in the database
+	 * 
+	 * @param groupName
+	 * @param userId
+	 * @param roleFlag
+	 * @param adminPerms
+	 * @param viewPerms
+	 * @throws SQLException
+	 */
 	public void linkUserGroup(String groupName, int userId, String roleFlag, boolean adminPerms, boolean viewPerms) throws SQLException {
 		String linkQuery = "INSERT INTO groupRights (user_id, group_name, accessRole, adminRightsFlag, viewRightsFlag) VALUES (?, ?, ?, ?, ?)";
 		try (PreparedStatement pstmt = connection.prepareStatement(linkQuery)) {
@@ -1181,6 +1245,13 @@ class DatabaseHelper {
 		}
 	}
 
+	/**
+	 * Delete a user's access to a special group in the database
+	 * 
+	 * @param gName
+	 * @param userId
+	 * @throws SQLException
+	 */
 	public void delUserGroup(String gName, int userId) throws SQLException{
 		String delQuery = "DELETE FROM groupRights WHERE group_name = ? AND user_id = ?";
 		try(PreparedStatement pstmt = connection.prepareStatement(delQuery)) {
@@ -1294,7 +1365,14 @@ class DatabaseHelper {
 		return false;
 	}
 	
-
+	/**
+	 * Check if a user has view access to a special group in the database
+	 * 
+	 * @param userId
+	 * @param groupName
+	 * @return true if the user has view access, false otherwise
+	 * @throws SQLException
+	 */
 	public boolean checkSpecialViewAccess(int userId, String groupName) throws SQLException {
 		String checkSpecial = "SELECT viewRightsFlag from groupRights where user_id = ? and group_name = ?";
 		try(PreparedStatement pstmt = connection.prepareStatement(checkSpecial)) {
@@ -1489,6 +1567,13 @@ class DatabaseHelper {
 		}
 	}
 
+	/**
+	 * View all articles in the database for a given group
+	 * 
+	 * @param role
+	 * @param group
+	 * @throws SQLException
+	 */
 	public void viewGroupedArticles(String role, String group) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
@@ -1520,6 +1605,13 @@ class DatabaseHelper {
 			}
 	}
 
+	/**
+	 * View all articles in the database for a given level
+	 * 
+	 * @param role
+	 * @param contentLevel
+	 * @throws SQLException
+	 */
 	public void viewContentArticles(String role, String contentLevel) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
@@ -1552,7 +1644,12 @@ class DatabaseHelper {
 	}
 	
 
-	//Gets all groups for one article
+	/**
+	 * Get all groups for one article
+	 * 
+	 * @param articleId
+	 * @return an ArrayList of group names
+	 */
 	public ArrayList<String> getGroupsForAnArticle(int articleId) {
 		ArrayList<String> tempList = new ArrayList<>();
 		String query = "SELECT name from groups "
@@ -1574,6 +1671,14 @@ class DatabaseHelper {
 		return null;
 	}
 
+	/**
+	 * Check if a user has access to a list of groups
+	 * 
+	 * @param curUser
+	 * @param groups
+	 * @return true if the user has access, false otherwise
+	 * @throws SQLException
+	 */
 	public boolean articleAuth(User curUser, ArrayList<String> groups) throws SQLException{
 		int userId = getUserId(curUser.getUsername(), curUser.getEmail());
 		for(int i = 0; i < groups.size(); i++) {
@@ -1585,6 +1690,14 @@ class DatabaseHelper {
 		return true;
 	}
 
+	/**
+	 * Check if a user has deletion access to a list of groups
+	 * 
+	 * @param curUser
+	 * @param groups
+	 * @return true if the user has deletion access, false otherwise
+	 * @throws SQLException
+	 */
 	public boolean articleDelAuth(User curUser, ArrayList<String> groups) throws SQLException{
 		int userId = getUserId(curUser.getUsername(), curUser.getEmail());
 		for(int i = 0; i < groups.size(); i++) {
@@ -1596,6 +1709,14 @@ class DatabaseHelper {
 		return true;
 	}
 
+	/**
+	 * Check if a user has encrypted access to a list of groups
+	 * 
+	 * @param curUser
+	 * @param groups
+	 * @return true if the user has encrypted access, false otherwise
+	 * @throws SQLException
+	 */
 	public boolean articleEncrypted(User curUser, ArrayList<String> groups) throws SQLException{
 		int userId = getUserId(curUser.getUsername(), curUser.getEmail());
 		for(int i = 0; i < groups.size(); i++) {
@@ -1607,6 +1728,14 @@ class DatabaseHelper {
 		return false;
 	}	
 
+	/**
+	 * View an article from the database
+	 * 
+	 * @param role
+	 * @param articleId
+	 * @param encrypted
+	 * @throws SQLException
+	 */
 	public void viewArticle(String role, String articleId, boolean encrypted) throws SQLException {
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
@@ -1671,6 +1800,14 @@ class DatabaseHelper {
 		return false;
 	}
 
+	/**
+	 * List special users with varying admin and view permissions
+	 * 
+	 * @param roleFlag
+	 * @param adminRights
+	 * @param gName
+	 * @throws SQLException
+	 */
 	public void listSpecUsers(String roleFlag, boolean adminRights, String gName) throws SQLException {
 		String username, email, pref;
 		
@@ -1728,7 +1865,12 @@ class DatabaseHelper {
 			
 	}
 
-
+	/**
+	 * List all special users in the database
+	 * 
+	 * @param gName
+	 * @throws SQLException
+	 */
 	public void listAllSpecUsers(String gName) throws SQLException {
 		String username, email, pref, accRole;
 		boolean admin, view;
@@ -1774,6 +1916,14 @@ class DatabaseHelper {
 			
 	}
 
+	/**
+	 * Search for an article in the database
+	 * 
+	 * @param role
+	 * @param level
+	 * @param group
+	 * @param search
+	 */
 	public void searchArticle(String role, String level, String group, String search) { 
 		if (role.equals("s")) {
 			System.out.println("Invalid role");
