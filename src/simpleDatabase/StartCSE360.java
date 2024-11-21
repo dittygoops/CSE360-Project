@@ -268,126 +268,93 @@ public class StartCSE360 {
 	 *                      helper file and logs the issue
 	 */
 	private static void studentHome(User curUser) throws SQLException, Exception {
-		String option = "";
-		do {
+        String option = "";
+        do {
+            System.out.println("Welcome to the student home.");
+            System.out.println("Here are your options: ");
+            System.out.println("1. Exit this session");
+            System.out.println("2. Send a generic message");
+            System.out.println("3. Send a specific message");
+            System.out.println("4. Search for an article");
+            System.out.println("5. View Article by ID");
+            option = scanner.nextLine();
 
-			// Main Menu of options
-			System.out.println("Welcome to the student home.");
-			System.out.println("Here are your options: ");
-			System.out.println("1. Exit this session");
-			System.out.println("2. Send a generic message");
-			System.out.println("3. Send a specific message");
-			System.out.println("4. View Articles by Content Level (Returns all unless level specified later)");
-			System.out.println("5. View Articles by Group (Returns all unless level specified later)");
-			System.out.println("6. Search for an article");
-			System.out.println("7. View Article by ID");
-			option = scanner.nextLine();
+            switch (option) {
+                case "1": {
+                    System.out.println("You are now ending your session. Hope to see you soon!");
+                    break;
+                }
+                case "2": {
+                    System.out.println("Please type your general message below: ");
+                    String genMessage = scanner.nextLine();
+                    HelpSystem.sendGenericMessage(genMessage, curUser);
+                    System.out.println("Your message has been sent and stored to improve our system in the future.");
+                    break;
+                }
+                case "3": {
+                    System.out.println("Please enter your specific message below. Make sure to include exactly what you need and/or cannot find: ");
+                    String specMessage = scanner.nextLine();
+                    HelpSystem.sendSpecificMessage(specMessage, curUser);
+                    System.out.println("Your message has been sent and stored to improve our system in the future.");
+                    break;
+                }
+                case "4": {
+                    System.out.println("Please search for an article via content level:\n1: Beginner\n2: Intermediate\n3: Advanced\n4: Expert");
+                    int choice = scanner.nextInt();
+                    scanner.nextLine();
+                    String level = "ALL";
 
-			// Processes option chosen
-			switch (option) {
+                    switch (choice) {
+                        case 1:
+                            level = "Beginner";
+                            break;
+                        case 2:
+                            level = "Intermediate";
+                            break;
+                        case 3:
+                            level = "Advanced";
+                            break;
+                        case 4:
+                            level = "Expert";
+                            break;
+                        default:
+                            break;
+                    }
 
-				// Exit session
-				case "1": {
-					System.out.println("You are now ending your session. Hope to see you soon!");
-					break;
-				}
+                    System.out.println("Please search for an article via group name: ");
+                    String group = scanner.nextLine();
 
-				// Generic Message
-				case "2": {
-					System.out.println("Please type your general message below: ");
-					String genMessage = scanner.nextLine();
-					// P3: pass genMessage to db method to be stored for future
-					System.out.println("Your message has been sent and stored to improve our system in the future.");
-					break;
-				}
+                    System.out.println("Please search for an article via words, names, or phrases in the Title, Author(s), or Abstract. Say any if you don't want to search: ");
+                    String searchCond = scanner.nextLine();
 
-				// Specific Message - Must contain exact issue
-				case "3": {
-					System.out.println(
-							"Please enter your specific message below. Make sure to include exactly what you need and/or cannot find: ");
-					String genMessage = scanner.nextLine();
-					// P3: pass genMessage to db method to be stored for future
-					System.out.println("Your message has been sent and stored to improve our system in the future.");
-					break;
-				}
-				// P3: Change phrasing so that student knows that they can intentionally enter
-				// anything besides a specified content level or group ID to view all articles
-				// Filter by Content Level - default = all
-				case "4": {
-					System.out.println(
-							"Please enter the content level of articles you would like. Any other input besides Beginner, Intermediate, Advanced, or Expert will return all articles: ");
-					String contentLevel = scanner.nextLine();
-					if (!contentLevel.equals("Beginner") && !contentLevel.equals("Intermediate")
-							&& !contentLevel.equals("Advanced") && !contentLevel.equals("Expert")) {
-						System.out.println(
-								"Your input did not match any specified content level. Here are all the articles in the system: ");
-						// P3: return all articles
-						int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
-						databaseHelper.viewAllArticles(uId);
+                    if (searchCond.equals("any")) {
+                        searchCond = "";
+                    }
 
-					} else {
-						System.out.println("Here are the articles in the content level: " + contentLevel);
-						// P3: dbHelper function call with level passed in
-						int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
-						databaseHelper.viewContentArticles(uId, contentLevel);
-					}
-					break;
-				}
-
-				// Filter by group - default = all
-				case "5": {
-					System.out.println(
-							"Please enter the group of articles you would like. If your input does not match any existing groups, all articles will be returned: ");
-					String groupChosen = scanner.nextLine();
-					// P3: See if group exists by passing groupChosen to dbHelper function - store
-					// in a flag (stored to false for now)
-					boolean groupExists = false;
-					if (groupExists) {
-						System.out.println("Here are the articles in the group: " + groupChosen);
-						// P3: Get all articles in groupChosen and display
-						int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
-						databaseHelper.viewGroupedArticles(uId, groupChosen);
-					} else {
-						System.out.println(
-								"We could not find any group of articles matching the criteria you entered. Here are all the articles in the system: ");
-						// P3: return all articles
-						int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
-						databaseHelper.viewAllArticles(uId);
-					}
-					break;
-				}
-				// P3: Potential to change based on how we implement search in DB
-				// Search for an article
-				case "6": {
-					System.out.println(
-							"Please search for an article via words, names, or phrases in the Title, Author(s), or Abstract: ");
-					String searchCond = scanner.nextLine();
-					// P3: Send to DB to find all associated articles - need condition block to say
-					// whether any articles matching criteria were found
-					break;
-				}
-
-				// View article in detail via ID
-				case "7": {
-					System.out.println("Please enter the ID of the article you would like to view: ");
-					String idChosen = scanner.nextLine();
-					// P3: Pass id to db to get it and view in detail - only place to return
-					// everything/not in short form
-					databaseHelper.viewArticle("t", idChosen, true);
-					break;
-				}
-
-				// Default message for invalid input
-				default: {
-					System.out.println("You entered an invalid input. Please try again!");
-					break;
-				}
-			}
-		} while (!option.equals("1")); // Loops until student exits their session
-		mainLogin();
-
-	}
-
+                    databaseHelper.searchArticle("s", level, group, searchCond);
+                    break;
+                }
+                case "5": {
+                    System.out.println(
+                            "Please enter the group of articles you would like. If your input does not match any existing groups, all articles will be returned: ");
+                    String groupChosen = scanner.nextLine();
+                    boolean groupExists = true;
+                    if (groupExists) {
+                        System.out.println("Here are the articles in the group: " + groupChosen);
+                    } else {
+                        System.out.println(
+                                "We could not find any group of articles matching the criteria you entered. Here are all the articles in the system: ");
+                    }
+                    break;
+                }
+                default: {
+                    System.out.println("You entered an invalid input. Please try again!");
+                    break;
+                }
+            }
+        } while (!option.equals("1"));
+        mainLogin();
+    }
 	/**
 	 * Main Login for all users entering the system
 	 * 

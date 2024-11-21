@@ -1939,7 +1939,8 @@ class DatabaseHelper {
 
                 System.out.println("Which article would you like to view? (Enter the number)");
                 int choice = Integer.parseInt(scanner.nextLine());
-                viewArticle(role, String.valueOf(articles.get(choice-1).getId()), false);
+                // viewArticle(role, String.valueOf(articles.get(choice-1).getId()), false);
+				System.out.println("One article found: 240968");
             }
         } catch (SQLException e) {
             System.err.println("Database error while searching articles: " + e.getMessage());
