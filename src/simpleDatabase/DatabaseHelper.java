@@ -13,6 +13,8 @@ import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
  
 /***
  * This class contains all functions that relate/interact with our H2 databases
@@ -1162,16 +1164,15 @@ class DatabaseHelper {
 	}
 
 	public void searchArticle(String role, String level, String group, String search) { 
-		String query = "SELECT * FROM articles WHERE level = ? AND group_id LIKE ? AND (title LIKE ? OR short_description LIKE ? OR keywords LIKE ? OR body LIKE ? OR reference_links LIKE ?)";
-		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+		String query = "SELECT * FROM articles WHERE level = ? AND group_id LIKE ? AND (title LIKE ? OR short_description LIKE ? OR keywords LIKE ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
 			pstmt.setString(1, level);
 			pstmt.setString(2, "%" + group + "%");
 			pstmt.setString(3, "%" + search + "%");
 			pstmt.setString(4, "%" + search + "%");
 			pstmt.setString(5, "%" + search + "%");
-			pstmt.setString(6, "%" + search + "%");
-			pstmt.setString(7, "%" + search + "%");
 			try (ResultSet rs = pstmt.executeQuery()) {
+				List<Article> articles = new ArrayList<>();
 				while (rs.next()) {
 					int id = rs.getInt("id");
 					String articleLevel = rs.getString("level");
@@ -1182,15 +1183,15 @@ class DatabaseHelper {
 					String encryptedBody = rs.getString("body");
 					String decryptedBody = encryptionHelper.decrypt(encryptedBody);
 					String referenceLinks = rs.getString("reference_links");
- 
-					System.out.println("ID: " + id);
-					System.out.println("Level: " + articleLevel);
-					System.out.println("Group ID: " + groupId);
-					System.out.println("Title: " + title);
-					System.out.println("Short Description: " + shortDescription);
-					System.out.println("Keywords: " + keywords);
-					System.out.println("Body: " + decryptedBody);
-					System.out.println("Reference Links: " + referenceLinks);
+
+					Article article = new Article(id, articleLevel, groupId, title, shortDescription, keywords, decryptedBody, referenceLinks);
+					articles.add(article);
+				}
+
+				System.out.println("Search Level: " + level + "\t\tTotal Results: " + articles.size());
+				
+				for (Article article: articles) {
+					System.out.println(article);
 				}
 			}
 		} catch (SQLException e) {
