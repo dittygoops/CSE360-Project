@@ -1365,7 +1365,9 @@ public class StartCSE360 {
 
 				// Manage Rights to a Special Access Group
 				case "17": {
+
 					specialAccessGroupAdminRights(curUser);
+					break;
 				}
 
 				// Logout
@@ -1434,6 +1436,7 @@ public class StartCSE360 {
 				int aId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
 				if (!databaseHelper.checkSpecialAdminAccess(aId, group)) {
 					System.out.println("You do not have access to this Special Access Group.");
+					return;
 				}
 				// check if a valid group and if this user has admin rights over group as an
 				// admin
@@ -1446,6 +1449,7 @@ public class StartCSE360 {
 				System.out.println("6. List of all instructors with decrypted view rights");
 				System.out.println("7. List of all instructors with admin rights");
 				System.out.println("8. List of all students with decrypted view rights");
+				System.out.println("9. Grant an administrator access to this group");
 				String access = scanner.nextLine();
 
 				switch (access) {
@@ -1564,6 +1568,27 @@ public class StartCSE360 {
 					case "8": {
 
 						databaseHelper.listSpecUsers("s", false, group);
+						break;
+					}
+					
+
+					//Issue with 3 and 9 is with del - check if have access - then delete
+					case "9": {
+						String instructAdminUser, instructAdminEmail;
+						String[] toBeAdmin = get_user_identifiers();
+						instructAdminUser = toBeAdmin[0];
+						instructAdminEmail = toBeAdmin[1];
+						if (!databaseHelper.userExist(instructAdminUser, instructAdminEmail)) {
+							System.out.println("There does not exist such a user");
+						}
+						int uId = databaseHelper.getUserId(instructAdminUser, instructAdminEmail);
+						if (!databaseHelper.delUserGroup(group, aId)) {
+							System.out.println("An issue occurred with overlapping user rights. Please try again later");
+							break;
+						}
+						databaseHelper.linkUserGroup(group, uId, "t", true, true);
+						// check if valid user and if they have access to the SAG
+						// if so - allow them to have admin rights
 						break;
 					}
 

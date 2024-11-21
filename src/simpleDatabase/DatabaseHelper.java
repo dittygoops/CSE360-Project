@@ -1776,9 +1776,16 @@ class DatabaseHelper {
 		boolean admin, view;
 		
 		
-			String sql = "SELECT cse360users.username, cse360users.email, cse360users.preferredFirst, groupRights.accessRole, groupRights.adminRightsFlag, group.viewRightsFlag from cse360users "
-				+ "JOIN groupRights on cse360.id = groupRights.user_id "
-				+ "WHERE groupRights.group_name = ?";
+			String sql = "SELECT cse360users.username, " 
+			+ "cse360users.email, "
+			+ "cse360users.preferredFirst, " 
+			+ "groupRights.accessRole, " 
+			+ "groupRights.adminRightsFlag, " 
+			+ "groupRights.viewRightsFlag " 
+			+ "FROM cse360users " 
+			+ "JOIN groupRights " 
+			+ "ON cse360users.id = groupRights.user_id " 
+			+ "WHERE groupRights.group_name = ?";
 
 				try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
 					pstmt.setString(1, gName);
