@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+
 /**
  * This file contains the user interface for the Project. All database
  * interactions will be processed by the DatabaseHelper class.
@@ -984,6 +985,7 @@ public class StartCSE360 {
 							System.out.println("Please enter the name of the file you would like to backup to: ");
 							fileName = scanner.nextLine();
 							// db method to restore all articles to <fileName>.txt
+							databaseHelper.backup("a", fileName);
 							break;
 						}
 

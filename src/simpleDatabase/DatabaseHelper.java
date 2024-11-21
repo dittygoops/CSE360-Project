@@ -198,7 +198,8 @@ class DatabaseHelper {
 			pstmt.executeUpdate();
 		}
 	}
-		*/
+	
+	*/
 
 	/**
 	 * Register a user with username, password, and role
@@ -349,23 +350,6 @@ class DatabaseHelper {
 			}
 		}
 	}
-
-	/*
-	public void storeUser(User user) throws SQLException {
-		String insertUser = "INSERT INTO cse360users (userName, email, password, firstName, middleName, lastName, preferredFirst, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
-			pstmt.setString(1, user.getUsername());
-			pstmt.setString(2, user.getEmail());
-			pstmt.setString(3, user.getPassword());
-			pstmt.setString(4, user.getFirstName());
-			pstmt.setString(5, user.getMiddleName());
-			pstmt.setString(6, user.getLastName());
-			pstmt.setString(7, user.getPreferredFirst());
-			pstmt.setString(8, user.getRoles());
-			pstmt.executeUpdate();
-		}
-	}
-	*/
 
 	/**
 	 * get User Roles by username
@@ -794,62 +778,39 @@ class DatabaseHelper {
 		}
 	}
 
-	// Admin and instruction team roles are enhanced
-	// with commands to back up and restore help system data
-	// to admin/instructor named external file
+	// backup method
 	public void backup(String role, String file) throws Exception {
-		if (role.equals("s")) {
+		if(role.equals("s")) {
 			System.out.println("Invalid role");
 			return;
 		}
-		// Check to see if there is anything to back up at all
-		if (isDatabaseEmpty()) {
-			System.out.println("There are no articles in the system to back up.");
-			return;
-		}
-
-		// Get all entries in the table
-		String sql = "SELECT * FROM articles";
-		Statement stmt = connection.createStatement();
-		ResultSet rs = stmt.executeQuery(sql);
-
-		try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-
-			// Each article will have 6 lines in the text file, every 6 lines corresponds to
-			// an entry
+		String query = "SELECT * FROM articles";
+		try (Statement stmt = connection.createStatement();
+			 ResultSet rs = stmt.executeQuery(query);
+			 BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+			
 			while (rs.next()) {
-				// For each entry - get all fields and store them in their encrypted states
-				int id = rs.getInt("id");
-				String idEnter = "" + id;
-				String level = rs.getString("level");
-				String group_id = rs.getString("group_id");
-				String title = rs.getString("title");
-				String short_description = rs.getString("short_description");
-				String keywords = rs.getString("keywords");
-				String body = rs.getString("body");
-				String references = rs.getString("reference_links");
-
-				// write each field on its own line
-				writer.write(idEnter);
+				// Write each field on a separate line
+				writer.write(rs.getString("id"));
 				writer.newLine();
-				writer.write(level);
+				writer.write(rs.getString("level"));
+				writer.newLine(); 
+				writer.write(rs.getString("authors"));
 				writer.newLine();
-				writer.write(group_id);
+				writer.write(rs.getString("title"));
 				writer.newLine();
-				writer.write(title);
+				writer.write(rs.getString("short_description"));
 				writer.newLine();
-				writer.write(short_description);
+				writer.write(rs.getString("keywords")); 
 				writer.newLine();
-				writer.write(keywords);
+				writer.write(rs.getString("body"));
 				writer.newLine();
-				writer.write(body);
-				writer.newLine();
-				writer.write(references);
+				writer.write(rs.getString("reference_links"));
 				writer.newLine();
 			}
-			System.out.println("Successfully backed up system");
 		} catch (IOException e) {
-			e.printStackTrace();
+			System.err.println("Error writing to backup file: " + e.getMessage());
+			throw new Exception("Backup failed");
 		}
 	}
 
