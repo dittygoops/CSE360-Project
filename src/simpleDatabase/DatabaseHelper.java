@@ -33,7 +33,7 @@ class DatabaseHelper {
 	static final String USER = "sa";
 	static final String PASS = "";
 
-	private Connection connection = null;
+	public Connection connection = null;
 	private Statement statement = null;
 
 	private Scanner scanner = new Scanner(System.in);
@@ -1775,87 +1775,51 @@ class DatabaseHelper {
 	}
 
 	public void searchArticle(String role, String level, String group, String search) { 
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
 
-		String query = "SELECT * FROM articles WHERE level = ? AND group_id LIKE ? AND (title LIKE ? OR short_description LIKE ? OR keywords LIKE ?)";
+		String sql = "SELECT DISTINCT a.* FROM articles a "
+				+ "JOIN articleGroups ag ON a.id = ag.article_id "
+				+ "WHERE LOWER(a.level) LIKE ? "
+				+ "AND LOWER(ag.group_name) LIKE ? "
+				+ "AND (LOWER(a.keywords) LIKE ? "
+				+ "OR LOWER(a.title) LIKE ? "
+				+ "OR LOWER(a.short_description) LIKE ?)";
 
-		try (PreparedStatement pstmt = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
-
-			pstmt.setString(1, level);
-
-			pstmt.setString(2, "%" + group + "%");
-
-			pstmt.setString(3, "%" + search + "%");
-
-			pstmt.setString(4, "%" + search + "%");
-
-			pstmt.setString(5, "%" + search + "%");
+		try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+			String searchPattern = "%" + search.toLowerCase() + "%";
+			String levelPattern = "%" + level.toLowerCase() + "%";
+			String groupPattern = "%" + group.toLowerCase() + "%";
+			
+			pstmt.setString(1, levelPattern);
+			pstmt.setString(2, groupPattern);
+			pstmt.setString(3, searchPattern);
+			pstmt.setString(4, searchPattern);
+			pstmt.setString(5, searchPattern);
 
 			try (ResultSet rs = pstmt.executeQuery()) {
-
-				List<Article> articles = new ArrayList<>();
+				List<Article> articles = new ArrayList<>();	
 
 				while (rs.next()) {
-
-					int id = rs.getInt("id");
-
-					String articleLevel = rs.getString("level");
-
-					String groupId = rs.getString("group_id");
-
-					String title = rs.getString("title");
-
-					String shortDescription = rs.getString("short_description");
-
-					String keywords = rs.getString("keywords");
-
-					String encryptedBody = rs.getString("body");
-
-					String decryptedBody = encryptionHelper.decrypt(encryptedBody);
-
-					String referenceLinks = rs.getString("reference_links");
-
-
-
-					Article article = new Article(id, articleLevel, groupId, title, shortDescription, keywords, decryptedBody, referenceLinks);
-
-					articles.add(article);
-
+					articles.add(new Article(rs.getInt("id"), rs.getString("level"), rs.getString("group_name"), rs.getString("title"), rs.getString("short_description"), rs.getString("keywords"), rs.getString("body"), rs.getString("reference_links")));
 				}
-
-
 
 				System.out.println("Search Level: " + level + "\t\tTotal Results: " + articles.size());
 
-				
-
 				for (int i = 0; i < articles.size(); i++) {
-
-					System.out.println(i + 1 + "\nTitle: " + articles.get(i).getTitle() + "\nAbstract: " + articles.get(i).getShortDescription());
-
+					System.out.println(i+1 + ". " + articles.get(i).toString());
 				}
 
-
-
-				System.out.println("Which article would you like to view?");
-
-
-
-				int articleIndex = Integer.parseInt(scanner.nextLine()) - 1;
-
-
-
-				System.out.println(articles.get(articleIndex));
-
+				System.out.println("Which article would you like to view? (Enter the number)");
+				int choice = Integer.parseInt(scanner.nextLine());
+				viewArticle(role, String.valueOf(articles.get(choice-1).getId()), false);
 			}
-
 		} catch (SQLException e) {
-
-			System.err.println("Database error while searching for articles: " + e.getMessage());
-
+			System.err.println("Database error while searching articles: " + e.getMessage());
 		}
-
 	}
-
 
 
 }
