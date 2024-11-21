@@ -13,8 +13,6 @@ import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-import java.util.ArrayList;
-import java.util.List;
  
 /***
  * This class contains all functions that relate/interact with our H2 databases
@@ -1166,39 +1164,4 @@ class DatabaseHelper {
 		}
 	}
 
-	public void searchArticle(String role, String level, String group, String search) { 
-		String query = "SELECT * FROM articles WHERE level = ? AND group_id LIKE ? AND (title LIKE ? OR short_description LIKE ? OR keywords LIKE ?)";
-		try (PreparedStatement pstmt = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
-			pstmt.setString(1, level);
-			pstmt.setString(2, "%" + group + "%");
-			pstmt.setString(3, "%" + search + "%");
-			pstmt.setString(4, "%" + search + "%");
-			pstmt.setString(5, "%" + search + "%");
-			try (ResultSet rs = pstmt.executeQuery()) {
-				List<Article> articles = new ArrayList<>();
-				while (rs.next()) {
-					int id = rs.getInt("id");
-					String articleLevel = rs.getString("level");
-					String groupId = rs.getString("group_id");
-					String title = rs.getString("title");
-					String shortDescription = rs.getString("short_description");
-					String keywords = rs.getString("keywords");
-					String encryptedBody = rs.getString("body");
-					String decryptedBody = encryptionHelper.decrypt(encryptedBody);
-					String referenceLinks = rs.getString("reference_links");
-
-					Article article = new Article(id, articleLevel, groupId, title, shortDescription, keywords, decryptedBody, referenceLinks);
-					articles.add(article);
-				}
-
-				System.out.println("Search Level: " + level + "\t\tTotal Results: " + articles.size());
-				
-				for (Article article: articles) {
-					System.out.println(article);
-				}
-			}
-		} catch (SQLException e) {
-			System.err.println("Database error while searching for articles: " + e.getMessage());
-		}
-	}
 }
