@@ -374,6 +374,7 @@ public class StartCSE360 {
 				}
 			}
 		} while (!option.equals("1")); // Loops until student exits their session
+		mainLogin();
 
 	}
 
@@ -1430,7 +1431,7 @@ public class StartCSE360 {
 
 	private static void specialAccessGroupAdminRights(User curUser) throws SQLException{
 			try {
-
+				String access;
 				System.out.println("Please enter the name of the Special Access Group: ");
 				String group = scanner.nextLine();
 				int aId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
@@ -1438,6 +1439,10 @@ public class StartCSE360 {
 					System.out.println("You do not have access to this Special Access Group.");
 					return;
 				}
+				do{
+
+				
+				
 				// check if a valid group and if this user has admin rights over group as an
 				// admin
 				System.out.println("You now have the following options: ");
@@ -1450,7 +1455,7 @@ public class StartCSE360 {
 				System.out.println("7. List of all instructors with admin rights");
 				System.out.println("8. List of all students with decrypted view rights");
 				System.out.println("9. Grant an administrator access to this group");
-				String access = scanner.nextLine();
+				access = scanner.nextLine();
 
 				switch (access) {
 
@@ -1468,6 +1473,10 @@ public class StartCSE360 {
 						int uId = databaseHelper.getUserId(userToAdd, emailToAdd);
 						System.out.println("The user has the following role(s): ");
 						boolean[] userRoles = databaseHelper.getUserRoles(userToAdd, emailToAdd);
+						if(!userRoles[1] && !userRoles[2]) {
+							System.out.println("This user does not have the proper roles to access the group from.");
+							break;
+						}
 						if (userRoles[2])
 							System.out.println("1. Student");
 						if (userRoles[1])
@@ -1509,10 +1518,7 @@ public class StartCSE360 {
 							System.out.println("There does not exist such a user");
 						}
 						int uId = databaseHelper.getUserId(instructAdminUser, instructAdminEmail);
-						if (!databaseHelper.delUserGroup(group, uId)) {
-							System.out.println("An issue occurred with overlapping user rights. Please try again later");
-							break;
-						}
+						databaseHelper.delUserGroup(group, uId);
 						databaseHelper.linkUserGroup(group, uId, "t", true, true);
 						// check if valid user and if they have access to the SAG
 						// if so - allow them to have admin rights
@@ -1532,12 +1538,8 @@ public class StartCSE360 {
 						}
 
 						int delId = databaseHelper.getUserId(delUser, delEmail);
-						if (!databaseHelper.delUserGroup(group, delId)) {
-							System.out.println(
-									"Something went wrong with deleting the user from this group. Please try again later!");
-							break;
-						} else
-							System.out.println("A user has been succesfully deleted from this group");
+						databaseHelper.delUserGroup(group, delId);
+						System.out.println("A user has been succesfully deleted from this group");
 						// check if valid user, then check if last instructor - if yes - do nothing and
 						// display issue, if not - remove them from group
 						break;
@@ -1571,8 +1573,7 @@ public class StartCSE360 {
 						break;
 					}
 					
-
-					//Issue with 3 and 9 is with del - check if have access - then delete
+	
 					case "9": {
 						String instructAdminUser, instructAdminEmail;
 						String[] toBeAdmin = get_user_identifiers();
@@ -1582,13 +1583,15 @@ public class StartCSE360 {
 							System.out.println("There does not exist such a user");
 						}
 						int uId = databaseHelper.getUserId(instructAdminUser, instructAdminEmail);
-						if (!databaseHelper.delUserGroup(group, aId)) {
-							System.out.println("An issue occurred with overlapping user rights. Please try again later");
-							break;
-						}
-						databaseHelper.linkUserGroup(group, uId, "t", true, true);
+						databaseHelper.delUserGroup(group, uId);
+						databaseHelper.linkUserGroup(group, uId, "a", true, false);
 						// check if valid user and if they have access to the SAG
 						// if so - allow them to have admin rights
+						break;
+					}
+
+					case "10": {
+						System.out.println("You have left the management menu for this special access group.");
 						break;
 					}
 
@@ -1597,6 +1600,7 @@ public class StartCSE360 {
 						break;
 					}
 				}
+			} while(!access.equals("10"));
 			} catch(SQLException e) {
 				System.err.println("DB issue with SAG Admin Rights");
 			}

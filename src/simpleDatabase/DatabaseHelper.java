@@ -1220,19 +1220,16 @@ class DatabaseHelper {
 		}
 	}
 
-	public boolean delUserGroup(String gName, int userId) throws SQLException{
+	public void delUserGroup(String gName, int userId) throws SQLException{
 		String delQuery = "DELETE FROM groupRights WHERE group_name = ? AND user_id = ?";
 		try(PreparedStatement pstmt = connection.prepareStatement(delQuery)) {
 			pstmt.setString(1, gName);
 			pstmt.setInt(2, userId);
 
-			int rowsAffected = pstmt.executeUpdate();
-			return rowsAffected > 0;	
+			pstmt.executeUpdate();	
 		} catch (SQLException e) {
 			System.err.println("DB issue with deleting a user's access to a speical group: " + e.getMessage());
-
 		}
-		return false;
 	}
 	
 
@@ -1718,8 +1715,8 @@ class DatabaseHelper {
 		
 		if(adminRights) {
 			String sql = "SELECT cse360users.username, cse360users.email, cse360users.preferredFirst from cse360users "
-				+ "JOIN groupRights on cse360.id = groupRights.user_id "
-				+ "WHERE groupRights.group_name = ?, groupRights.roleFlag = ?, groupRights.adminRightsFlag = ?";
+				+ "JOIN groupRights on cse360users.id = groupRights.user_id "
+				+ "WHERE groupRights.group_name = ? AND groupRights.roleFlag = ? AND groupRights.adminRightsFlag = ?";
 
 				try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
 					pstmt.setString(1, gName);
@@ -1743,7 +1740,7 @@ class DatabaseHelper {
 		} else {
 			String sql = "SELECT cse360users.username, cse360users.email, cse360users.preferredFirst from cse360users "
 				+ "JOIN groupRights on cse360.id = groupRights.user_id "
-				+ "WHERE groupRights.group_name = ?, roleFlag = ?, viewRightsFlag = ?";
+				+ "WHERE groupRights.group_name = ? AND roleFlag = ? AND viewRightsFlag = ?";
 
 				try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
 					pstmt.setString(1, gName);
@@ -1772,7 +1769,7 @@ class DatabaseHelper {
 
 
 	public void listAllSpecUsers(String gName) throws SQLException {
-		String username, email, pref, accessRole;
+		String username, email, pref, accRole;
 		boolean admin, view;
 		
 		
@@ -1795,7 +1792,7 @@ class DatabaseHelper {
 							username = rs.getString(1);
 							email = rs.getString(2);
 							pref = rs.getString(3);
-							accessRole = rs.getString(4);
+							accRole = rs.getString(4);
 
 							admin = rs.getBoolean(5);
 							view = rs.getBoolean(6);
