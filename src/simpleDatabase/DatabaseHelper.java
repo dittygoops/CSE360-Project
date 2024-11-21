@@ -1190,9 +1190,15 @@ class DatabaseHelper {
 
 				System.out.println("Search Level: " + level + "\t\tTotal Results: " + articles.size());
 				
-				for (Article article: articles) {
-					System.out.println(article);
+				for (int i = 0; i < articles.size(); i++) {
+					System.out.println(i + 1 + "\nTitle: " + articles.get(i).getTitle() + "\nAbstract: " + articles.get(i).getShortDescription());
 				}
+
+				System.out.println("Which article would you like to view?");
+
+				int articleIndex = Integer.parseInt(scanner.nextLine()) - 1;
+
+				System.out.println(articles.get(articleIndex));
 			}
 		} catch (SQLException e) {
 			System.err.println("Database error while searching for articles: " + e.getMessage());
