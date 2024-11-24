@@ -2,5 +2,11 @@
 *.txt
 *.class
 *.DS_Store
+<<<<<<< HEAD
 *.classpath
 bin/
+=======
+.classpath
+
+bin/
+>>>>>>> master

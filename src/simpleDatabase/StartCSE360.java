@@ -29,8 +29,8 @@ import java.util.Scanner;
  * Users can have multiple roles simultaneously.
  * </p>
  *
- * @author Shiva Rudra, Abhave Abhilash, Aditya Gupta, Isabella Swanson, Justin Miller
- * @version 1.0
+ * @author Shiva Rudra
+ * @version 1.0+
  * @since 10/9/2024
  */
 public class StartCSE360 {
@@ -189,6 +189,7 @@ public class StartCSE360 {
             }
             case "2": {
                 System.out.println("Student.");
+                studentHome(currentUser);
                 studentHome(currentUser);
                 break;
             }

@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
+ 
 /***
  * This class contains all functions that relate/interact with our H2 databases
  * 
@@ -1338,6 +1338,14 @@ class DatabaseHelper {
 			pstmt.setInt(7, tempId);
 			pstmt.setString(8, authors);
 
+			pstmt.setString(2, groupId);
+			pstmt.setString(3, title);
+			pstmt.setString(4, shortDescription);
+			pstmt.setArray(5, connection.createArrayOf("VARCHAR", keywords));
+			pstmt.setString(6, encryptedBody);
+			pstmt.setArray(7, connection.createArrayOf("VARCHAR", referenceLinks));
+			pstmt.setInt(8, tempId);
+			
 			pstmt.executeUpdate();
 		} catch (SQLException e) {
 			System.err.println("DB issue while inserting article into table");
@@ -1794,182 +1802,48 @@ class DatabaseHelper {
 			pstmt.setInt(1, id);
 			int rowsAffected = pstmt.executeUpdate();
 			return rowsAffected > 0;
-		} catch(SQLException e) {
-			System.err.println("DB issue while trying to delete an article");
 		}
-		return false;
 	}
 
-	/**
-	 * List special users with varying admin and view permissions
-	 * 
-	 * @param roleFlag
-	 * @param adminRights
-	 * @param gName
-	 * @throws SQLException
-	 */
-	public void listSpecUsers(String roleFlag, boolean adminRights, String gName) throws SQLException {
-		String username, email, pref;
-		
-		if(adminRights) {
-			String sql = "SELECT cse360users.username, cse360users.email, cse360users.preferredFirst from cse360users "
-				+ "JOIN groupRights on cse360users.id = groupRights.user_id "
-				+ "WHERE groupRights.group_name = ? AND groupRights.roleFlag = ? AND groupRights.adminRightsFlag = ?";
-
-				try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
-					pstmt.setString(1, gName);
-					pstmt.setString(2, roleFlag);
-					pstmt.setBoolean(3, true);
-
-					try(ResultSet rs = pstmt.executeQuery()) {
-						while(rs.next()) {
-							username = rs.getString(1);
-							email = rs.getString(2);
-							pref = rs.getString(3);
-
-							System.out.print("Username: " + username);
-							System.out.print(", Email: " + email);
-							System.out.println(", Preferred First Name: " + pref);	
-						}
-					}
-				} catch (SQLException e) {
-					System.err.println("DB issue displaying special users with varying admin permissions: " + e.getMessage());
-				}
-		} else {
-			String sql = "SELECT cse360users.username, cse360users.email, cse360users.preferredFirst from cse360users "
-				+ "JOIN groupRights on cse360.id = groupRights.user_id "
-				+ "WHERE groupRights.group_name = ? AND roleFlag = ? AND viewRightsFlag = ?";
-
-				try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
-					pstmt.setString(1, gName);
-					pstmt.setString(2, roleFlag);
-					pstmt.setBoolean(3, true);
-
-					try(ResultSet rs = pstmt.executeQuery()) {
-						while(rs.next()) {
-							username = rs.getString(1);
-							email = rs.getString(2);
-							pref = rs.getString(3);
-
-							System.out.print("Username: " + username);
-							System.out.print(", Email: " + email);
-							System.out.println(", Preferred First Name: " + pref);	
-						}
-					}
-				} catch (SQLException e) {
-					System.err.println("DB issue displaying special users with varying viewing permissions: " + e.getMessage());
-				}	
-		}
-				
-
-			
-	}
-
-	/**
-	 * List all special users in the database
-	 * 
-	 * @param gName
-	 * @throws SQLException
-	 */
-	public void listAllSpecUsers(String gName) throws SQLException {
-		String username, email, pref, accRole;
-		boolean admin, view;
-		
-		
-			String sql = "SELECT cse360users.username, " 
-			+ "cse360users.email, "
-			+ "cse360users.preferredFirst, " 
-			+ "groupRights.accessRole, " 
-			+ "groupRights.adminRightsFlag, " 
-			+ "groupRights.viewRightsFlag " 
-			+ "FROM cse360users " 
-			+ "JOIN groupRights " 
-			+ "ON cse360users.id = groupRights.user_id " 
-			+ "WHERE groupRights.group_name = ?";
-
-				try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
-					pstmt.setString(1, gName);
-
-					try(ResultSet rs = pstmt.executeQuery()) {
-						while(rs.next()) {
-							username = rs.getString(1);
-							email = rs.getString(2);
-							pref = rs.getString(3);
-							accRole = rs.getString(4);
-
-							admin = rs.getBoolean(5);
-							view = rs.getBoolean(6);
-
-							System.out.print("Username: " + username);
-							System.out.print(", Email: " + email);
-							System.out.print(", Preferred First Name: " + pref);
-							if(admin) System.out.print(", Admin Rights");
-							if(view) System.out.print(", View Rights");
-							System.out.println();	
-						}
-					}
-				} catch (SQLException e) {
-					System.err.println("DB issue displaying all special users: " + e.getMessage());
-				}
-				
-
-			
-	}
-
-	/**
-	 * Search for an article in the database
-	 * 
-	 * @param role
-	 * @param level
-	 * @param group
-	 * @param search
-	 */
 	public void searchArticle(String role, String level, String group, String search) { 
-		if (role.equals("s")) {
-			System.out.println("Invalid role");
-			return;
-		}
-
-		String sql = "SELECT DISTINCT a.* FROM articles a "
-				+ "JOIN articleGroups ag ON a.id = ag.article_id "
-				+ "WHERE LOWER(a.level) LIKE ? "
-				+ "AND LOWER(ag.group_name) LIKE ? "
-				+ "AND (LOWER(a.keywords) LIKE ? "
-				+ "OR LOWER(a.title) LIKE ? "
-				+ "OR LOWER(a.short_description) LIKE ?)";
-
-		try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-			String searchPattern = "%" + search.toLowerCase() + "%";
-			String levelPattern = "%" + level.toLowerCase() + "%";
-			String groupPattern = "%" + group.toLowerCase() + "%";
-			
-			pstmt.setString(1, levelPattern);
-			pstmt.setString(2, groupPattern);
-			pstmt.setString(3, searchPattern);
-			pstmt.setString(4, searchPattern);
-			pstmt.setString(5, searchPattern);
-
+		String query = "SELECT * FROM articles WHERE level = ? AND group_id LIKE ? AND (title LIKE ? OR short_description LIKE ? OR keywords LIKE ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+			pstmt.setString(1, level);
+			pstmt.setString(2, "%" + group + "%");
+			pstmt.setString(3, "%" + search + "%");
+			pstmt.setString(4, "%" + search + "%");
+			pstmt.setString(5, "%" + search + "%");
 			try (ResultSet rs = pstmt.executeQuery()) {
-				List<Article> articles = new ArrayList<>();	
-
+				List<Article> articles = new ArrayList<>();
 				while (rs.next()) {
-					articles.add(new Article(rs.getInt("id"), rs.getString("level"), rs.getString("group_name"), rs.getString("title"), rs.getString("short_description"), rs.getString("keywords"), rs.getString("body"), rs.getString("reference_links")));
+					int id = rs.getInt("id");
+					String articleLevel = rs.getString("level");
+					String groupId = rs.getString("group_id");
+					String title = rs.getString("title");
+					String shortDescription = rs.getString("short_description");
+					String keywords = rs.getString("keywords");
+					String encryptedBody = rs.getString("body");
+					String decryptedBody = encryptionHelper.decrypt(encryptedBody);
+					String referenceLinks = rs.getString("reference_links");
+
+					Article article = new Article(id, articleLevel, groupId, title, shortDescription, keywords, decryptedBody, referenceLinks);
+					articles.add(article);
 				}
 
 				System.out.println("Search Level: " + level + "\t\tTotal Results: " + articles.size());
-
+				
 				for (int i = 0; i < articles.size(); i++) {
-					System.out.println(i+1 + ". " + articles.get(i).toString());
+					System.out.println(i + 1 + "\nTitle: " + articles.get(i).getTitle() + "\nAbstract: " + articles.get(i).getShortDescription());
 				}
 
-				System.out.println("Which article would you like to view? (Enter the number)");
-				int choice = Integer.parseInt(scanner.nextLine());
-				viewArticle(role, String.valueOf(articles.get(choice-1).getId()), false);
+				System.out.println("Which article would you like to view?");
+
+				int articleIndex = Integer.parseInt(scanner.nextLine()) - 1;
+
+				System.out.println(articles.get(articleIndex));
 			}
 		} catch (SQLException e) {
-			System.err.println("Database error while searching articles: " + e.getMessage());
+			System.err.println("Database error while searching for articles: " + e.getMessage());
 		}
 	}
-
-
 }
