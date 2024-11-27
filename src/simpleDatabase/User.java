@@ -1,13 +1,10 @@
 package simpleDatabase;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 
-/* .......... User Superclass ............*/
-/**
- * The User class serves as the base class for all types of users in the system.
- * It contains common attributes such as username, password, email, and other personal details.
- */
 public class User {
     private String username;       // The user's unique identifier
     private String password;       // The user's password
@@ -15,42 +12,42 @@ public class User {
     private String firstName;      // The user's first name
     private String middleName;     // The user's middle name (optional)
     private String lastName;       // The user's last name
-    private String prefName;       // The user's preferred name
-    private boolean aFlag;          // The roles assigned to the user
-    private boolean tFlag;
-    private boolean sFlag;
-    private boolean otpFlag;       // Indicates if a one-time password is required
-    private LocalDateTime otpExpiration; // The expiration time for the one-time password
+    private String preferedName;   // The user's preferred name
+    private String roles;           // Indicates if a one-time password is required
+    private Connection connection;
 
     /**
      * Constructor for creating a new User instance.
-     *
-     * @param username        The user's unique identifier
-     * @param password        The user's password
-     * @param email           The user's email address
-     * @param firstName       The user's first name
-     * @param middleName      The user's middle name (optional)
-     * @param lastName        The user's last name
-     * @param prefName        The user's preferred name
-     * @param roles           The roles assigned to the user
-     * @param otpFlag         Indicates if a one-time password is required
-     * @param otpExpiration    The expiration time for the one-time password
+     * @param username The user's unique identifier
+     * @param password The user's password
+     * @param email The user's email address
+     * @param firstName The user's first name
+     * @param middleName The user's middle name (optional)
+     * @param lastName The user's last name
+     * @param prefName The user's preferred name
+     * @param roles The roles assigned to the user
      */
-    public User(String username, String password, String email, String firstName,
-                String middleName, String lastName, String prefName, boolean aFlag, boolean tFlag, boolean sFlag,
-                boolean otpFlag, LocalDateTime otpExpiration) {
+    public User(Connection connection, String username, String password, String email, String firstName, String middleName, String lastName, String prefName, String roles) {
+        this.connection = connection;
         this.username = username;
         this.password = password;
         this.email = email;
         this.firstName = firstName;
         this.middleName = middleName;
         this.lastName = lastName;
-        this.prefName = prefName;
-        this.aFlag = aFlag;
-        this.tFlag = tFlag;
-        this.sFlag = sFlag;
-        this.otpFlag = otpFlag;
-        this.otpExpiration = otpExpiration;
+        this.preferedName = prefName;
+        this.roles = roles;
+    }
+
+    // overloaded user constructor
+    public User(String username, String email, String firstName, String middleName, String lastName, String prefName, String roles) {
+        this.username = username;
+        this.email = email;
+        this.firstName = firstName;
+        this.middleName = middleName;
+        this.lastName = lastName;
+        this.preferedName = prefName;
+        this.roles = roles;
     }
 
     // Getter methods
@@ -66,26 +63,22 @@ public class User {
         return firstName;
     }
 
-    public String getMiddleName() {
-        return middleName;
+    public String getRoles() {
+        return roles;
+    }
+
+    public String getPreferredName() {
+        return preferedName;
     }
 
     public String getLastName() {
         return lastName;
     }
 
-    public String getPreferredName() {
-        return prefName;
+    public String getMiddleName() {
+        return middleName;
     }
 
-    public boolean[] getRoles() {
-        boolean[] res = {aFlag, tFlag, sFlag};
-        return res;
-    }
-
-    public String getPassword() {
-        return password;
-    }
 
     // Setter methods
     public void setUsername(String username) {
@@ -113,35 +106,55 @@ public class User {
     }
 
     public void setPreferredName(String prefName) {
-        this.prefName = prefName;
+        this.preferedName = prefName;
     }
 
-    public void setRoles(boolean[] flags) {
-        this.aFlag = flags[0];
-        this.tFlag = flags[1];
-        this.sFlag = flags[2];
-    }
-
-    public void setOTPFlag(boolean otpFlag) {
-        this.otpFlag = otpFlag;
-    }
-
-    public void setOneTimePasswordExpiration(LocalDateTime otpExpiration) {
-        this.otpExpiration = otpExpiration;
+    public void setRoles(String roles) {
+        this.roles = roles;
     }
     
-    public boolean getOTP() {
-        return otpFlag;
-    }
+    // register User 
+    public boolean register(String userName, String password, int userID) throws SQLException {
+		String insertUser = "UPDATE cse360users SET userName = ?, password = ?, otpFlag = ? WHERE id = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+			pstmt.setString(1, userName);
+			pstmt.setString(2, password);
+			pstmt.setBoolean(3, true);
+			pstmt.setInt(4, userID);
+			int rowsAffected = pstmt.executeUpdate();
+			return (rowsAffected > 0); 
+			
+		} catch (SQLException e) {
+			System.err.println("DB issue while registering user: " + e.getMessage());
+		}
+		return false;
+	}
 
-    public String getPreferredFirst() {
-        return prefName;
-    }
+    // login User
+    public User login(String userName, String password) throws SQLException {
+		String query = "SELECT * FROM cse360users WHERE userName = ? AND password = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, userName);
+			pstmt.setString(2, password);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				if (rs.next()) {
+					// Extracting values from the result set
+                    String dbuserName = rs.getString("userName");
+					String dbemail = rs.getString("email");
+					String dbfirstName = rs.getString("firstName");
+					String dbmiddleName = rs.getString("middleName");
+                    String dbLastName = rs.getString("lastName");
+					String preferredFirst = rs.getString("preferredFirst");
+                    String dbRoles = rs.getString("roles");
+                    return new User(dbuserName, dbemail, dbfirstName, dbmiddleName, dbLastName, preferredFirst, dbRoles);
 
-    public LocalDateTime getOneTimePasswordExpiration() {
-        return otpExpiration;
-    }
-    
+				} else {
+					return null; // User not found
+				}
+			}
+		}
+	}
+
 
     /**
      * Method to retrieve the full name of the user, combining first, middle (if present), and last names.
@@ -150,16 +163,6 @@ public class User {
      */
     public String getFullName() {
         return firstName + " " + (middleName != null && !middleName.isEmpty() ? middleName + " " : "") + lastName;
-    }
-
-    /**
-     * Method to get the display name of the user.
-     * Returns the preferred name if set; otherwise, returns the first name.
-     *
-     * @return The display name of the user
-     */
-    public String getDisplayName() {
-        return prefName != null && !prefName.isEmpty() ? prefName : firstName;
     }
     
     /**
@@ -187,82 +190,3 @@ public class User {
         // Logic to select a role for the current session
     }
 }
-/* .......... End Of User Superclass ............*/
-
-
-/* .......... Admin Subclass ............*/
-/**
- * The Admin class extends the User class to provide additional administrative capabilities.
- * This includes managing users, sending invitations, and handling account operations.
- */
-class Admin extends User {
-    public DatabaseHelper databaseHelper;
-    /**
-     * Constructor for creating a new Admin instance.
-     *
-     * @param username        The admin's unique identifier
-     * @param password        The admin's password
-     * @param email           The admin's email address
-     * @param firstName       The admin's first name
-     * @param middleName      The admin's middle name (optional)
-     * @param lastName        The admin's last name
-     * @param prefName        The admin's preferred name
-     * @param roles           The roles assigned to the admin
-     * @param otpFlag         Indicates if a one-time password is required
-     * @param otpExpiration    The expiration time for the one-time password
-     */
-    public Admin(String username, String password, String email, String firstName, String middleName, String lastName, String prefName,
-    boolean aFlag, boolean tFlag, boolean sFlag, boolean otpFlag, LocalDateTime otpExpiration) {
-        super(username, password, email, firstName, middleName, lastName, prefName,
-     aFlag, tFlag, sFlag, otpFlag, otpExpiration);
-        // initiliaze DatabaseHelper object
-        databaseHelper = new DatabaseHelper();
-    }
-
-    /**
-     * Invites a new user by generating a one-time invitation code and sending an invitation email.
-     *
-     * @param email The email address of the user to invite
-     * @param roles A list of roles to assign to the invited user
-     * @return The generated invitation code
-     */
-    public String inviteUser(String email, String roles) {
-        // generate otp code and return
-        //String invitationCode = databaseHelper.createOTP(roles);
-        return "invitationCode";
-    }
-
-    /**
-     * Resets a user account by generating a one-time password and setting an expiration time.
-     *
-     * @param username The username of the account to reset
-     */
-    public String resetUserAccount(String username, String email) {
-        // get roles from the username
-       int userID = databaseHelper.getUserId(username, email);
-        // generate otp code and return
-        databaseHelper.createOTP(userID);
-        return "";
-    }
-
-    /**
-     * Deletes a user account after confirming deletion with the admin.
-     *
-     * @param username The username of the account to delete
-     * @return True if the account was successfully deleted, otherwise false
-     */
-    public boolean deleteUserAccount(String username, String email) throws SQLException {
-        // delete user acount
-        return databaseHelper.deleteUserAccount(username, email);
-    }
-}
-    /**
-     * Retrieves a list of user summaries containing basic information about all users.
-     * @return A list of user summaries
-     */
-    /*
-    public List<UserSummary> getUserSummaries() {
-        // get user summaries
-        return databaseHelper.getUserSummaries();
-    }
-    */

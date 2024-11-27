@@ -21,211 +21,141 @@ package simpleDatabase;
 public class Article {
     /** Unique identifier for the article */
     private int id;
-    
-    /** Technical complexity level (beginner/intermediate/advanced/expert) */
     private String level;
-    
-    /** Comma-separated list of group IDs this article belongs to */
-    private String groupId;
-    
-    /** Title/heading of the article */
+    private String authors;
     private String title;
-    
-    /** Brief abstract or summary of the article content */
     private String shortDescription;
-    
-    /** Comma-separated list of search keywords */
     private String keywords;
-    
-    /** Main content text of the article */
     private String body;
-    
-    /** Comma-separated list of reference URLs */
     private String referenceLinks;
+    private String groupName;
 
-    /**
-     * Creates a new Article with the specified attributes.
-     * All fields are required and cannot be null.
-     *
-     * @param id Unique identifier for the article
-     * @param level Technical complexity level 
-     * @param groupId Comma-separated list of group IDs
-     * @param title Article title/heading
-     * @param shortDescription Brief summary of content
-     * @param keywords Search keywords
-     * @param body Main article text
-     * @param referenceLinks Reference URLs
-     */
-    public Article(int id, String level, String groupId, String title, String shortDescription, String keywords, String body, String referenceLinks) {
-        this.id = id;
+   
+    // overloaded article constructor
+    public Article(String level, String authors, String title, String shortDescription, String keywords, String body, String referenceLinks, String groupName) {
+        this.id = createArticleId();
         this.level = level;
-        this.groupId = groupId;
+        this.authors = authors;
         this.title = title;
         this.shortDescription = shortDescription;
         this.keywords = keywords;
         this.body = body;
         this.referenceLinks = referenceLinks;
+        this.groupName = groupName;
     }
 
-    /**
-     * Gets the unique identifier of this article.
-     *
-     * @return The article ID
-     */
+    // article constructor
+    public Article(int id, String level, String authors, String title, String shortDescription, String keywords, String body, String referenceLinks, String groupName) {
+        this.id = id;
+        this.level = level;
+        this.authors = authors;
+        this.title = title;
+        this.shortDescription = shortDescription;
+        this.keywords = keywords;
+        this.body = body;
+        this.referenceLinks = referenceLinks;
+        this.groupName = groupName;
+    }
+
+    // Getter methods
     public int getId() {
         return id;
     }
 
-    /**
-     * Sets the unique identifier of this article.
-     * Should only be used when creating new articles.
-     *
-     * @param id The article ID to set
-     */
     public void setId(int id) {
         this.id = id;
     }
 
-    /**
-     * Gets the technical complexity level of this article.
-     *
-     * @return The level (beginner/intermediate/advanced/expert)
-     */
     public String getLevel() {
         return level;
     }
 
-    /**
-     * Sets the technical complexity level of this article.
-     *
-     * @param level The level to set
-     */
     public void setLevel(String level) {
         this.level = level;
     }
 
-    /**
-     * Gets the comma-separated list of group IDs this article belongs to.
-     *
-     * @return The group IDs
-     */
-    public String getGroupId() {
-        return groupId;
+    public String getAuthors() {
+        return authors;
     }
 
-    /**
-     * Sets the comma-separated list of group IDs this article belongs to.
-     *
-     * @param groupId The group IDs to set
-     */
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
+    public void setAuthors(String authors) {
+        this.authors = authors;
     }
 
-    /**
-     * Gets the title/heading of this article.
-     *
-     * @return The article title
-     */
     public String getTitle() {
         return title;
     }
 
-    /**
-     * Sets the title/heading of this article.
-     *
-     * @param title The title to set
-     */
     public void setTitle(String title) {
         this.title = title;
     }
 
-    /**
-     * Gets the brief summary/abstract of this article's content.
-     *
-     * @return The short description
-     */
     public String getShortDescription() {
         return shortDescription;
     }
 
-    /**
-     * Sets the brief summary/abstract of this article's content.
-     *
-     * @param shortDescription The description to set
-     */
     public void setShortDescription(String shortDescription) {
         this.shortDescription = shortDescription;
     }
 
-    /**
-     * Gets the comma-separated list of search keywords for this article.
-     *
-     * @return The keywords
-     */
     public String getKeywords() {
         return keywords;
     }
 
-    /**
-     * Sets the comma-separated list of search keywords for this article.
-     *
-     * @param keywords The keywords to set
-     */
     public void setKeywords(String keywords) {
         this.keywords = keywords;
     }
 
-    /**
-     * Gets the main content text of this article.
-     *
-     * @return The article body text
-     */
     public String getBody() {
         return body;
     }
 
-    /**
-     * Sets the main content text of this article.
-     *
-     * @param body The body text to set
-     */
     public void setBody(String body) {
         this.body = body;
     }
 
-    /**
-     * Gets the comma-separated list of reference URLs for this article.
-     *
-     * @return The reference links
-     */
     public String getReferenceLinks() {
         return referenceLinks;
     }
 
-    /**
-     * Sets the comma-separated list of reference URLs for this article.
-     *
-     * @param referenceLinks The reference links to set
-     */
     public void setReferenceLinks(String referenceLinks) {
         this.referenceLinks = referenceLinks;
     }
 
-    /**
-     * Returns a string representation of this article containing all its fields.
-     * Useful for debugging and logging purposes.
-     *
-     * @return A multi-line string with all article fields
-     */
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+
+
+    // create article id
+    public int createArticleId() {
+        String generatedId = "";
+        for (int i = 0; i < 6; i++) {
+            generatedId += (int) (Math.random() * 10);
+        }
+        int res = Integer.parseInt(generatedId);
+        return res;
+	}
+
+
+
+    // make a toString method
+    @Override
     public String toString() {
-        return "ID: " + id + "\n" +
-            "Level: " + level + "\n" +
-            "Group ID: " + groupId + "\n" +
-            "Title: " + title + "\n" +
-            "Short Description: " + shortDescription + "\n" +
-            "Keywords: " + keywords + "\n" +
-            "Body: " + body + "\n" +
-            "Reference Links: " + referenceLinks;
+        return "Article{" +
+                "id=" + id +
+                ", level='" + level + '\'' +
+                ", authors='" + authors + '\'' +
+                ", title='" + title + '\'' +
+                ", shortDescription='" + shortDescription + '\'' +
+                ", keywords='" + keywords + '\'' +
+                ", body='" + body + '\'' +
+                ", referenceLinks='" + referenceLinks + '\'' +
+                ", groupName='" + groupName + '\'' +
+                '}';
     }
 }
