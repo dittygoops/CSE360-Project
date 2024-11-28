@@ -795,12 +795,11 @@ public class StartCSE360 {
 
 							System.out.println(
 									"Please enter the name of the general group or Special Access Group of articles you would like to backup: ");
-							String group = scanner.nextLine();
-							// check if group exists in system - if no - say invalid and exit
-							System.out.println("Please enter the name of the file you would like to backup to: ");
-							fileName = scanner.nextLine();
-							// db method to restore g articles to <fileName>.txt
-							break;
+                            // check if group exists in system - if no - say invalid and exit
+                            System.out.println("Please enter the name of the file you would like to backup to: ");
+                            fileName = scanner.nextLine();
+                            // db method to restore g articles to <fileName>.txt
+                            break;
 						}
 
 						default: {
@@ -906,13 +905,14 @@ public class StartCSE360 {
 
 				default: {
 					System.out.print("Invalid choice. Please try again.");
-					break;
-				}
-			}
-		} while (!choice.equals("17")); // Keep looping until admin chooses to logout
-
-		mainLogin(); // route back to main login after admin ends their session
-	}
+                            break;
+                        }
+                    }
+                }
+            }
+        } while (!choice.equals("17")); // Keep looping until admin chooses to logout
+                mainLogin(); // route back to main login after admin ends their session
+    }
 
 	/**
 	 * Instructor Home
@@ -1304,7 +1304,7 @@ public class StartCSE360 {
 					case "2": {
 
 						System.out.println("Here are all the users with either Admin or View rights to this group");
-						databaseHelper.listAllSpecUsers(group);
+						// databaseHelper.listAllSpecUsers(group);
 						// List all users with access to SAG
 						// Display as userName, Email, accessRole, Rights: Admin, View (either or both
 						// depending on user)
@@ -1352,28 +1352,28 @@ public class StartCSE360 {
 					// List of all admins with admin rights
 					case "5": {
 
-						databaseHelper.listSpecUsers("a", true, group);
+						// databaseHelper.listSpecUsers("a", true, group);
 						break;
 					}
 
 					// List of instructors with decrypted view rights
 					case "6": {
 
-						databaseHelper.listSpecUsers("t", false, group);
+						// databaseHelper.listSpecUsers("t", false, group);
 						break;
 					}
 
 					// List of all instructors with admin rights
 					case "7": {
 
-						databaseHelper.listSpecUsers("t", true, group);
+						// databaseHelper.listSpecUsers("t", true, group);
 						break;
 					}
 
 					// List of all students with decrypted view rights
 					case "8": {
 
-						databaseHelper.listSpecUsers("s", false, group);
+						// databaseHelper.listSpecUsers("s", false, group);
 						break;
 					}
 					

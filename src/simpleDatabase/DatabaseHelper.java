@@ -1320,7 +1320,7 @@ class DatabaseHelper {
 		String body = scanner.nextLine();
 
 		// article encryption
-		//String encryptedBody = encryptionHelper.encrypt(body);
+		String encryptedBody = encryptionHelper.encrypt(body);
 
 		System.out.println("Enter reference links (comma separated): ");
 		String[] referenceLinks = scanner.nextLine().split(",");
