@@ -1539,8 +1539,8 @@ class DatabaseHelper {
 			try(ResultSet rs = pstmt.executeQuery()) {
 				while (rs.next()) {
 				int id = rs.getInt(1);
-				String authors = rs.getString(2);
-				String shortDescription = rs.getString(3);
+				String authors = rs.getString(3);
+				String shortDescription = rs.getString(2);
 				String title = rs.getString(4);
 
 				System.out.println("ID: " + id);
@@ -1852,7 +1852,10 @@ class DatabaseHelper {
 
 			try(ResultSet rs = pstmt.executeQuery()) {
 				while(rs.next()) {
-					if(!multAdminsToGroup(rs.getString(1))) return false;
+					if(!multAdminsToGroup(rs.getString(1))) {
+						System.out.println("You cannot delete this user as they are the sole admin for the group " + rs.getString(1) + ".");
+						return false;
+					}
 				}
 				return true;
 			}
@@ -1881,10 +1884,10 @@ class DatabaseHelper {
 
 	public boolean multAdminsToGroup(String gName) throws SQLException{
 		String query = "SELECT COUNT(accessRole) FROM groupRights "
-		+ "WHERE accessRole = ? AND group_name =?";
+		+ "WHERE adminRightsFlag = ? AND group_name =?";
 
 		try(PreparedStatement pstmt = connection.prepareStatement(query)) {
-			pstmt.setString(1, "a");
+			pstmt.setBoolean(1, true);
 			pstmt.setString(2, gName);
 
 			try(ResultSet rs = pstmt.executeQuery()) {

@@ -657,7 +657,7 @@ public class StartCSE360 {
 					}
 					int uId = databaseHelper.getUserId(usernameDelete, emailDelete);
 					if(!databaseHelper.canDeleteAdmin(uId)){
-						System.out.println("You cannot delete this user as they are the sole administrator for a group.");
+						System.out.println(" Please keep in mind this user may or may not also be the sole admin for other groups as well.");
 						break;
 					}
 					if (databaseHelper.deleteUserAccount(usernameDelete, emailDelete))
@@ -863,15 +863,21 @@ public class StartCSE360 {
 
 					System.out.println("Please enter the name of the group of articles you would like to view: ");
 					String groupName = scanner.nextLine();
-					if (!databaseHelper.groupExist(groupName) || databaseHelper.isGroupSpecial(groupName)) {
-						System.out.println(
-								"You have either entered a group that does not exist or a Special Access Group which administrators are not allowed to view. Please try again later.");
+					if (!databaseHelper.groupExist(groupName)) {
+						System.out.println("The group you entered does not exist. Please enter an existing group next time.");
 						break;
 					}
+					
+					int aId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+					if(databaseHelper.isGroupSpecial(groupName)) {	
+						if(!databaseHelper.checkSpecialAdminAccess(aId, groupName)) {
+							System.out.println("The group you entered is a special access group that you do not have access to. Please enter a group that you have access to next time.");
+							break;
+						}	
+					}
 
-					System.out.println("Here are the articles: ");
-					int uId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
-					databaseHelper.viewGroupedArticles(uId, groupName);
+					System.out.println("Here are the articles from the group " + groupName + ": ");
+					databaseHelper.viewGroupedArticles(aId, groupName);
 					break;
 				}
 
