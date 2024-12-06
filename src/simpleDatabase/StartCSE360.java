@@ -335,16 +335,20 @@ public class StartCSE360 {
                     break;
                 }
                 case "5": {
-                    System.out.println(
-                            "Please enter the group of articles you would like. If your input does not match any existing groups, all articles will be returned: ");
-                    String groupChosen = scanner.nextLine();
-                    boolean groupExists = true;
-                    if (groupExists) {
-                        System.out.println("Here are the articles in the group: " + groupChosen);
-                    } else {
-                        System.out.println(
-                                "We could not find any group of articles matching the criteria you entered. Here are all the articles in the system: ");
-                    }
+                    System.out.println("Please enter the id of the article you would like to view: ");
+					String articleID = scanner.nextLine();
+					int aId = Integer.parseInt(articleID);
+					ArrayList<String> temp = databaseHelper.getGroupsForAnArticle(aId);
+					boolean encrypted = false;
+					for(int i = 0; i < temp.size(); i++) {
+						if(databaseHelper.isGroupSpecial(temp.get(i))) { 
+							encrypted = true;	 
+							break;
+						}
+					}
+					databaseHelper.viewArticle("t", articleID, encrypted);
+
+					
                     break;
                 }
                 default: {
@@ -601,7 +605,7 @@ public class StartCSE360 {
 
 						System.out.print("Here is the OTP sent: ");
 						System.out.println(databaseHelper.createOTP(shellUserID));
-						System.out.println("You have successfully invited a student to join the system!");
+						System.out.println("You have successfully invited a user to join the system!");
 						System.out
 								.println("One Time Password has been sent to this user to enable their registration.");
 					} else
