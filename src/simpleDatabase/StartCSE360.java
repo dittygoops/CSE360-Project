@@ -657,7 +657,7 @@ public class StartCSE360 {
 					}
 					int uId = databaseHelper.getUserId(usernameDelete, emailDelete);
 					if(!databaseHelper.canDeleteAdmin(uId)){
-						System.out.println(" Please keep in mind this user may or may not also be the sole admin for other groups as well.");
+						System.out.println("Please keep in mind this user may or may not also be the sole admin for other groups as well.");
 						break;
 					}
 					if (databaseHelper.deleteUserAccount(usernameDelete, emailDelete))
@@ -1387,6 +1387,8 @@ public class StartCSE360 {
 					String group = scanner.nextLine();
 					String[] tmp = {group};
 					databaseHelper.createGroups(tmp);
+					int tId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+					databaseHelper.linkUserGroup(group, tId, "t", true, true);
 					// insert entry into tmp table
 					break;
 				}
@@ -1413,10 +1415,7 @@ public class StartCSE360 {
 					}
 
 					databaseHelper.delEntireGroup(group);
-
-
-					// check if group exists
-					// delete on cascade
+					break;
 				}
 
 				case "14": {
@@ -1548,6 +1547,10 @@ public class StartCSE360 {
 				String access;
 				System.out.println("Please enter the name of the Special Access Group: ");
 				String group = scanner.nextLine();
+				if(!databaseHelper.isGroupSpecial(group)){
+					System.out.println("This is not a special group.");
+					return;
+				}
 				int aId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
 				if (!databaseHelper.checkSpecialAdminAccess(aId, group)) {
 					System.out.println("You do not have access to this Special Access Group.");

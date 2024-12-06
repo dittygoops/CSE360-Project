@@ -1252,7 +1252,7 @@ class DatabaseHelper {
 		try(PreparedStatement pstmt = connection.prepareStatement(delQuery)) {
 			pstmt.setString(1, gName);
 			int rowsAffected = pstmt.executeUpdate();
-			if(rowsAffected > 1) System.out.println("A group was deleted");
+			if(rowsAffected >= 1) System.out.println("A group was deleted");
 			else System.out.println("There was no group to delete");
 		} catch(SQLException e) {
 			System.err.println("DB issue with trying to delete an entire group");
@@ -1831,7 +1831,7 @@ class DatabaseHelper {
 							System.out.print(", Email: " + email);
 							System.out.print(", Preferred First Name: " + pref);
 							if(admin) System.out.print(", Admin Rights");
-							if(view) System.out.print(", View Rights");
+							if(view && !accRole.equals("a")) System.out.print(", View Rights");
 							System.out.println();	
 						}
 					}
@@ -1845,10 +1845,10 @@ class DatabaseHelper {
 
 	public boolean canDeleteAdmin(int userId) throws SQLException{
 		String query = "SELECT DISTINCT(group_name) from groupRights "
-		+ "WHERE user_id = ? AND accessRole = ?";
+		+ "WHERE user_id = ? AND adminRightsFlag = ?";
 		try(PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setInt(1, userId);
-			pstmt.setString(2, "a");
+			pstmt.setBoolean(2, true);
 
 			try(ResultSet rs = pstmt.executeQuery()) {
 				while(rs.next()) {
@@ -1867,12 +1867,12 @@ class DatabaseHelper {
 
 	public boolean isUserAdminOfGroup(int userId, String gName) throws SQLException{
 		String query = "SELECT accessRole FROM groupRights "
-		+ "WHERE user_id = ? AND group_name = ? AND accessRole = ?";
+		+ "WHERE user_id = ? AND group_name = ? AND adminRightsFlag = ?";
 
 		try(PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setInt(1, userId);
 			pstmt.setString(2, gName);
-			pstmt.setString(3, "a");
+			pstmt.setBoolean(3, true);
 			try(ResultSet rs = pstmt.executeQuery()) {
 				return rs.next();	
 			}
