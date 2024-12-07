@@ -2210,6 +2210,11 @@ class DatabaseHelper {
 				}
 
 				int articleIndex = Integer.parseInt(choice) - 1;
+				
+				if(articles.size() == 0) {
+					System.out.println("There are no articles matching your criteria. Please try again later.");
+					return;
+				}
 
 				if (articleIndex < 0 || articleIndex >= articles.size()) {
 					System.out.println("Invalid article selection. Please try again.");
