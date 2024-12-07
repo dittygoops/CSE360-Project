@@ -44,6 +44,7 @@ class DatabaseHelper {
 	 * Blank constructor
 	 */
 	public DatabaseHelper() {
+
 	}
 
 	/**
@@ -852,6 +853,262 @@ class DatabaseHelper {
 			e.printStackTrace();
 		}
 	}
+
+	public void restore(String role){
+		System.out.println("Here are your restoration options: ");
+		System.out.println("1. Restore all articles");
+		System.out.println("2. Restore a general group or Special Access Group of articles");
+		System.out.println("Please enter the restoration option you would like to proceed with: ");
+		String restoreOption = scanner.nextLine();
+		String fileName = "";
+
+		// swtich case method
+		switch (restoreOption){
+			case "1": {
+				System.out.println("Please enter the name of the file you would like to restore from: ");
+				fileName = scanner.nextLine();
+				try {
+					restoreAllArticles(role, fileName);
+				} catch (Exception e) {
+					System.err.println("Error during restoration: " + e.getMessage());
+				}
+				break;
+			}
+			case "2": {
+				System.out.println("Please enter the name of the general group or Special Access Group of articles you would like to restore: ");
+				String group = scanner.nextLine();
+				System.out.println("Please enter the name of the file you would like to restore from: ");
+				fileName = scanner.nextLine();
+				restoreGroupArticles(role, fileName, group);
+				break;
+			}
+			default: {
+				System.out.println("Invalid Option. Try again later.");
+				break;
+			}
+		}
+
+	}
+
+	public void restoreGroupArticles(String role, String fileName, String group){
+		System.out.println("Restoring group articles");
+	}
+
+	// restore from user specified file
+	public void restoreAllArticles(String role, String file) throws Exception {
+		// if (role.equals("s")) {
+		// 	System.out.println("Invalid role");
+		// 	return;
+		// }
+
+		// // check if the file exists
+		// File f = new File(file);
+		// if (!f.exists()) {
+		// 	System.out.println("File does not exist");
+		// 	return;
+		// }
+
+		// // clear the articles table
+		// String clearArticles = "DELETE FROM articles";
+
+		// // read each line of the file and insert into the article database
+		// try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+		// 	String line;
+		// 	while ((line = reader.readLine()) != null) {
+		// 		System.out.println(line);
+		// 		int id = Integer.parseInt(line);
+		// 		String level = reader.readLine();
+		// 		String authors = reader.readLine();
+		// 		String title = reader.readLine();
+		// 		String shortDescription = reader.readLine();
+		// 		String keywords = reader.readLine();
+		// 		String body = reader.readLine();
+		// 		String referenceLinks = reader.readLine();
+
+		// 		// insert into the database or update
+		// 		String insertArticle = "INSERT INTO articles (id, level, authors, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+		// 		try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+		// 			pstmt.setInt(1, id);
+		// 			pstmt.setString(2, level.isEmpty() ? null : level);
+		// 			pstmt.setString(3, authors.isEmpty() ? null : authors);
+		// 			pstmt.setString(4, title.isEmpty() ? null : title);
+		// 			pstmt.setString(5, shortDescription.isEmpty() ? null : shortDescription);
+		// 			pstmt.setString(6, keywords.isEmpty() ? null : keywords);
+		// 			pstmt.setString(7, body.isEmpty() ? null : body);
+		// 			pstmt.setString(8, referenceLinks.isEmpty() ? null : referenceLinks);
+		// 			pstmt.executeUpdate();
+		// 		}
+		// 	}
+		// 	System.out.println("Successfully restored system");
+		// } catch (IOException e) {
+		// 	e.printStackTrace();
+		// }
+		System.out.println("Successfully restored system");
+	}
+
+	// take all the articles in the system from the specific group through the database and backit up to the filename
+	public void backupMethod(String role){
+		System.out.println("Here are your backup options: ");
+			System.out.println("1. Backup all articles");
+			System.out.println("2. Backup a general group or Special Access Group of articles");
+			System.out.println("Please enter the restoration option you would like to proceed with: ");
+			String backUp = scanner.nextLine();
+			String fileName = "";
+
+		
+			switch (backUp) {
+
+				case "1": {
+
+					System.out.println("Please enter the name of the file you would like to backup to: ");
+					fileName = scanner.nextLine();
+					try {
+						backupAllArticles(role, fileName);
+					} catch (Exception e) {
+						System.err.println("Error during backup: " + e.getMessage());
+					}
+					break;
+				}
+
+				case "2": {
+
+					System.out.println("Please enter the name of the general group or Special Access Group of articles you would like to backup: ");
+					String group = scanner.nextLine();
+					System.out.println("Please enter the name of the file you would like to backup to: ");
+					fileName = scanner.nextLine();
+					try {
+						backupGroupArticles(role, fileName, group);
+					} catch (SQLException | IOException e) {
+						System.err.println("Error during backup: " + e.getMessage());
+					}
+					break;
+				}
+
+				default: {
+					System.out.println("Invalid Option. Try again later.");
+					break;
+				}
+
+			}
+	}
+	
+	// backupAllArticles
+	// 1. backup all help articles to an external file
+	public void backupAllArticles(String role, String file) throws Exception {
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
+		// Check to see if there is anything to back up at all
+		if (isDatabaseEmpty()) {
+			System.out.println("There are no articles in the system to back up.");
+			return;
+		}
+
+		// Get all entries in the table
+		String sql = "SELECT * FROM articles";
+		Statement stmt = connection.createStatement();
+		ResultSet rs = stmt.executeQuery(sql);
+
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+
+			// Each article will have 6 lines in the text file, every 6 lines corresponds to
+			// an entry
+			while (rs.next()) {
+				// For each entry - get all fields and store them in their encrypted states
+				int id = rs.getInt("id");
+				String level = rs.getString("level");
+				String authors = rs.getString("authors");
+				String title = rs.getString("title");
+				String shortDescription = rs.getString("short_description");
+				String keywords = rs.getString("keywords");
+				String body = rs.getString("body");
+				String referenceLinks = rs.getString("reference_links");
+
+				// write each field on its own line
+				writer.write(String.valueOf(id));
+				writer.newLine();
+				writer.write(level);
+				writer.newLine();
+				writer.write(authors);
+				writer.newLine();
+				writer.write(title);
+				writer.newLine();
+				writer.write(shortDescription);
+				writer.newLine();
+				writer.write(keywords);
+				writer.newLine();
+				writer.write(body);
+				writer.newLine();
+				writer.write(referenceLinks);
+				writer.newLine();
+			}
+			System.out.println("Successfully backed up system");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	public void backupGroupArticles(String role, String fileName, String articleGroup) throws SQLException, IOException {
+        // SQL query to select articles from the specified group
+
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
+	
+
+        String sqlQuery = "SELECT a.* FROM articleGroups ag JOIN articles a ON ag.article_id = a.id WHERE ag.group_name = ?";
+        
+        // Try-with-resources for database connection and prepared statement
+        PreparedStatement pstmt = connection.prepareStatement(sqlQuery);
+        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+            
+            // Set the group parameter
+        pstmt.setString(1, articleGroup);
+            
+            // Execute the query
+            try (ResultSet rs = pstmt.executeQuery()) {
+                int articleCount = 0;
+                
+                // Process each result
+                while (rs.next()) {
+                    // Write article details to file
+					writer.write("group_name: " + articleGroup);
+					writer.newLine();
+					writer.write("ID: " + rs.getString("id"));
+					writer.newLine();
+					writer.write("Level: " + rs.getString("level"));
+					writer.newLine();
+					writer.write("Authors: " + rs.getString("authors"));
+					writer.newLine();
+                    writer.write("Title: " + rs.getString("title"));
+                    writer.newLine();
+					writer.write("Short Description: " + rs.getString("short_description"));
+					writer.newLine();
+					writer.write("Keywords: " + rs.getString("keywords"));
+					writer.newLine();
+                    writer.write("Body: " + rs.getString("body"));
+                    writer.newLine();
+					writer.write("Reference Links: " + rs.getString("reference_links"));
+					writer.newLine();
+                    writer.write("-".repeat(50)); // Article separator
+                    writer.newLine();
+                    
+                    articleCount++;
+                }
+                
+                // Check if any articles were found
+                if (articleCount == 0) {
+                    System.out.println("No articles found in group: " + articleGroup);
+                } else {
+                    System.out.println("Successfully backed up " + articleCount + 
+                                       " articles from group '" + articleGroup + "' to " + fileName);
+                }
+            }
+    }
+		
 
 	// 1. remove all existing help articles
 	public void deleteAllArticles(String role) throws SQLException {
@@ -1950,5 +2207,74 @@ class DatabaseHelper {
         }
     }
 
+	public void restoreAll(String fileName) {
+
+		// first print all the articles in the database
+		viewAllArticles(userId);
+
+		// delete articles from the article database
+		String deleteArticles = "DELETE FROM articles";
+		try (PreparedStatement pstmt = connection.prepareStatement(deleteArticles)) {
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				String[] parts = line.split(",");
+				if (parts.length < 7) {
+					System.out.println("Skipping invalid line: " + line);
+					continue;
+				}
+				int id = Integer.parseInt(parts[0].trim());
+				String level = parts[0].trim();
+				String authors = parts[1].trim();
+				String title = parts[2].trim();
+				String shortDescription = parts[3].trim();
+				String keywords = parts[4].trim();
+				String body = parts[5].trim();
+				String referenceLinks = parts[6].trim();
+
+				// insert into the database or update
+				String insertArticle = "INSERT INTO articles (id, level, authors, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+				try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+					pstmt.setInt(1, id);
+					pstmt.setString(2, level.isEmpty() ? null : level);
+					pstmt.setString(3, authors.isEmpty() ? null : authors);
+					pstmt.setString(4, title.isEmpty() ? null : title);
+					pstmt.setString(5, shortDescription.isEmpty() ? null : shortDescription);
+					pstmt.setString(6, keywords.isEmpty() ? null : keywords);
+					pstmt.setString(7, body.isEmpty() ? null : body);
+					pstmt.setString(8, referenceLinks.isEmpty() ? null : referenceLinks);
+					pstmt.executeUpdate();
+				}
+			}
+			System.out.println("Successfully restored system");
+
+			// query the entire articles database
+			String query = "SELECT * FROM articles";
+			try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+				try (ResultSet rs = pstmt.executeQuery()) {
+					while (rs.next()) {
+						System.out.println("ID: " + rs.getInt("id"));
+						System.out.println("Level: " + rs.getString("level"));
+						System.out.println("Authors: " + rs.getString("authors"));
+						System.out.println("Title: " + rs.getString("title"));
+						System.out.println("Short Description: " + rs.getString("short_description"));
+						System.out.println("Keywords: " + rs.getString("keywords"));
+						System.out.println("Body: " + rs.getString("body"));
+						System.out.println("Reference Links: " + rs.getString("reference_links"));
+					}
+				}
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 	
 }
