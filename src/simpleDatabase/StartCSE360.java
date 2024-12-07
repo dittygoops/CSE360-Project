@@ -299,41 +299,47 @@ public class StartCSE360 {
                     break;
                 }
                 case "4": {
-                    System.out.println("Please search for an article via content level:\n1: Beginner\n2: Intermediate\n3: Advanced\n4: Expert");
-                    int choice = scanner.nextInt();
-                    scanner.nextLine();
-                    String level = "ALL";
+    				// ask for content level
+    				System.out.println("Please search for an article via content level:\n1: Beginner\n2: Intermediate\n3: Advanced\n4: Expert");
+    				String choice = scanner.nextLine();
+    				scanner.nextLine();
+    				String level = "ALL";
 
-                    switch (choice) {
-                        case 1:
-                            level = "Beginner";
-                            break;
-                        case 2:
-                            level = "Intermediate";
-                            break;
-                        case 3:
-                            level = "Advanced";
-                            break;
-                        case 4:
-                            level = "Expert";
-                            break;
-                        default:
-                            break;
-                    }
+    				switch (choice) {
+    					case "1":
+    						level = "Beginner";
+    						break;
+    					case "2":
+    						level = "Intermediate";
+    						break;
+    					case "3":
+    						level = "Advanced";
+    						break;
+    					case "4":
+    						level = "Expert";
+    						break;				
+    					default:
+    						break;
+    				}
 
-                    System.out.println("Please search for an article via group name: ");
-                    String group = scanner.nextLine();
+    				// ask for group
+    				System.out.println("Please search for an article via group name. Leave blank if you don't want to search: ");
+    				String group = scanner.nextLine();
+    				if (group.equals("")) {
+    					group = "ALL";
+    				}
 
-                    System.out.println("Please search for an article via words, names, or phrases in the Title, Author(s), or Abstract. Say any if you don't want to search: ");
-                    String searchCond = scanner.nextLine();
+    				System.out.println("Please search for an article via words, names, or phrases in the Title, Author(s), or Abstract. Say any if you don't want to search: ");
+    				String searchCond = scanner.nextLine();
 
-                    if (searchCond.equals("any")) {
-                        searchCond = "";
-                    }
+    				if (searchCond.equals("any")) {
+    					searchCond = "";
+    				}
 
-                    databaseHelper.searchArticle("s", level, group, searchCond);
-                    break;
-                }
+    				//P3: Send to DB to find all associated articles - need condition block to say whether any articles matching criteria were found
+    				databaseHelper.searchArticle("s", level, group, searchCond);
+    				break;
+    			}
                 case "5": {
                     System.out.println("Please enter the id of the article you would like to view: ");
 					String articleID = scanner.nextLine();
