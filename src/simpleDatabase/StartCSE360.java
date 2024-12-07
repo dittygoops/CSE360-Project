@@ -913,104 +913,13 @@ public class StartCSE360 {
 
 				// Restore options
 				case "10": {
-					System.out.println("Here are your restoration options: ");
-					System.out.println("1. Restore all articles");
-					System.out.println("2. Restore a general group or Special Access Group of articles");
-					System.out.println("Please enter the restoration option you would like to proceed with: ");
-					String restoreOption = scanner.nextLine();
-					String fileName = "";
-					System.out.println("System was restored properly.");
-					/*
-					switch (restoreOption) {
-						
-						case "1": {
-
-							System.out.println("Please enter the name of the file you would like to restore from: ");
-							fileName = scanner.nextLine();
-							System.out.println(
-									"Would you like to clear all articles in the system before restoring? Please note that if you do not, we will not restore duplicating articles. 1. Yes 2. No");
-							String answer = scanner.nextLine();
-							if (answer.equals("1"))
-								databaseHelper.restore("a", fileName);
-							else if (answer.equals("2"))
-								databaseHelper.restoreMerge("a", fileName);
-							else
-								System.out.println("Invalid choice! Try again");
-							break;
-						}
-
-						// P3: Change restore here to work with groups
-						case "2": {
-
-							System.out.println("Please enter the name of the general or Special Access Group: ");
-							String group = scanner.nextLine();
-							// Check if such a group exists - if no = make group entry into table
-							System.out.println("Please enter the name of the file you would like to restore from: ");
-							fileName = scanner.nextLine();
-							System.out.println(
-									"Would you like to clear all articles in the system before restoring? Please note that if you do not, we will not restore duplicating articles. 1. Yes 2. No");
-							String answer = scanner.nextLine();
-							if (answer.equals("1"))
-								databaseHelper.restore("a", fileName);
-							else if (answer.equals("2"))
-								databaseHelper.restoreMerge("a", fileName);
-							else
-								System.out.println("Invalid choice! Try again");
-							break;
-						}
-
-						default: {
-							System.out.println("Invalid Option. Try again later.");
-							break;
-						}
-
-					}
-
-					break;
-					*/
+					databaseHelper.restore("a");	
+					break;				
 				}
 
 				// Backup Options
 				case "11": {
-
-					System.out.println("Here are your backup options: ");
-					System.out.println("1. Backup all articles");
-					System.out.println("2. Backup a general group or Special Access Group of articles");
-					System.out.println("Please enter the restoration option you would like to proceed with: ");
-					String backUp = scanner.nextLine();
-					String fileName = "";
-
-					System.out.println("The system was backuped properly");
-					/*
-					switch (backUp) {
-
-						case "1": {
-
-							System.out.println("Please enter the name of the file you would like to backup to: ");
-							fileName = scanner.nextLine();
-							// db method to restore all articles to <fileName>.txt
-							break;
-						}
-
-						case "2": {
-
-							System.out.println(
-									"Please enter the name of the general group or Special Access Group of articles you would like to backup: ");
-							String group = scanner.nextLine();
-							// check if group exists in system - if no - say invalid and exit
-							System.out.println("Please enter the name of the file you would like to backup to: ");
-							fileName = scanner.nextLine();
-							// db method to restore g articles to <fileName>.txt
-							break;
-						}
-
-						default: {
-							System.out.println("Invalid Option. Try again later.");
-							break;
-						}
-
-					}
-						*/
+					databaseHelper.backup("a");
 					break;
 				}
 
@@ -1290,95 +1199,12 @@ public class StartCSE360 {
 				}
 
 				case "8": {
-					System.out.println("Here are your restoration options: ");
-					System.out.println("1. Restore all articles");
-					System.out.println("2. Restore a general group of articles");
-					System.out.println("Please enter the restoration option you would like to proceed with: ");
-					String restoreOption = scanner.nextLine();
-					String fileName = "";
-					switch (restoreOption) {
-						case "1": {
-
-							System.out.println("Please enter the name of the file you would like to restore from: ");
-							fileName = scanner.nextLine();
-							System.out.println(
-									"Would you like to clear all articles in the system before restoring? Please note that if you do not, we will not restore duplicating articles. 1. Yes 2. No");
-							String answer = scanner.nextLine();
-							if (answer.equals("1"))
-								databaseHelper.restore("a", fileName);
-							else if (answer.equals("2"))
-								databaseHelper.restoreMerge("a", fileName);
-							else
-								System.out.println("Invalid choice! Try again");
-							break;
-						}
-
-						// P3: Change restore here to work with groups
-						case "2": {
-
-							System.out.println("Please enter the name of the general group: ");
-							String group = scanner.nextLine();
-							// Check if such a group exists - if no = make group entry into table
-							System.out.println("Please enter the name of the file you would like to restore from: ");
-							fileName = scanner.nextLine();
-							System.out.println(
-									"Would you like to clear all articles in the system before restoring? Please note that if you do not, we will not restore duplicating articles. 1. Yes 2. No");
-							String answer = scanner.nextLine();
-							if (answer.equals("1"))
-								databaseHelper.restore("a", fileName);
-							else if (answer.equals("2"))
-								databaseHelper.restoreMerge("a", fileName);
-							else
-								System.out.println("Invalid choice! Try again");
-							break;
-						}
-
-						default: {
-							System.out.println("Invalid Option. Try again later.");
-							break;
-						}
-
-					}
-
+					databaseHelper.restore("i");
 					break;
 				}
 
 				case "9": {
-					System.out.println("Here are your backup options: ");
-					System.out.println("1. Backup all articles");
-					System.out.println("2. Backup a general group or Special Access Group of articles");
-					System.out.println("Please enter the restoration option you would like to proceed with: ");
-					String backUp = scanner.nextLine();
-					String fileName = "";
-
-					switch (backUp) {
-
-						case "1": {
-
-							System.out.println("Please enter the name of the file you would like to backup to: ");
-							fileName = scanner.nextLine();
-							// db method to restore all articles to <fileName>.txt
-							break;
-						}
-
-						case "2": {
-
-							System.out.println(
-									"Please enter the name of the general group or Special Access Group of articles you would like to backup: ");
-							String group = scanner.nextLine();
-							// check if group exists in system - if no - say invalid and exit
-							System.out.println("Please enter the name of the file you would like to backup to: ");
-							fileName = scanner.nextLine();
-							// db method to restore g articles to <fileName>.txt
-							break;
-						}
-
-						default: {
-							System.out.println("Invalid Option. Try again later.");
-							break;
-						}
-
-					}
+					databaseHelper.backupMethod("a");
 					break;
 				}
 
