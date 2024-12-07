@@ -2201,7 +2201,19 @@ class DatabaseHelper {
 
 				System.out.println("Which article would you like to view?");
 
-				int articleIndex = Integer.parseInt(scanner.nextLine()) - 1;
+				String choice = scanner.nextLine();
+
+				if (!choice.matches("\\d+")) {
+					System.out.println("Invalid input. Please enter a valid article number.");
+					return;
+				}
+
+				int articleIndex = Integer.parseInt(choice) - 1;
+
+				if (articleIndex < 0 || articleIndex >= articles.size()) {
+					System.out.println("Invalid article selection. Please try again.");
+					return;
+				}
 
 				System.out.println(articles.get(articleIndex));
 			}
