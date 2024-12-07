@@ -323,7 +323,7 @@ public class StartCSE360 {
     				}
 
     				// ask for group
-    				System.out.println("Please search for an article via group name. Leave blank if you don't want to search: ");
+    				System.out.println("Please search for an article via group name. Leave blank to see all articles: ");
     				String group = scanner.nextLine();
     				if (group.equals("")) {
     					group = "ALL";
@@ -919,7 +919,7 @@ public class StartCSE360 {
 
 				// Backup Options
 				case "11": {
-					databaseHelper.backup("a");
+					databaseHelper.backupMethod("a");
 					break;
 				}
 
@@ -1204,7 +1204,7 @@ public class StartCSE360 {
 				}
 
 				case "9": {
-					databaseHelper.backupMethod("a");
+					databaseHelper.backupMethod("t");
 					break;
 				}
 
@@ -1287,6 +1287,7 @@ public class StartCSE360 {
 					}
 					System.out.println("Here are all the students in the group: " + group);
 					databaseHelper.listSpecUsers("s", false, group);
+					break;
 				}
 				// Cases 14-16 ask team about
 				case "16": {
