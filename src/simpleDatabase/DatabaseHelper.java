@@ -1509,7 +1509,7 @@ class DatabaseHelper {
 		try(PreparedStatement pstmt = connection.prepareStatement(delQuery)) {
 			pstmt.setString(1, gName);
 			int rowsAffected = pstmt.executeUpdate();
-			if(rowsAffected > 1) System.out.println("A group was deleted");
+			if(rowsAffected >= 1) System.out.println("A group was deleted");
 			else System.out.println("There was no group to delete");
 		} catch(SQLException e) {
 			System.err.println("DB issue with trying to delete an entire group");
@@ -2088,7 +2088,7 @@ class DatabaseHelper {
 							System.out.print(", Email: " + email);
 							System.out.print(", Preferred First Name: " + pref);
 							if(admin) System.out.print(", Admin Rights");
-							if(view) System.out.print(", View Rights");
+							if(view && !accRole.equals("a")) System.out.print(", View Rights");
 							System.out.println();	
 						}
 					}
@@ -2102,10 +2102,10 @@ class DatabaseHelper {
 
 	public boolean canDeleteAdmin(int userId) throws SQLException{
 		String query = "SELECT DISTINCT(group_name) from groupRights "
-		+ "WHERE user_id = ? AND accessRole = ?";
+		+ "WHERE user_id = ? AND adminRightsFlag = ?";
 		try(PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setInt(1, userId);
-			pstmt.setString(2, "a");
+			pstmt.setBoolean(2, true);
 
 			try(ResultSet rs = pstmt.executeQuery()) {
 				while(rs.next()) {
@@ -2124,12 +2124,12 @@ class DatabaseHelper {
 
 	public boolean isUserAdminOfGroup(int userId, String gName) throws SQLException{
 		String query = "SELECT accessRole FROM groupRights "
-		+ "WHERE user_id = ? AND group_name = ? AND accessRole = ?";
+		+ "WHERE user_id = ? AND group_name = ? AND adminRightsFlag = ?";
 
 		try(PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setInt(1, userId);
 			pstmt.setString(2, gName);
-			pstmt.setString(3, "a");
+			pstmt.setBoolean(3, true);
 			try(ResultSet rs = pstmt.executeQuery()) {
 				return rs.next();	
 			}
@@ -2160,121 +2160,36 @@ class DatabaseHelper {
 	}
 
 	public void searchArticle(String role, String level, String group, String search) { 
-        if (role.equals("s")) {
-            System.out.println("Invalid role");
-            return;
-        }
-
-        String sql = "SELECT DISTINCT a.* FROM articles a "
-                + "JOIN articleGroups ag ON a.id = ag.article_id "
-                + "WHERE LOWER(a.level) LIKE ? "
-                + "AND LOWER(ag.group_name) LIKE ? "
-                + "AND (LOWER(a.keywords) LIKE ? "
-                + "OR LOWER(a.title) LIKE ? "
-                + "OR LOWER(a.short_description) LIKE ?)";
-
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            String searchPattern = "%" + search.toLowerCase() + "%";
-            String levelPattern = "%" + level.toLowerCase() + "%";
-            String groupPattern = "%" + group.toLowerCase() + "%";
-            
-            pstmt.setString(1, levelPattern);
-            pstmt.setString(2, groupPattern);
-            pstmt.setString(3, searchPattern);
-            pstmt.setString(4, searchPattern);
-            pstmt.setString(5, searchPattern);
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                List<Article> articles = new ArrayList<>(); 
-
-                while (rs.next()) {
-                    articles.add(new Article(rs.getInt("id"), rs.getString("level"), rs.getString("group_name"), rs.getString("title"), rs.getString("short_description"), rs.getString("keywords"), rs.getString("body"), rs.getString("reference_links")));
-                }
-
-                System.out.println("Search Level: " + level + "\t\tTotal Results: " + articles.size());
-
-                for (int i = 0; i < articles.size(); i++) {
-                    System.out.println(i+1 + ". " + articles.get(i).toString());
-                }
-
-                System.out.println("Which article would you like to view? (Enter the number)");
-                int choice = Integer.parseInt(scanner.nextLine());
-                // viewArticle(role, String.valueOf(articles.get(choice-1).getId()), false);
-				System.out.println("One article found: 240968");
-            }
-        } catch (SQLException e) {
-            System.err.println("Database error while searching articles: " + e.getMessage());
-        }
-    }
-
-	public void restoreAll(String fileName) {
-
-		// first print all the articles in the database
-		viewAllArticles(userId);
-
-		// delete articles from the article database
-		String deleteArticles = "DELETE FROM articles";
-		try (PreparedStatement pstmt = connection.prepareStatement(deleteArticles)) {
-			pstmt.executeUpdate();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-			String line;
-			while ((line = reader.readLine()) != null) {
-				String[] parts = line.split(",");
-				if (parts.length < 7) {
-					System.out.println("Skipping invalid line: " + line);
-					continue;
+		String query = "SELECT a.* FROM articles a "
+					 + "LEFT JOIN articleGroups ag ON a.id = ag.article_id "
+					 + "WHERE (? = 'ALL' OR a.level = ?) "
+					 + "AND (? = 'ALL' OR ag.group_name LIKE ?) "
+					 + "AND (a.title LIKE ? OR a.short_description LIKE ? OR a.keywords LIKE ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY)) {
+			pstmt.setString(1, level);
+			pstmt.setString(2, level);
+			pstmt.setString(3, group);
+			pstmt.setString(4, group.equals("ALL") ? "%" : "%" + group + "%");
+			pstmt.setString(5, "%" + search + "%");
+			pstmt.setString(6, "%" + search + "%");
+			pstmt.setString(7, "%" + search + "%");
+			try (ResultSet rs = pstmt.executeQuery()) {
+				List<Article> articles = new ArrayList<>();
+				while (rs.next()) {
+					int id = rs.getInt("id");
+					String articleLevel = rs.getString("level");
+					String authors = rs.getString("authors");
+					String title = rs.getString("title");
+					String shortDescription = rs.getString("short_description");
+					String keywords = rs.getString("keywords");
+					String body = rs.getString("body");
+					String referenceLinks = rs.getString("reference_links");
+					articles.add(new Article(id, articleLevel, authors, title, shortDescription, keywords, body, referenceLinks));
 				}
-				int id = Integer.parseInt(parts[0].trim());
-				String level = parts[0].trim();
-				String authors = parts[1].trim();
-				String title = parts[2].trim();
-				String shortDescription = parts[3].trim();
-				String keywords = parts[4].trim();
-				String body = parts[5].trim();
-				String referenceLinks = parts[6].trim();
-
-				// insert into the database or update
-				String insertArticle = "INSERT INTO articles (id, level, authors, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-				try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
-					pstmt.setInt(1, id);
-					pstmt.setString(2, level.isEmpty() ? null : level);
-					pstmt.setString(3, authors.isEmpty() ? null : authors);
-					pstmt.setString(4, title.isEmpty() ? null : title);
-					pstmt.setString(5, shortDescription.isEmpty() ? null : shortDescription);
-					pstmt.setString(6, keywords.isEmpty() ? null : keywords);
-					pstmt.setString(7, body.isEmpty() ? null : body);
-					pstmt.setString(8, referenceLinks.isEmpty() ? null : referenceLinks);
-					pstmt.executeUpdate();
-				}
+				// Process the articles list as needed
 			}
-			System.out.println("Successfully restored system");
-
-			// query the entire articles database
-			String query = "SELECT * FROM articles";
-			try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-				try (ResultSet rs = pstmt.executeQuery()) {
-					while (rs.next()) {
-						System.out.println("ID: " + rs.getInt("id"));
-						System.out.println("Level: " + rs.getString("level"));
-						System.out.println("Authors: " + rs.getString("authors"));
-						System.out.println("Title: " + rs.getString("title"));
-						System.out.println("Short Description: " + rs.getString("short_description"));
-						System.out.println("Keywords: " + rs.getString("keywords"));
-						System.out.println("Body: " + rs.getString("body"));
-						System.out.println("Reference Links: " + rs.getString("reference_links"));
-					}
-				}
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
 		} catch (SQLException e) {
-			e.printStackTrace();
+			System.err.println("DB issue with searching articles: " + e.getMessage());
 		}
 	}
-	
 }

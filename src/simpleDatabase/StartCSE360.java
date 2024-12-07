@@ -299,52 +299,62 @@ public class StartCSE360 {
                     break;
                 }
                 case "4": {
-                    System.out.println("Please search for an article via content level:\n1: Beginner\n2: Intermediate\n3: Advanced\n4: Expert");
-                    int choice = scanner.nextInt();
-                    scanner.nextLine();
-                    String level = "ALL";
+    				// ask for content level
+    				System.out.println("Please search for an article via content level:\n1: Beginner\n2: Intermediate\n3: Advanced\n4: Expert");
+    				String choice = scanner.nextLine();
+    				scanner.nextLine();
+    				String level = "ALL";
 
-                    switch (choice) {
-                        case 1:
-                            level = "Beginner";
-                            break;
-                        case 2:
-                            level = "Intermediate";
-                            break;
-                        case 3:
-                            level = "Advanced";
-                            break;
-                        case 4:
-                            level = "Expert";
-                            break;
-                        default:
-                            break;
-                    }
+    				switch (choice) {
+    					case "1":
+    						level = "Beginner";
+    						break;
+    					case "2":
+    						level = "Intermediate";
+    						break;
+    					case "3":
+    						level = "Advanced";
+    						break;
+    					case "4":
+    						level = "Expert";
+    						break;				
+    					default:
+    						break;
+    				}
 
-                    System.out.println("Please search for an article via group name: ");
-                    String group = scanner.nextLine();
+    				// ask for group
+    				System.out.println("Please search for an article via group name. Leave blank if you don't want to search: ");
+    				String group = scanner.nextLine();
+    				if (group.equals("")) {
+    					group = "ALL";
+    				}
 
-                    System.out.println("Please search for an article via words, names, or phrases in the Title, Author(s), or Abstract. Say any if you don't want to search: ");
-                    String searchCond = scanner.nextLine();
+    				System.out.println("Please search for an article via words, names, or phrases in the Title, Author(s), or Abstract. Say any if you don't want to search: ");
+    				String searchCond = scanner.nextLine();
 
-                    if (searchCond.equals("any")) {
-                        searchCond = "";
-                    }
+    				if (searchCond.equals("any")) {
+    					searchCond = "";
+    				}
 
-                    databaseHelper.searchArticle("s", level, group, searchCond);
-                    break;
-                }
+    				//P3: Send to DB to find all associated articles - need condition block to say whether any articles matching criteria were found
+    				databaseHelper.searchArticle("s", level, group, searchCond);
+    				break;
+    			}
                 case "5": {
-                    System.out.println(
-                            "Please enter the group of articles you would like. If your input does not match any existing groups, all articles will be returned: ");
-                    String groupChosen = scanner.nextLine();
-                    boolean groupExists = true;
-                    if (groupExists) {
-                        System.out.println("Here are the articles in the group: " + groupChosen);
-                    } else {
-                        System.out.println(
-                                "We could not find any group of articles matching the criteria you entered. Here are all the articles in the system: ");
-                    }
+                    System.out.println("Please enter the id of the article you would like to view: ");
+					String articleID = scanner.nextLine();
+					int aId = Integer.parseInt(articleID);
+					ArrayList<String> temp = databaseHelper.getGroupsForAnArticle(aId);
+					boolean encrypted = false;
+					for(int i = 0; i < temp.size(); i++) {
+						if(databaseHelper.isGroupSpecial(temp.get(i))) { 
+							encrypted = true;	 
+							break;
+						}
+					}
+					databaseHelper.viewArticle("t", articleID, encrypted);
+
+					
                     break;
                 }
                 default: {
@@ -601,7 +611,7 @@ public class StartCSE360 {
 
 						System.out.print("Here is the OTP sent: ");
 						System.out.println(databaseHelper.createOTP(shellUserID));
-						System.out.println("You have successfully invited a student to join the system!");
+						System.out.println("You have successfully invited a user to join the system!");
 						System.out
 								.println("One Time Password has been sent to this user to enable their registration.");
 					} else
@@ -657,7 +667,7 @@ public class StartCSE360 {
 					}
 					int uId = databaseHelper.getUserId(usernameDelete, emailDelete);
 					if(!databaseHelper.canDeleteAdmin(uId)){
-						System.out.println(" Please keep in mind this user may or may not also be the sole admin for other groups as well.");
+						System.out.println("Please keep in mind this user may or may not also be the sole admin for other groups as well.");
 						break;
 					}
 					if (databaseHelper.deleteUserAccount(usernameDelete, emailDelete))
@@ -1213,6 +1223,8 @@ public class StartCSE360 {
 					String group = scanner.nextLine();
 					String[] tmp = {group};
 					databaseHelper.createGroups(tmp);
+					int tId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
+					databaseHelper.linkUserGroup(group, tId, "t", true, true);
 					// insert entry into tmp table
 					break;
 				}
@@ -1239,10 +1251,7 @@ public class StartCSE360 {
 					}
 
 					databaseHelper.delEntireGroup(group);
-
-
-					// check if group exists
-					// delete on cascade
+					break;
 				}
 
 				case "14": {
@@ -1374,6 +1383,10 @@ public class StartCSE360 {
 				String access;
 				System.out.println("Please enter the name of the Special Access Group: ");
 				String group = scanner.nextLine();
+				if(!databaseHelper.isGroupSpecial(group)){
+					System.out.println("This is not a special group.");
+					return;
+				}
 				int aId = databaseHelper.getUserId(curUser.getUsername(), curUser.getEmail());
 				if (!databaseHelper.checkSpecialAdminAccess(aId, group)) {
 					System.out.println("You do not have access to this Special Access Group.");
