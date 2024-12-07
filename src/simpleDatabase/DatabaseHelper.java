@@ -1,6 +1,7 @@
 package simpleDatabase;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -896,54 +897,55 @@ class DatabaseHelper {
 
 	// restore from user specified file
 	public void restoreAllArticles(String role, String file) throws Exception {
-		// if (role.equals("s")) {
-		// 	System.out.println("Invalid role");
-		// 	return;
-		// }
+		if (role.equals("s")) {
+			System.out.println("Invalid role");
+			return;
+		}
 
-		// // check if the file exists
-		// File f = new File(file);
-		// if (!f.exists()) {
-		// 	System.out.println("File does not exist");
-		// 	return;
-		// }
+		// check if the file exists
+		File f = new File(file);
+		if (!f.exists()) {
+			System.out.println("File does not exist");
+			return;
+		}
 
-		// // clear the articles table
-		// String clearArticles = "DELETE FROM articles";
+		// clear the articles table
+		String clearArticles = "DELETE FROM articles";
+		statement.execute(clearArticles);
 
-		// // read each line of the file and insert into the article database
-		// try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-		// 	String line;
-		// 	while ((line = reader.readLine()) != null) {
-		// 		System.out.println(line);
-		// 		int id = Integer.parseInt(line);
-		// 		String level = reader.readLine();
-		// 		String authors = reader.readLine();
-		// 		String title = reader.readLine();
-		// 		String shortDescription = reader.readLine();
-		// 		String keywords = reader.readLine();
-		// 		String body = reader.readLine();
-		// 		String referenceLinks = reader.readLine();
 
-		// 		// insert into the database or update
-		// 		String insertArticle = "INSERT INTO articles (id, level, authors, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-		// 		try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
-		// 			pstmt.setInt(1, id);
-		// 			pstmt.setString(2, level.isEmpty() ? null : level);
-		// 			pstmt.setString(3, authors.isEmpty() ? null : authors);
-		// 			pstmt.setString(4, title.isEmpty() ? null : title);
-		// 			pstmt.setString(5, shortDescription.isEmpty() ? null : shortDescription);
-		// 			pstmt.setString(6, keywords.isEmpty() ? null : keywords);
-		// 			pstmt.setString(7, body.isEmpty() ? null : body);
-		// 			pstmt.setString(8, referenceLinks.isEmpty() ? null : referenceLinks);
-		// 			pstmt.executeUpdate();
-		// 		}
-		// 	}
-		// 	System.out.println("Successfully restored system");
-		// } catch (IOException e) {
-		// 	e.printStackTrace();
-		// }
-		System.out.println("Successfully restored system");
+		// read each line of the file and insert into the article database
+		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				System.out.println(line);
+				int id = Integer.parseInt(line);
+				String level = reader.readLine();
+				String authors = reader.readLine();
+				String title = reader.readLine();
+				String shortDescription = reader.readLine();
+				String keywords = reader.readLine();
+				String body = reader.readLine();
+				String referenceLinks = reader.readLine();
+
+				// insert into the database or update
+				String insertArticle = "INSERT INTO articles (id, level, authors, title, short_description, keywords, body, reference_links) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+				try (PreparedStatement pstmt = connection.prepareStatement(insertArticle)) {
+					pstmt.setInt(1, id);
+					pstmt.setString(2, level.isEmpty() ? null : level);
+					pstmt.setString(3, authors.isEmpty() ? null : authors);
+					pstmt.setString(4, title.isEmpty() ? null : title);
+					pstmt.setString(5, shortDescription.isEmpty() ? null : shortDescription);
+					pstmt.setString(6, keywords.isEmpty() ? null : keywords);
+					pstmt.setString(7, body.isEmpty() ? null : body);
+					pstmt.setString(8, referenceLinks.isEmpty() ? null : referenceLinks);
+					pstmt.executeUpdate();
+				}
+			}
+			System.out.println("Successfully restored system");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	// take all the articles in the system from the specific group through the database and backit up to the filename
