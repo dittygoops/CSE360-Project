@@ -2162,6 +2162,11 @@ class DatabaseHelper {
 	}
 
 	public void searchArticle(String role, String level, String group, String search) { 
+		role = role.strip();
+		level = level.strip();
+		group = group.strip();
+		search = search.strip();
+		
 		String query = "SELECT a.* FROM articles a "
 					 + "LEFT JOIN articleGroups ag ON a.id = ag.article_id "
 					 + "WHERE (? = 'ALL' OR a.level = ?) "
