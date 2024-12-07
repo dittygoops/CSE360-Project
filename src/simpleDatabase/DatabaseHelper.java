@@ -1108,6 +1108,7 @@ class DatabaseHelper {
                     System.out.println("Successfully backed up " + articleCount + 
                                        " articles from group '" + articleGroup + "' to " + fileName);
                 }
+				writer.close();
             }
     }
 		
@@ -2168,7 +2169,7 @@ class DatabaseHelper {
 		search = search.strip();
 		
 		String query = "SELECT a.* FROM articles a "
-					 + "LEFT JOIN articleGroups ag ON a.id = ag.article_id "
+					 + "JOIN articleGroups ag ON a.id = ag.article_id "
 					 + "WHERE (? = 'ALL' OR a.level = ?) "
 					 + "AND (? = 'ALL' OR ag.group_name LIKE ?) "
 					 + "AND (a.title LIKE ? OR a.short_description LIKE ? OR a.keywords LIKE ?)";
