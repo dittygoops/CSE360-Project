@@ -104,8 +104,17 @@ public class CSE360Test {
         User user = new User("testUser", "password", "email", "firstName", "middleName", "lastName", "prefName", false, true, false, false, null);
         databaseHelper.register(user.getUsername(), user.getPassword(), databaseHelper.insertShellUser(false, true, false));
 
+<<<<<<< HEAD
         // Add an article
         databaseHelper.createArticle("t");
+=======
+        /*
+        // Test 2: View all articles test
+        databaseHelper.viewAllArticles("s");
+        System.out.println("Test 2 passed");
+        numPassed++;
+        */
+>>>>>>> 45eb321935656fd7c007e6158c368e35de020664
 
         // Verify the article was added
         String query = "SELECT COUNT(*) AS count FROM articles";
